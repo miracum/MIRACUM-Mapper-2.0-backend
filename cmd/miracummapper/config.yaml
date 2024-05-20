@@ -1,0 +1,11 @@
+# config.yml
+version: 1.0.0
+database:
+    retry: 25
+    # sleep: 5
+    # migration:
+    #   enabled: false
+rate_limit:
+  enabled: true
+  limit: 100
+  burst: 10

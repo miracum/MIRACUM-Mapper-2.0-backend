@@ -1,0 +1,1028 @@
+---
+openapi: 3.0.0
+info:
+  title: MIRACUM Mapping Tool Backend
+  # summary: A MIRACUM Mapping Tool Backend
+  description: This is the backend for the MIRACUM Mapping Tool. It provides an API to manage projects with their corresponding mappings. Code Systems can be managed as well. The API uses Keycloak for authentication and authorization.
+  # termsOfService: 'https://miracum.org'
+  # contact:
+  #   name: API Support
+  #   url: 'https://miracum.org'
+  #   email: support@miracum.org
+  license:
+    name: GPL-3.0 License
+    # identifier: GPL-3.0-or-later
+    url: "https://www.gnu.org/licenses/gpl-3.0.html"
+  version: "0.1.0"
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.miracum.org
+    description: Production server
+# externalDocs:
+#   description: Find out more about Swagger
+#   url: http://swagger.io
+tags:
+  - name: status
+    description: Status about the server
+    # externalDocs:
+    #   description: Find out more
+    #   url: http://swagger.io
+  - name: project
+    description: Operations about projects
+  - name: project-permission
+    description: Operations about project permissions
+  - name: project-code-system
+    description: Operations about the defined systems of a project
+  - name: mapping
+    description: Operations about mappings
+  - name: code-system
+    description: Operations about code systems
+  - name: concept
+    description: Operations about concepts
+paths:
+  /ping:
+    get:
+      tags:
+        - status
+      summary: Check if the server is running
+      description: This endpoint can be used to check if the server is running. It returns a simple pong message.
+      operationId: ping
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "pong"
+      security: []
+  # /login:
+  /projects:
+    get:
+      tags:
+        - project
+      summary: Get all projects
+      description: Get all projects with pagination. Sorting can also be specified by query parameters.
+      operationId: getProjects
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - name: sortBy
+          in: query
+          description: Field to sort sortBy
+          required: false
+          schema:
+            type: string
+            default: id
+            enum: [name, dateCreated, id]
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Project" # id required
+        "400":
+          description: Invalid request (e.g., negative page number or page, invalid sortBy or sortOrder values)
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Page not found (e.g., page number too high)
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - project
+      summary: Create a new project
+      description: Create a new project with permissions and code system roles (the columns in the mapping table). Code system roles can not be changed after creation.
+      parameters: []
+      operationId: addProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ProjectDetails" # id prohibited/ignored, CodeSystemRoles required, Permissions optional
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetails" # id required
+        "400":
+          description: Invalid Input
+          content:
+            application/json:
+              schema:
+                type: string
+        "422":
+          description: Validation Exception
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /project/{project_id}:
+    get:
+      tags:
+        - project
+      summary: Get project details
+      description: Get the project details by ID including the list of project permissions and code system roles (the columns in the mapping table)
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getProject
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProjectDetails" # project id optional, permissions required
+        "400":
+          description: Invalid project-id supplied # (e.g., negative id)
+        "404":
+          description: Project not found
+    put:
+      tags:
+        - project
+      summary: Update the project information
+      description: Update the project information. Does not update the permissions for the users or the code system roles (the columns in the mapping table).
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: editProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Project" # id required
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Project" # id required
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project not found
+        "422":
+          description: Validation Exception # validate if id is provided in requestBody, it matches with the id in the path
+    delete:
+      tags:
+        - project
+      summary: Delete a project
+      description: Delete a project by ID. This will also delete all mappings and elements of the project as well as the permissions for the project and the code system roles.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: deleteProject
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Project" # id required
+        "404":
+          description: Project not found
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /project/{project_id}/permissions:
+    get:
+      tags:
+        - project-permission
+      summary: Get permissions for a project
+      description: Get all permissions for a project by project ID.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getAllPermissions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/ProjectPermission"
+        "400":
+          description: Invalid project-id supplied # (e.g., negative id)
+        "404":
+          description: Project not found
+  /project/{project_id}/permissions/{user_id}:
+    get:
+      tags:
+        - project-permission
+      summary: Get project permission for a specific user
+      description: Get the project permission for a specific user by the user ID.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/user_id"
+      operationId: getPermission
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProjectPermission"
+        "400":
+          description: Invalid project-id supplied # (e.g., negative id)
+        "404":
+          description: Project or user not found
+    post:
+      tags:
+        - project-permission
+      summary: Create a new project permission for user
+      description: Create a new project  permission for a user by the user ID.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/user_id"
+      operationId: addPermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ProjectPermission"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProjectPermission"
+        "400":
+          description: Invalid Input
+        "404":
+          description: Project or user not found
+        "422":
+          description: Validation Exception # e.g if trying to create a permission for a user that already has a permission for the project, or and invalid permission role
+    put:
+      tags:
+        - project-permission
+      summary: Update a project permission for a user
+      description: Update a project permission for a user by the user ID
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/user_id"
+      operationId: updatePermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ProjectPermission"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProjectPermission"
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or user not found
+        "422":
+          description: Validation Exception
+    delete:
+      tags:
+        - project-permission
+      summary: Delete a project permission for a user
+      description: Delete a project permission for a user by the user ID
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/user_id"
+      operationId: deletePermission
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProjectPermission"
+        "404":
+          description: Project or user not found
+  /project/{project_id}/code-system-roles:
+    get:
+      tags:
+        - project-code-system
+      summary: Get all code system roles for a project
+      description: Get all code system roles (columns in the mapping table) for a project by project ID
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getAllCodeSystemRoles
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CodeSystemRole" # id required
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project not found
+    # post:
+    #   tags:
+    #     - project-code-system
+    #   summary: create a new code system role (column in the mapping table) for a project by project ID
+    #   description: create a new element for each mapping with this code system role
+    #   parameters:
+    #     - $ref: '#/components/parameters/project_id'
+    #   operationId: addCodeSystemRole
+    #   requestBody:
+    #     required: true
+    #     content:
+    #       application/json:
+    #         schema:
+    #           '$ref': '#/components/schemas/CodeSystemRole'
+    #   responses:
+    #     '200':
+    #       description: Success
+    #       content:
+    #         application/json:
+    #           schema:
+    #             type: array
+    #             items:
+    #               '$ref': '#/components/schemas/CodeSystemRole' # id optional
+    #     '400':
+    #       description: Invalid ID supplied
+    #     '404':
+    #       description: Project not found
+    #     '422':
+    #       description: Validation Exception
+  /project/{project_id}/code-system-roles/{code-system-role_id}:
+    get:
+      tags:
+        - project-code-system
+      summary: Get a code system role by ID
+      description: Get a code system role (column in the mapping table) by ID
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/code-system-role_id"
+      operationId: getCodeSystemRole
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemRole" # id required
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or Code-System-Role not found
+    put:
+      tags:
+        - project-code-system
+      summary: Update a code system role by ID
+      description: Update name or type from a code system role (column in the mapping table) by ID
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/code-system-role_id"
+      operationId: updateCodeSystemRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CodeSystemRole" # id optional
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemRole" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or Code-System-Role not found
+        "422":
+          description:
+            Validation Error # if trying to change the system of the code-system-role. only name or type of the code-system-role can be changed
+            # if code-system-role id is provided in the request body and doesn't match the code-system-role id in the path
+    # delete:
+    #   tags:
+    #     - project-code-system
+    #   summary: delete a code system role (column in the mapping table) by ID
+    #   description: ''
+    #   parameters:
+    #     - $ref: '#/components/parameters/project_id'
+    #     - $ref: '#/components/parameters/code-system-role_id'
+    #   operationId: deleteCodeSystemRole
+    #   responses:
+    #     '200':
+    #       description: Success
+    #       content:
+    #         application/json:
+    #           schema:
+    #             '$ref': '#/components/schemas/CodeSystemRole' # id optional
+    #     '404':
+    #       description: Project or Code-System-Role not found
+  /project/{project_id}/mappings:
+    get:
+      tags:
+        - mapping
+      summary: Get all mappings for a project by project ID
+      description: Get all mappings for a project by project ID. The mappings include all elements with concepts. Paging and sorting can be specified by query parameters.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          required: false
+          schema:
+            type: string
+            default: id
+            enum: [id, equivalence, status, comment, created, modified]
+        - $ref: "#/components/parameters/sortOrder"
+      operationId: getAllMappings
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Mapping" # id required
+        "400":
+          description: Invalid request (e.g., negative page number or page, invalid sortBy or sortOrder values)
+        "404":
+          description: Page not found (e.g., page number too high)
+    post:
+      tags:
+        - mapping
+      summary: Create a new mapping for a project
+      description: Create a new mapping for a project by project ID including all needed elements (specified by code_system_roles from the corresponding project)
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: addMapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Mapping" # id prohibited/ignored
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project not found
+        "422":
+          description: Validation Exception
+  /project/{project_id}/mapping/{mapping_id}:
+    get:
+      tags:
+        - mapping
+      summary: Get a mapping with its elements by ID
+      description: Get a mapping by ID and all included elements. The elements include the concept with the system-id.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/mapping_id"
+      operationId: getMappingByID
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping" # id required
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or Mapping not found
+    put:
+      tags:
+        - mapping
+      summary: Update a mapping and its elements by ID
+      description: Update a mapping by ID and all included elements. The elements include the concept with the system-id.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/mapping_id"
+      operationId: updateMapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Mapping" # id required
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or Mapping not found
+        "422":
+          description: Validation Error # if trying to change the project of the mapping
+    delete:
+      tags:
+        - mapping
+      summary: Delete a mapping and its elements by ID
+      description: Delete a mapping by ID and all included elements.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/mapping_id"
+      operationId: deleteMapping
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or Mapping not found
+  /code-systems:
+    get:
+      tags:
+        - code-system
+      summary: Get all code systems
+      description: Get all code systems.
+      operationId: getAllCodeSystems
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CodeSystem"
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Project or Code-System-Role not found
+    post:
+      tags:
+        - code-system
+      summary: Create a new code system
+      description: Create a new code system. Only admins can create code systems.
+      operationId: addCodeSystem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CodeSystem" # id prohibited/ignored
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystem" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: CodeSystem not found
+        "422":
+          description: Validation Exception
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /code-system/{code-system_id}:
+    get:
+      tags:
+        - code-system
+      summary: Get a code system by ID
+      description: Get a code system by ID.
+      parameters:
+        - $ref: "#/components/parameters/code-system_id"
+      operationId: getCodeSystem
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystem" # id required
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: CodeSystem not found
+    put:
+      tags:
+        - code-system
+      summary: Update a code system by ID
+      description: Update a code system by ID. Only admins can update code systems.
+      parameters:
+        - $ref: "#/components/parameters/code-system_id"
+      operationId: updateCodeSystem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CodeSystem" # id optional
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystem" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Codesystem not found
+        "422":
+          description: Validation Error # if id is provided in the request body it must match the id in the path
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+    delete:
+      tags:
+        - code-system
+      summary: Delete a code system by ID
+      description: Delete a code system by ID. Only admins can delete code systems.
+      parameters:
+        - $ref: "#/components/parameters/code-system_id"
+      operationId: deleteCodeSystem
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystem" # id optional
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Codesystem not found
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /code-system/{code-system_id}/concepts:
+    get:
+      tags:
+        - concept
+      summary: Get all concepts for a code system by ID
+      description: Get all concepts for a code system by ID. Paging and sorting can be specified by query parameters.
+      operationId: getAllConcepts
+      parameters:
+        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - name: sortBy
+          in: query
+          description: Field to sort sortBy
+          required: false
+          schema:
+            type: string
+            default: code
+            enum: [code, display]
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Concept" # id optional
+  /code-system/{code-system_id}/find-concept:
+    get:
+      tags:
+        - concept
+      summary: Find a concept by code or meaning
+      description: Find a concept by code or meaning. The code can be searched by a search string. A Limit can be specified by query parameters.
+      parameters:
+        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/limit"
+        - name: codeSearch
+          in: query
+          description: search string for the code field
+          required: false
+          schema:
+            type: string
+        - name: meaningSearch
+          in: query
+          description: search string for the meaning field
+          required: false
+          schema:
+            type: string
+      operationId: findConceptByCode
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Concept" # id required
+        "400":
+          description: Invalid code supplied
+        "404":
+          description: Concept not found
+components:
+  parameters:
+    project_id:
+      name: project_id
+      in: path
+      required: true
+      description: The ID of the project
+      schema:
+        type: integer
+        format: int32
+    user_id:
+      name: user_id
+      in: path
+      required: true
+      description: The ID of the user
+      schema:
+        type: string # uuid
+    code-system-role_id:
+      name: code-system-role_id
+      in: path
+      required: true
+      description: The ID of the code system role
+      schema:
+        type: integer
+        format: int32
+    mapping_id:
+      name: mapping_id
+      in: path
+      required: true
+      description: The ID of the mapping
+      schema:
+        type: integer
+        format: int64
+    code-system_id:
+      name: code-system_id
+      in: path
+      required: true
+      description: The ID of the Codesystem
+      schema:
+        type: integer
+        format: int32
+    page:
+      name: page
+      in: query
+      description: Page number (must be a positive integer)
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    pageSize:
+      name: pageSize
+      in: query
+      description: Number of items per page (minimum 1, maximum 100)
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Order of sorting (asc or desc)
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+    limit:
+      name: limit
+      in: query
+      description: maximum number of items to return
+      required: false
+      schema:
+        type: integer
+        default: 5
+        minimum: 1
+        maximum: 25
+  schemas:
+    Project:
+      type: object
+      required:
+        - name
+        - version
+        - description
+        - equivalence_required
+        - status_required
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        equivalence_required:
+          type: boolean
+        status_required:
+          type: boolean
+        modified:
+          type: string
+    ProjectDetails:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          required:
+            - code_system_roles
+          properties:
+            project_permissions:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProjectPermission"
+            code_system_roles:
+              type: array
+              items:
+                $ref: "#/components/schemas/CodeSystemRole" # id required
+    ProjectPermission:
+      type: object
+      required:
+        - user_id
+        - role
+      properties:
+        user_id:
+          type: string # uuid
+        user_name:
+          type: string
+        role:
+          type: string
+          enum: [reviewer, project_owner, editor]
+    CodeSystemRole:
+      type: object
+      required: # todo, was alles außer id?
+        - name
+        - system
+        - type
+        - position
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        system:
+          type: object
+          properties:
+            # id? über drop down version und name anzeigen von allen codesystemen und bei auswahl id, system, name, uri zurückgeben?
+            id:
+              type: integer
+              format: int32
+            name:
+              type: string
+            version:
+              type: string
+        type:
+          type: string
+          enum: [source, destination]
+        position:
+          type: integer
+          format: int32
+    Mapping:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        equivalence:
+          type: string
+          enum: [related-to, equivalent, source-is-narrower-than-target, source-is-broader-than-target, not-related]
+        status:
+          type: string
+        comment:
+          type: string
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Element"
+    Element:
+      type: object
+      properties:
+        concept:
+          $ref: "#/components/schemas/Concept"
+        system-id:
+          type: integer
+          format: int32
+    Concept:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        meaning:
+          type: string
+    CodeSystem:
+      type: object
+      required:
+        - uri
+        - version
+        - name
+      properties:
+        id:
+          type: integer
+          format: int32
+        uri:
+          type: string
+        version:
+          type: string
+        name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        author:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Validation Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: string
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://<keycloak-url>/auth/realms/<realm-name>/protocol/openid-connect/auth
+          tokenUrl: https://<keycloak-url>/auth/realms/<realm-name>/protocol/openid-connect/token
+          scopes:
+            admin: grants admin access
+            member: grants normal access
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  links: {}
+  callbacks: {}
+security:
+  - OAuth2: [normal, admin]
+  - BearerAuth: [normal, admin]

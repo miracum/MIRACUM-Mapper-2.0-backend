@@ -1,0 +1,4 @@
+- How to develop locally (go version, maybe Dev Containers)
+- Pipeline Setup
+- How to run tests (unit tests and integration tests)
+- How to run and debug the app locally

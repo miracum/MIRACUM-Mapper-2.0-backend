@@ -1,0 +1,2 @@
+- Image of the database from DrawSQL
+- Internal Database Triggers and constraints for consistency
