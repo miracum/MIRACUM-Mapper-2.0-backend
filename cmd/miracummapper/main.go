@@ -20,7 +20,8 @@ func main() {
 
 	db := database.NewDBConnection(config)
 
-	database.Migrate(db)
+	// database.Migrate(db)
+	database.InitGorm(db)
 
 	// r := routes.SetupRouter()
 
