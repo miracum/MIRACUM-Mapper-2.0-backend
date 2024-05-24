@@ -1,6 +1,9 @@
 package models
 
-import "database/sql/driver"
+import (
+	"database/sql/driver"
+	"fmt"
+)
 
 type CodeSystemRoleType string
 
@@ -10,7 +13,14 @@ const (
 )
 
 func (e *CodeSystemRoleType) Scan(value interface{}) error {
-	*e = CodeSystemRoleType(value.([]byte))
+	switch v := value.(type) {
+	case []byte:
+		*e = CodeSystemRoleType(v)
+	case string:
+		*e = CodeSystemRoleType(v)
+	default:
+		return fmt.Errorf("unsupported type: %T", v)
+	}
 	return nil
 }
 
@@ -27,4 +37,5 @@ type CodeSystemRole struct {
 	ProjectID    uint32
 	CodeSystemID uint32
 	Elements     []Element
+	CodeSystem   CodeSystem
 }

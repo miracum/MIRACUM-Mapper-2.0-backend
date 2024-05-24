@@ -2,86 +2,83 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"miracummapper/internal/api"
+	"miracummapper/internal/database/conversions"
 	"miracummapper/internal/database/models"
-
-	"github.com/google/uuid"
+	"miracummapper/internal/utilities"
 )
 
-type project_permission_join_user struct {
-	Pp_role   string
-	User_id   uuid.UUID
-	User_name string
-}
+var (
+	// Define mappings from API parameters to database column names
+	sortColumns = map[api.GetProjectsParamsSortBy]string{
+		"dateCreated": "created",
+		"id":          "id",
+		"name":        "name",
+	}
 
-type code_system_role_join_code_system struct {
-	Csr_id             uint32
-	Csr_name           string
-	Csr_position       uint32
-	Csr_code_system_id uint32
-	System_id          uint32
-	System_name        string
-	System_Version     string
-	Csr_type           string
-}
+	// Define mappings from API parameters to sort orders
+	sortOrders = map[api.GetProjectsParamsSortOrder]string{
+		"asc":  "ASC",
+		"desc": "DESC",
+	}
+)
 
-// GetProject implements api.StrictServerInterface.
 func (s *StrictGormServer) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
 	var project models.Project
-	var code_system_roles []models.CodeSystemRole
-	var project_permissions []models.ProjectPermission
-	var csr_join_cs []code_system_role_join_code_system
-	var pp_join_user []project_permission_join_user
 
-	s.Database.First(&project, request.ProjectId)
-	s.Database.Model(&code_system_roles).Select("code_system_roles.id, code_system_roles.name, code_system_roles.position, code_system_roles.code_system_id, code_systems.id, code_systems.name, code_systems.version, code_system_roles.type").Joins("JOIN code_systems ON code_system_roles.code_system_id = code_systems.id").Where("code_system_roles.project_id = ?", request.ProjectId).Scan(&csr_join_cs)
-
-	s.Database.Model(&project_permissions).Select("project_permissions.role, users.id, users.name").Joins("JOIN users ON project_permissions.user_id = users.id").Where("project_permissions.project_id = ?", request.ProjectId).Scan(&pp_join_user)
-
-	id := int32(project.ID)
-	modified := project.UpdatedAt.String()
-	var pd api.ProjectDetails = api.ProjectDetails{
-		Description:         project.Description,
-		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  &id,
-		Modified:            &modified,
-		Name:                project.Name,
-		StatusRequired:      project.StatusRequired,
-		Version:             project.Version,
-	}
-
-	var csrs []api.CodeSystemRole
-	for _, v := range csr_join_cs {
-		id := int32(v.Csr_id)
-		system_id := int32(v.System_id)
-		csr := api.CodeSystemRole{
-			Id:       &id,
-			Name:     v.Csr_name,
-			Position: int32(v.Csr_position),
-			System: struct {
-				Id      *int32  `json:"id,omitempty"`
-				Name    *string `json:"name,omitempty"`
-				Version *string `json:"version,omitempty"`
-			}{Id: &system_id,
-				Name:    &v.System_name,
-				Version: &v.System_Version},
-			Type: api.CodeSystemRoleType(v.Csr_type),
+	if err := s.Database.Preload("CodeSystemRoles.CodeSystem").Preload("Permissions").First(&project, request.ProjectId).Error; err != nil {
+		// Handle error
+		if err.Error() == "record not found" {
+			return api.GetProject404Response{}, nil
 		}
-		csrs = append(csrs, csr)
+		return api.GetProject404Response{}, err
 	}
 
-	var pps []api.ProjectPermission
-	for _, v := range pp_join_user {
-		pp := api.ProjectPermission{
-			Role:     api.ProjectPermissionRole(v.Pp_role),
-			UserId:   v.User_id.String(),
-			UserName: &v.User_name,
-		}
-		pps = append(pps, pp)
+	projectDetails := conversions.GormProjectToAPIProjectDetails(project)
+
+	return api.GetProject200JSONResponse(projectDetails), nil
+}
+
+// AddProject implements api.StrictServerInterface.
+func (s *StrictGormServer) AddProject(ctx context.Context, request api.AddProjectRequestObject) (api.AddProjectResponseObject, error) {
+	projectDetails := request.Body
+
+	if len(projectDetails.CodeSystemRoles) == 0 {
+		return api.AddProject422JSONResponse("CodeSystemRoles are required"), nil
 	}
 
-	pd.CodeSystemRoles = csrs
-	pd.ProjectPermissions = &pps
+	project, err := conversions.ApiProjectDetailsToGormProject(*projectDetails)
+	if err != nil {
+		return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "Invalid uuid provided"}, err
+	}
 
-	return api.GetProject200JSONResponse(pd), nil
+	// Create the project in the database
+	if err := s.Database.Create(&project).Error; err != nil {
+		return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, err
+	}
+	return api.AddProject200JSONResponse(*projectDetails), nil
+}
+
+// GetProjects implements api.StrictServerInterface.
+func (s *StrictGormServer) GetProjects(ctx context.Context, request api.GetProjectsRequestObject) (api.GetProjectsResponseObject, error) {
+
+	pageSize := *request.Params.PageSize
+	offset := utilities.GetOffset(*request.Params.Page, pageSize)
+	sortBy := sortColumns[*request.Params.SortBy]
+	sortOrder := sortOrders[*request.Params.SortOrder]
+
+	var projects []models.Project = []models.Project{}
+
+	if err := s.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&projects).Error; err != nil {
+		return nil, err
+	}
+
+	// Convert projects to api.Projects
+	var apiProjects []api.Project = []api.Project{}
+	for _, project := range projects {
+		apiProjects = append(apiProjects, conversions.GormProjectToAPIProject(project))
+	}
+
+	return api.GetProjects200JSONResponse(apiProjects), nil
 }

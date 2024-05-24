@@ -81,14 +81,7 @@ func initGorm(config *config.Config) (*gorm.DB, error) {
 		WHEN duplicate_object THEN null;
 	END $$;`)
 
-	gormDB.AutoMigrate(&models.CodeSystem{})
-	gormDB.AutoMigrate(&models.Concept{})
-	gormDB.AutoMigrate(&models.Mapping{})
-	gormDB.AutoMigrate(&models.Element{})
-	gormDB.AutoMigrate(&models.CodeSystemRole{})
-	gormDB.AutoMigrate(&models.Project{})
-	gormDB.AutoMigrate(&models.ProjectPermission{})
-	gormDB.AutoMigrate(&models.User{})
+	gormDB.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{})
 
 	createTestData(gormDB)
 
