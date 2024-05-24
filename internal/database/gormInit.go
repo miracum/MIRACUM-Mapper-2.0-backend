@@ -13,7 +13,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitGorm(config *config.Config) {
+func NewGormConnection(config *config.Config) *gorm.DB {
+	db, err := initGorm(config)
+	if err != nil {
+		panic(err)
+	}
+	return db
+}
+
+func initGorm(config *config.Config) (*gorm.DB, error) {
 
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{
 		// Conn: db,
@@ -27,7 +35,7 @@ func InitGorm(config *config.Config) {
 	}), &gorm.Config{}) // Use db.Driver() instead of db.DriverName()
 	if err != nil {
 		log.Fatalf("Failed to create GORM database connection: %v", err)
-		return
+		return nil, err
 	}
 
 	// Assuming gormDB is your *gorm.DB instance
@@ -83,6 +91,8 @@ func InitGorm(config *config.Config) {
 	gormDB.AutoMigrate(&models.User{})
 
 	createTestData(gormDB)
+
+	return gormDB, nil
 }
 
 func CreateEnum(db *gorm.DB, enumType interface{}) error {
@@ -120,8 +130,18 @@ func createTestData(gormDB *gorm.DB) {
 	}
 
 	// Save the test user to the database
-	result := gormDB.Create(&testUser)
-	if result.Error != nil {
-		log.Fatalf("Failed to create test user: %v", result.Error)
+	gormDB.Create(&testUser)
+
+	description := "Example Code System"
+	codeSystem := models.CodeSystem{
+		Uri:             "http://example.com/codesystem",
+		Version:         "1.0",
+		Name:            "Example Code System",
+		Description:     &description,
+		Author:          nil,
+		Concepts:        nil,
+		CodeSystemRoles: nil,
 	}
+
+	gormDB.Create(&codeSystem)
 }

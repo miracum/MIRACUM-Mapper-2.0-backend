@@ -18,10 +18,10 @@ func main() {
 
 	config := config.NewConfig()
 
-	db := database.NewDBConnection(config)
+	// Db := database.NewDBConnection(config)
 
 	// database.Migrate(db)
-	database.InitGorm(config)
+	db := database.NewGormConnection(config)
 
 	// r := routes.SetupRouter()
 
@@ -45,7 +45,8 @@ func main() {
 	// r.Use(middleware.Logger())
 
 	// svr := server.CreateServer(db, config)
-	svr := server.CreateStrictServer(db, config)
+	// svr := server.CreateStrictServer(Db, config)
+	svr := server.CreateStrictGormServer(db, config)
 
 	strictHandler := api.NewStrictHandler(svr, nil)
 

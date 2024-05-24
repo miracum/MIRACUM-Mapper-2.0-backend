@@ -20,7 +20,7 @@ func (e CodeSystemRoleType) Value() (driver.Value, error) {
 
 // CodeSystemRole defines model for CodeSystemRole.
 type CodeSystemRole struct {
-	Id           uint32             `gorm:"primarykey"`
+	ID           uint32             `gorm:"primarykey"`
 	Type         CodeSystemRoleType `gorm:"type:CodeSystemRoleType"`
 	Name         string
 	Position     uint32
