@@ -27,7 +27,7 @@ var (
 func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
 	var project models.Project
 
-	if err := s.Database.Preload("CodeSystemRoles.CodeSystem").Preload("Permissions").First(&project, request.ProjectId).Error; err != nil {
+	if err := s.Database.Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, request.ProjectId).Error; err != nil {
 		// Handle error
 		if err.Error() == "record not found" {
 			return api.GetProject404Response{}, nil
@@ -81,4 +81,24 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 	}
 
 	return api.GetProjects200JSONResponse(apiProjects), nil
+}
+
+// DeleteProject implements api.StrictServerInterface.
+func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectRequestObject) (api.DeleteProjectResponseObject, error) {
+	// NINA IST HIER AM WERK; PFOTEN WEG
+
+	project_id := request.ProjectId
+	var project models.Project
+
+	if err := s.Database.First(&project, project_id).Error; err != nil {
+		if err.Error() == "record not found" {
+			return api.DeleteProject404Response{}, nil
+		}
+		return api.DeleteProject500JSONResponse{}, err
+	}
+
+	s.Database.Delete(&models.Project{}, project_id)
+
+	api_project := transform.GormProjectToAPIProject(project)
+	return api.DeleteProject200JSONResponse(api_project), nil
 }

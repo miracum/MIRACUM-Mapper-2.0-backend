@@ -206,6 +206,8 @@ paths:
                 "$ref": "#/components/schemas/Project" # id required
         "404":
           description: Project not found
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]

@@ -47,5 +47,5 @@ type Mapping struct {
 	Equivalence *Equivalence `gorm:"type:Equivalence"`
 	Status      *Status      `gorm:"type:Status"`
 	Comment     *string
-	Elements    []Element
+	Elements    []Element `gorm:"constraint:OnDelete:CASCADE"`
 }

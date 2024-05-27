@@ -23,7 +23,7 @@ func CreateServer(database *gorm.DB, config *config.Config) *Server {
 	return &Server{Database: database, Config: config}
 }
 
-func CreateMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareFunc, error) {
+func CreateStrictMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareFunc, error) {
 	spec, err := api.GetSwagger()
 	if err != nil {
 		return nil, fmt.Errorf("loading spec: %w", err)
@@ -50,6 +50,22 @@ func CreateMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareFunc, e
 	}
 
 	return strictMiddlewareFuncs, nil
+}
+
+func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
+	spec, err := api.GetSwagger()
+	if err != nil {
+		return nil, fmt.Errorf("loading spec: %w", err)
+	}
+
+	validator := middleware.OapiRequestValidatorWithOptions(spec,
+		&middleware.Options{
+			Options: openapi3filter.Options{
+				AuthenticationFunc: middlewares.NewAuthenticator(v),
+			},
+		})
+
+	return []gin.HandlerFunc{validator}, nil
 }
 
 // AddCodeSystem implements api.StrictServerInterface.
@@ -79,11 +95,6 @@ func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingReq
 
 // DeletePermission implements api.StrictServerInterface.
 func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermissionRequestObject) (api.DeletePermissionResponseObject, error) {
-	panic("unimplemented")
-}
-
-// DeleteProject implements api.StrictServerInterface.
-func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectRequestObject) (api.DeleteProjectResponseObject, error) {
 	panic("unimplemented")
 }
 

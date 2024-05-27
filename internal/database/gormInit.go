@@ -5,8 +5,7 @@ import (
 	"log"
 	"miracummapper/internal/config"
 	"miracummapper/internal/database/models"
-	"reflect"
-	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
@@ -14,103 +13,132 @@ import (
 )
 
 func NewGormConnection(config *config.Config) *gorm.DB {
-	db, err := initGorm(config)
+	db, err := getGormConnection(config)
 	if err != nil {
 		panic(err)
 	}
 	return db
 }
 
-func initGorm(config *config.Config) (*gorm.DB, error) {
-
-	gormDB, err := gorm.Open(postgres.New(postgres.Config{
-		// Conn: db,
-		DSN: fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			config.Env.DBHost,
-			config.Env.DBPort,
-			config.Env.DBUser,
-			config.Env.DBPassword,
-			config.Env.DBName),
-	}), &gorm.Config{}) // Use db.Driver() instead of db.DriverName()
+func getGormConnection(config *config.Config) (*gorm.DB, error) {
+	db, err := createGormConnection(config)
 	if err != nil {
-		log.Fatalf("Failed to create GORM database connection: %v", err)
 		return nil, err
 	}
 
-	// Assuming gormDB is your *gorm.DB instance
-	// enums := []interface{}{
-	// 	ProjectPermissionRole(""),
-	// 	CodeSystemRoleType(""),
-	// 	Status(""),
-	// 	Equivalence(""),
-	// }
+	err = connectToDb(db, config)
+	if err != nil {
+		return nil, err
+	}
 
-	// for _, enum := range enums {
-	// 	err := CreateEnum(gormDB, enum)
-	// 	if err != nil {
-	// 		log.Fatalf("Failed to create enum for %T: %v", enum, err)
-	// 	}
-	// }
+	initEnums(db)
 
-	gormDB.Exec(`
+	db.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{})
+
+	createTestData(db)
+
+	return db, nil
+}
+
+func initEnums(db *gorm.DB) {
+	db.Exec(`
 	DO $$ BEGIN
 		CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');
 	EXCEPTION
 		WHEN duplicate_object THEN null;
 	END $$;`)
 
-	gormDB.Exec(`
+	db.Exec(`
 	DO $$ BEGIN
 		CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');
 	EXCEPTION
 		WHEN duplicate_object THEN null;
 	END $$;`)
 
-	gormDB.Exec(`
+	db.Exec(`
 	DO $$ BEGIN
 		CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');
 	EXCEPTION
 		WHEN duplicate_object THEN null;
 	END $$;`)
 
-	gormDB.Exec(`
+	db.Exec(`
 	DO $$ BEGIN
 		CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'projectOwner', 'editor');
 	EXCEPTION
 		WHEN duplicate_object THEN null;
 	END $$;`)
+}
 
-	gormDB.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{})
+func createGormConnection(config *config.Config) (*gorm.DB, error) {
+	DSN := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		config.Env.DBHost,
+		config.Env.DBPort,
+		config.Env.DBUser,
+		config.Env.DBPassword,
+		config.Env.DBName)
 
-	createTestData(gormDB)
-
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		// Conn: db,
+		DSN: DSN,
+	}), &gorm.Config{}) // Use db.Driver() instead of db.DriverName()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GORM database connection: %v", err)
+	}
 	return gormDB, nil
 }
 
-func CreateEnum(db *gorm.DB, enumType interface{}) error {
-	t := reflect.TypeOf(enumType)
-	if t.Kind() != reflect.String {
-		return fmt.Errorf("enumType must be a string")
+func connectToDb(db *gorm.DB, config *config.Config) error {
+	for i := 0; i < config.File.DatabaseConfig.Retry; i++ {
+		err := pingGormDB(db)
+		if err == nil {
+			log.Printf("Successfully connected to database: %s", config.Env.DBName)
+			return nil
+		}
+		log.Printf("Failed to connect to database: %s. Retrying in %d seconds", config.Env.DBName, config.File.DatabaseConfig.Sleep)
+		if i != config.File.DatabaseConfig.Retry-1 {
+			time.Sleep(time.Duration(config.File.DatabaseConfig.Sleep) * time.Second)
+		}
 	}
-
-	enumName := t.Name()
-	values := []string{}
-
-	v := reflect.ValueOf(enumType)
-	for i := 0; i < v.NumField(); i++ {
-		values = append(values, fmt.Sprintf("'%s'", v.Field(i).String()))
-	}
-
-	query := fmt.Sprintf(`
-    DO $$ BEGIN
-        CREATE TYPE %s AS ENUM (%s);
-    EXCEPTION
-        WHEN duplicate_object THEN null;
-    END $$;`, enumName, strings.Join(values, ", "))
-
-	return db.Exec(query).Error
+	return fmt.Errorf("failed to connect to database %s after %d retries", config.Env.DBName, config.File.DatabaseConfig.Retry)
 }
+
+func pingGormDB(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	err = sqlDB.Ping()
+	if err != nil {
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+	return nil
+}
+
+// func CreateEnum(db *gorm.DB, enumType interface{}) error {
+// 	t := reflect.TypeOf(enumType)
+// 	if t.Kind() != reflect.String {
+// 		return fmt.Errorf("enumType must be a string")
+// 	}
+
+// 	enumName := t.Name()
+// 	values := []string{}
+
+// 	v := reflect.ValueOf(enumType)
+// 	for i := 0; i < v.NumField(); i++ {
+// 		values = append(values, fmt.Sprintf("'%s'", v.Field(i).String()))
+// 	}
+
+// 	query := fmt.Sprintf(`
+//     DO $$ BEGIN
+//         CREATE TYPE %s AS ENUM (%s);
+//     EXCEPTION
+//         WHEN duplicate_object THEN null;
+//     END $$;`, enumName, strings.Join(values, ", "))
+
+// 	return db.Exec(query).Error
+// }
 
 func createTestData(gormDB *gorm.DB) {
 	// Create a test user
@@ -123,7 +151,7 @@ func createTestData(gormDB *gorm.DB) {
 	}
 
 	// Save the test user to the database
-	gormDB.Create(&testUser)
+	gormDB.FirstOrCreate(&testUser, models.User{Id: testUser.Id})
 
 	description := "Example Code System"
 	codeSystem := models.CodeSystem{
@@ -136,5 +164,5 @@ func createTestData(gormDB *gorm.DB) {
 		CodeSystemRoles: nil,
 	}
 
-	gormDB.Create(&codeSystem)
+	gormDB.FirstOrCreate(&codeSystem)
 }

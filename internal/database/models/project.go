@@ -8,7 +8,7 @@ type Project struct {
 	Name                string
 	StatusRequired      bool
 	Version             string
-	Mappings            []Mapping
-	CodeSystemRoles     []CodeSystemRole
-	Permissions         []ProjectPermission
+	Mappings            []Mapping           `gorm:"constraint:OnDelete:CASCADE"`
+	CodeSystemRoles     []CodeSystemRole    `gorm:"constraint:OnDelete:CASCADE"`
+	Permissions         []ProjectPermission `gorm:"constraint:OnDelete:CASCADE"`
 }
