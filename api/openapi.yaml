@@ -1189,18 +1189,6 @@ components:
   #       application/json:
   #         schema:
   #           $ref: "#/components/schemas/Error"
-  #   NotFoundError:
-  #     description: Not Found
-  #     content:
-  #       application/json:
-  #         schema:
-  #           $ref: "#/components/schemas/Error"
-  #   ValidationError:
-  #     description: Validation Error
-  #     content:
-  #       application/json:
-  #         schema:
-  #           $ref: "#/components/schemas/Error"
     BadRequestError:
       description: Invalid Request (e.g., negative id supplied, invalid body (e.g. missing field) or query parameters)
       content:
