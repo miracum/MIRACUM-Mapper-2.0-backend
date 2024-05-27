@@ -9,7 +9,13 @@ import (
 
 func GormProjectToAPIProjectDetails(project models.Project) api.ProjectDetails {
 	id := int32(project.ID)
-	modified := project.UpdatedAt.String()
+	// modified := project.UpdatedAt.String()
+	var modified string
+	if !project.UpdatedAt.IsZero() {
+		modified = project.UpdatedAt.String()
+	} else {
+		modified = ""
+	}
 	var projectDetails api.ProjectDetails = api.ProjectDetails{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
