@@ -32,5 +32,4 @@ code-gen/
 __debug_*
 
 .DS_Store
-*_gen.go
 miracummapper
