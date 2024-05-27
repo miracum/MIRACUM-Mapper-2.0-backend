@@ -1,30 +1,55 @@
 package server
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"miracummapper/internal/api"
-
 	"miracummapper/internal/config"
+	middlewares "miracummapper/internal/server/middlewares"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/gin-gonic/gin"
-
-	middlewares "miracummapper/internal/server/middlewares"
-
 	middleware "github.com/oapi-codegen/gin-middleware"
+	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
+	"gorm.io/gorm"
 )
 
 type Server struct {
-	Database *sql.DB
+	Database *gorm.DB
 	Config   *config.Config
 }
 
-// Server implements the api.ServerInterface
-var _ api.ServerInterface = (*Server)(nil)
-
-func CreateServer(database *sql.DB, config *config.Config) *Server {
+func CreateServer(database *gorm.DB, config *config.Config) *Server {
 	return &Server{Database: database, Config: config}
+}
+
+func CreateStrictMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareFunc, error) {
+	spec, err := api.GetSwagger()
+	if err != nil {
+		return nil, fmt.Errorf("loading spec: %w", err)
+	}
+
+	validator := middleware.OapiRequestValidatorWithOptions(spec,
+		&middleware.Options{
+			Options: openapi3filter.Options{
+				AuthenticationFunc: middlewares.NewAuthenticator(v),
+			},
+		})
+
+	strictMiddlewareFuncs := make([]strictgin.StrictGinMiddlewareFunc, 0)
+	for _, h := range []gin.HandlerFunc{validator} {
+		strictMiddlewareFuncs = append(strictMiddlewareFuncs, func(f strictgin.StrictGinHandlerFunc, operationID string) strictgin.StrictGinHandlerFunc {
+			return func(c *gin.Context, request interface{}) (response interface{}, err error) {
+				h(c)
+				// if c.IsAborted() {
+				// 	return nil, nil
+				// }
+				return f(c, request)
+			}
+		})
+	}
+
+	return strictMiddlewareFuncs, nil
 }
 
 func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
@@ -43,122 +68,114 @@ func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
 	return []gin.HandlerFunc{validator}, nil
 }
 
-// AddCodeSystem implements codegen.ServerInterface.
-func (s *Server) AddCodeSystem(c *gin.Context) {
+// AddCodeSystem implements api.StrictServerInterface.
+func (s *Server) AddCodeSystem(ctx context.Context, request api.AddCodeSystemRequestObject) (api.AddCodeSystemResponseObject, error) {
 	panic("unimplemented")
 }
 
-// AddMapping implements codegen.ServerInterface.
-func (s *Server) AddMapping(c *gin.Context, projectId int32) {
+// AddMapping implements api.StrictServerInterface.
+func (s *Server) AddMapping(ctx context.Context, request api.AddMappingRequestObject) (api.AddMappingResponseObject, error) {
 	panic("unimplemented")
 }
 
-// AddPermission implements codegen.ServerInterface.
-func (s *Server) AddPermission(c *gin.Context, projectId int32, userId string) {
+// AddPermission implements api.StrictServerInterface.
+func (s *Server) AddPermission(ctx context.Context, request api.AddPermissionRequestObject) (api.AddPermissionResponseObject, error) {
 	panic("unimplemented")
 }
 
-// AddProject implements codegen.ServerInterface.
-func (s *Server) AddProject(c *gin.Context) {
+// DeleteCodeSystem implements api.StrictServerInterface.
+func (s *Server) DeleteCodeSystem(ctx context.Context, request api.DeleteCodeSystemRequestObject) (api.DeleteCodeSystemResponseObject, error) {
 	panic("unimplemented")
 }
 
-// DeleteCodeSystem implements codegen.ServerInterface.
-func (s *Server) DeleteCodeSystem(c *gin.Context, codeSystemId int32) {
+// DeleteMapping implements api.StrictServerInterface.
+func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingRequestObject) (api.DeleteMappingResponseObject, error) {
 	panic("unimplemented")
 }
 
-// DeleteMapping implements codegen.ServerInterface.
-func (s *Server) DeleteMapping(c *gin.Context, projectId int32, mappingId int64) {
+// DeletePermission implements api.StrictServerInterface.
+func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermissionRequestObject) (api.DeletePermissionResponseObject, error) {
 	panic("unimplemented")
 }
 
-// DeletePermission implements codegen.ServerInterface.
-func (s *Server) DeletePermission(c *gin.Context, projectId int32, userId string) {
+// EditProject implements api.StrictServerInterface.
+func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequestObject) (api.EditProjectResponseObject, error) {
 	panic("unimplemented")
 }
 
-// DeleteProject implements codegen.ServerInterface.
-func (s *Server) DeleteProject(c *gin.Context, projectId int32) {
+// FindConceptByCode implements api.StrictServerInterface.
+func (s *Server) FindConceptByCode(ctx context.Context, request api.FindConceptByCodeRequestObject) (api.FindConceptByCodeResponseObject, error) {
 	panic("unimplemented")
 }
 
-// EditProject implements codegen.ServerInterface.
-func (s *Server) EditProject(c *gin.Context, projectId int32) {
+// GetAllCodeSystemRoles implements api.StrictServerInterface.
+func (s *Server) GetAllCodeSystemRoles(ctx context.Context, request api.GetAllCodeSystemRolesRequestObject) (api.GetAllCodeSystemRolesResponseObject, error) {
 	panic("unimplemented")
 }
 
-// FindConceptByCode implements codegen.ServerInterface.
-func (s *Server) FindConceptByCode(c *gin.Context, codeSystemId int32, params api.FindConceptByCodeParams) {
+// GetAllCodeSystems implements api.StrictServerInterface.
+func (s *Server) GetAllCodeSystems(ctx context.Context, request api.GetAllCodeSystemsRequestObject) (api.GetAllCodeSystemsResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetAllCodeSystemRoles implements codegen.ServerInterface.
-func (s *Server) GetAllCodeSystemRoles(c *gin.Context, projectId int32) {
+// GetAllConcepts implements api.StrictServerInterface.
+func (s *Server) GetAllConcepts(ctx context.Context, request api.GetAllConceptsRequestObject) (api.GetAllConceptsResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetAllCodeSystems implements codegen.ServerInterface.
-func (s *Server) GetAllCodeSystems(c *gin.Context) {
+// GetAllMappings implements api.StrictServerInterface.
+func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsRequestObject) (api.GetAllMappingsResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetAllConcepts implements codegen.ServerInterface.
-func (s *Server) GetAllConcepts(c *gin.Context, codeSystemId int32, params api.GetAllConceptsParams) {
+// GetAllPermissions implements api.StrictServerInterface.
+func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermissionsRequestObject) (api.GetAllPermissionsResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetAllMappings implements codegen.ServerInterface.
-func (s *Server) GetAllMappings(c *gin.Context, projectId int32, params api.GetAllMappingsParams) {
+// GetCodeSystem implements api.StrictServerInterface.
+func (s *Server) GetCodeSystem(ctx context.Context, request api.GetCodeSystemRequestObject) (api.GetCodeSystemResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetAllPermissions implements codegen.ServerInterface.
-func (s *Server) GetAllPermissions(c *gin.Context, projectId int32) {
+// GetCodeSystemRole implements api.StrictServerInterface.
+func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSystemRoleRequestObject) (api.GetCodeSystemRoleResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetCodeSystem implements codegen.ServerInterface.
-func (s *Server) GetCodeSystem(c *gin.Context, codeSystemId int32) {
+// GetMappingByID implements api.StrictServerInterface.
+func (s *Server) GetMappingByID(ctx context.Context, request api.GetMappingByIDRequestObject) (api.GetMappingByIDResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetCodeSystemRole implements codegen.ServerInterface.
-func (s *Server) GetCodeSystemRole(c *gin.Context, projectId int32, codeSystemRoleId int32) {
+// GetPermission implements api.StrictServerInterface.
+func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionRequestObject) (api.GetPermissionResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetMappingByID implements codegen.ServerInterface.
-func (s *Server) GetMappingByID(c *gin.Context, projectId int32, mappingId int64) {
+// // Ping implements api.StrictServerInterface.
+// func (s *StrictGormServer) Ping(ctx context.Context, request api.PingRequestObject) (api.PingResponseObject, error) {
+// 	panic("unimplemented")
+// }
+
+// UpdateCodeSystem implements api.StrictServerInterface.
+func (s *Server) UpdateCodeSystem(ctx context.Context, request api.UpdateCodeSystemRequestObject) (api.UpdateCodeSystemResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetPermission implements codegen.ServerInterface.
-func (s *Server) GetPermission(c *gin.Context, projectId int32, userId string) {
+// UpdateCodeSystemRole implements api.StrictServerInterface.
+func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCodeSystemRoleRequestObject) (api.UpdateCodeSystemRoleResponseObject, error) {
 	panic("unimplemented")
 }
 
-// GetProject implements codegen.ServerInterface.
-func (s *Server) GetProject(c *gin.Context, projectId int32) {
+// UpdateMapping implements api.StrictServerInterface.
+func (s *Server) UpdateMapping(ctx context.Context, request api.UpdateMappingRequestObject) (api.UpdateMappingResponseObject, error) {
 	panic("unimplemented")
 }
 
-// UpdateCodeSystem implements codegen.ServerInterface.
-func (s *Server) UpdateCodeSystem(c *gin.Context, codeSystemId int32) {
+// UpdatePermission implements api.StrictServerInterface.
+func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermissionRequestObject) (api.UpdatePermissionResponseObject, error) {
 	panic("unimplemented")
 }
 
-// UpdateCodeSystemRole implements codegen.ServerInterface.
-func (s *Server) UpdateCodeSystemRole(c *gin.Context, projectId int32, codeSystemRoleId int32) {
-	panic("unimplemented")
-}
-
-// UpdateMapping implements codegen.ServerInterface.
-func (s *Server) UpdateMapping(c *gin.Context, projectId int32, mappingId int64) {
-	panic("unimplemented")
-}
-
-// UpdatePermission implements codegen.ServerInterface.
-func (s *Server) UpdatePermission(c *gin.Context, projectId int32, userId string) {
-	panic("unimplemented")
-}
+var _ api.StrictServerInterface = (*Server)(nil)
