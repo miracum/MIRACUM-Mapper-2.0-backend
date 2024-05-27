@@ -46,7 +46,7 @@ func main() {
 
 	// svr := server.CreateServer(db, config)
 	// svr := server.CreateStrictServer(Db, config)
-	svr := server.CreateStrictGormServer(db, config)
+	svr := server.CreateServer(db, config)
 
 	strictHandler := api.NewStrictHandler(svr, nil)
 

@@ -160,6 +160,8 @@ paths:
           description: Invalid project-id supplied # (e.g., negative id)
         "404":
           description: Project not found
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - project
