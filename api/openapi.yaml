@@ -908,6 +908,8 @@ components:
           type: string
         system:
           type: object
+          required:
+            - id
           properties:
             # id? über drop down version und name anzeigen von allen codesystemen und bei auswahl id, system, name, uri zurückgeben?
             id:

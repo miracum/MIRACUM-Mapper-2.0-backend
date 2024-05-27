@@ -7,6 +7,8 @@ import (
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
 	"miracummapper/internal/utilities"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -27,7 +29,9 @@ var (
 func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
 	var project models.Project
 
-	if err := s.Database.Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, request.ProjectId).Error; err != nil {
+	if err := s.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
+		return db.Order("Position ASC")
+	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, request.ProjectId).Error; err != nil {
 		// Handle error
 		if err.Error() == "record not found" {
 			return api.GetProject404Response{}, nil
@@ -55,6 +59,15 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 
 	// Create the project in the database
 	if err := s.Database.Create(&project).Error; err != nil {
+		// if strings.Contains(err.Error(), "foreign key") && strings.Contains(err.Error(), "user_id") {
+		// 	// Extract the user ID from the error message
+		// 	regex := regexp.MustCompile(`\((.*?)\)`)
+		// 	matches := regex.FindStringSubmatch(err.Error())
+		// 	if len(matches) > 1 {
+		// 		userID := matches[1]
+		// 		return api.AddProject422JSONResponse(fmt.Sprintf("User with ID %s does not exist", userID)), nil
+		// 	}
+		// }
 		return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, err
 	}
 	return api.AddProject200JSONResponse(*projectDetails), nil
@@ -85,7 +98,6 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 
 // DeleteProject implements api.StrictServerInterface.
 func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectRequestObject) (api.DeleteProjectResponseObject, error) {
-	// NINA IST HIER AM WERK; PFOTEN WEG
 
 	project_id := request.ProjectId
 	var project models.Project
