@@ -16,7 +16,7 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 	if db.Error != nil {
 		switch {
 		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-			return database.ErrRecordNotFound
+			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
 		default:
 			return db.Error
 		}
@@ -28,35 +28,54 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 // AddProject implements database.Datastore.
 func (gq *GormQuery) AddProjectQuery(project *models.Project) error {
 	db := gq.Database.Create(&project)
-	// if strings.Contains(err.Error(), "foreign key") && strings.Contains(err.Error(), "user_id") {
-	// 	// Extract the user ID from the error message
-	// 	regex := regexp.MustCompile(`\((.*?)\)`)
-	// 	matches := regex.FindStringSubmatch(err.Error())
-	// 	if len(matches) > 1 {
-	// 		userID := matches[1]
-	// 		return api.AddProject422JSONResponse(fmt.Sprintf("User with ID %s does not exist", userID)), nil
-	// 	}
-	// }
-	// if(db.Error != nil) {
-	// 	switch {
-	// 		case errors.Is(db.Error, gorm.ErrForeignKeyViolated):
-	// 			if(strings.Contains(err.Error(), "fk_users_project_permissions")){
+	if db.Error != nil {
+		// cast error to postgres error
+		pgErr, ok := handlePgError(db)
+		if !ok {
+			return db.Error
+		}
+		switch pgErr.Code {
+		case "23503":
+			switch pgErr.ConstraintName {
+			case "fk_users_project_permissions":
+				userID, err := extractIDFromErrorDetail(pgErr.Detail, "user_id")
+				if err != nil {
+					return db.Error
+				}
+				return database.NewDBError(database.ClientError, fmt.Sprintf("User with id %s specified in permissions does not exist", userID))
 
-	// 			}
-
-	// 	}
-	// }
-	return db.Error
+			case "fk_code_systems_code_system_roles":
+				codeSystemID, err := extractIDFromErrorDetail(pgErr.Detail, "code_system_id")
+				if err != nil {
+					return db.Error
+				}
+				return database.NewDBError(database.ClientError, fmt.Sprintf("Code System with id %s specified in code system roles does not exist", codeSystemID))
+			default:
+				return db.Error
+			}
+		default:
+			return db.Error
+		}
+	} else {
+		return nil
+	}
 }
 
 // DeleteProject implements database.Datastore.
 func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32) error {
 	db := gq.Database.Delete(&project, projectId)
-	switch {
-	case errors.Is(db.Error, gorm.ErrRecordNotFound):
-		return database.ErrRecordNotFound
-	default:
-		return db.Error
+	if db.Error != nil {
+		switch {
+		case errors.Is(db.Error, gorm.ErrRecordNotFound):
+			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+		default:
+			return db.Error
+		}
+	} else {
+		if db.RowsAffected == 0 {
+			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+		}
+		return nil
 	}
 }
 
@@ -72,14 +91,17 @@ func (gq *GormQuery) UpdateProjectQuery(project *models.Project) error {
 		project_old := models.Project{}
 
 		if err := tx.First(&project_old, project.ID).Error; err != nil {
-			return err
-			// TODO insert correct error: check if project exists (record not found)
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", project.ID))
+			default:
+				return err
+			}
 		}
 
 		// TODO avoid checking these fields in this function, move to endpoint logic
 		if project_old.StatusRequired != project.StatusRequired || project_old.EquivalenceRequired != project.EquivalenceRequired {
-			// TODO change error
-			return errors.New("StatusRequired and EquivalenceRequired cannot be updated")
+			return database.NewDBError(database.ClientError, "StatusRequired and EquivalenceRequired cannot be updated")
 		}
 
 		// won't create new record because tx.First already checked that a project with that ID exists

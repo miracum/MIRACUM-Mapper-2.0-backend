@@ -31,10 +31,10 @@ func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestOb
 
 	if err := s.Database.GetProjectQuery(&project, request.ProjectId); err != nil {
 		switch {
-		case errors.Is(err, database.ErrRecordNotFound):
+		case errors.Is(err, database.ErrNotFound):
 			return api.GetProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", request.ProjectId)), nil
 		default:
-			return api.GetProject500JSONResponse{}, err
+			return api.GetProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the projects"}, err
 		}
 	}
 
@@ -55,15 +55,20 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 	if err != nil {
 		switch {
 		case errors.Is(err, transform.ErrInvalidUUID):
-			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, err
+			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, nil
 		default:
-			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, err
+			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
 		}
 	}
 
 	// Create the project in the database
 	if err := s.Database.AddProjectQuery(project); err != nil {
-		return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, err
+		switch {
+		case errors.Is(err, database.ErrClientError):
+			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		default:
+			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
+		}
 	}
 	return api.AddProject200JSONResponse(*projectDetails), nil
 }
@@ -98,10 +103,10 @@ func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectReq
 
 	if err := s.Database.DeleteProjectQuery(&project, projectId); err != nil {
 		switch {
-		case errors.Is(err, database.ErrRecordNotFound):
-			return api.DeleteProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeleteProject404JSONResponse(err.Error()), nil
 		default:
-			return api.DeleteProject500JSONResponse{}, err
+			return api.DeleteProject500JSONResponse{InternalServerErrorJSONResponse: api.InternalServerErrorJSONResponse(database.InternalServerErrorMessage)}, nil
 		}
 	}
 
@@ -125,9 +130,11 @@ func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequest
 	db_project := transform.ApiProjectToGormProject(*project)
 	if err := s.Database.UpdateProjectQuery(&db_project); err != nil {
 		switch {
-		case errors.Is(err, database.ErrRecordNotFound):
+		case errors.Is(err, database.ErrNotFound):
 			return api.EditProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
 		// TODO
+		case errors.Is(err, database.ErrClientError):
+			return api.EditProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		// case errors.Is(err, database.???) error for trying to update status-/equivalenceRequired
 		default:
 			return api.EditProject500JSONResponse{}, err
