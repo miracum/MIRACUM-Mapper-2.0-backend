@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"miracummapper/internal/api"
+	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
 	"miracummapper/internal/utilities"
-
-	"gorm.io/gorm"
 )
 
 var (
@@ -29,17 +29,16 @@ var (
 func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
 	var project models.Project
 
-	if err := s.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
-		return db.Order("Position ASC")
-	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, request.ProjectId).Error; err != nil {
-		// Handle error
-		if err.Error() == "record not found" {
-			return api.GetProject404Response{}, nil
+	if err := s.Database.GetProjectQuery(&project, request.ProjectId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			return api.GetProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", request.ProjectId)), nil
+		default:
+			return api.GetProject500JSONResponse{}, err
 		}
-		return api.GetProject500JSONResponse{}, err
 	}
 
-	projectDetails := transform.GormProjectToAPIProjectDetails(project)
+	projectDetails := transform.GormProjectToApiProjectDetails(project)
 
 	return api.GetProject200JSONResponse(projectDetails), nil
 }
@@ -48,26 +47,22 @@ func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestOb
 func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestObject) (api.AddProjectResponseObject, error) {
 	projectDetails := request.Body
 
-	if len(projectDetails.CodeSystemRoles) == 0 {
-		return api.AddProject422JSONResponse("CodeSystemRoles are required"), nil
-	}
+	// if len(projectDetails.CodeSystemRoles) == 0 {
+	// 	return api.AddProject422JSONResponse("CodeSystemRoles are required"), nil
+	// }
 
 	project, err := transform.ApiProjectDetailsToGormProject(*projectDetails)
 	if err != nil {
-		return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "Invalid uuid provided"}, err
+		switch {
+		case errors.Is(err, transform.ErrInvalidUUID):
+			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, err
+		default:
+			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, err
+		}
 	}
 
 	// Create the project in the database
-	if err := s.Database.Create(&project).Error; err != nil {
-		// if strings.Contains(err.Error(), "foreign key") && strings.Contains(err.Error(), "user_id") {
-		// 	// Extract the user ID from the error message
-		// 	regex := regexp.MustCompile(`\((.*?)\)`)
-		// 	matches := regex.FindStringSubmatch(err.Error())
-		// 	if len(matches) > 1 {
-		// 		userID := matches[1]
-		// 		return api.AddProject422JSONResponse(fmt.Sprintf("User with ID %s does not exist", userID)), nil
-		// 	}
-		// }
+	if err := s.Database.AddProjectQuery(project); err != nil {
 		return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, err
 	}
 	return api.AddProject200JSONResponse(*projectDetails), nil
@@ -83,14 +78,13 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 
 	var projects []models.Project = []models.Project{}
 
-	if err := s.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&projects).Error; err != nil {
-		return nil, err
+	if err := s.Database.GetProjectsQuery(&projects, pageSize, offset, sortBy, sortOrder); err != nil {
+		return api.GetProjects500JSONResponse{}, err
 	}
 
-	// Convert projects to api.Projects
 	var apiProjects []api.Project = []api.Project{}
 	for _, project := range projects {
-		apiProjects = append(apiProjects, transform.GormProjectToAPIProject(project))
+		apiProjects = append(apiProjects, transform.GormProjectToApiProject(project))
 	}
 
 	return api.GetProjects200JSONResponse(apiProjects), nil
@@ -99,18 +93,47 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 // DeleteProject implements api.StrictServerInterface.
 func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectRequestObject) (api.DeleteProjectResponseObject, error) {
 
-	project_id := request.ProjectId
+	projectId := request.ProjectId
 	var project models.Project
 
-	if err := s.Database.First(&project, project_id).Error; err != nil {
-		if err.Error() == "record not found" {
-			return api.DeleteProject404Response{}, nil
+	if err := s.Database.DeleteProjectQuery(&project, projectId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			return api.DeleteProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.DeleteProject500JSONResponse{}, err
 		}
-		return api.DeleteProject500JSONResponse{}, err
 	}
 
-	s.Database.Delete(&models.Project{}, project_id)
-
-	api_project := transform.GormProjectToAPIProject(project)
+	api_project := transform.GormProjectToApiProject(project)
 	return api.DeleteProject200JSONResponse(api_project), nil
+}
+
+// EditProject implements api.StrictServerInterface.
+func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequestObject) (api.EditProjectResponseObject, error) {
+	project := request.Body
+	projectId := request.ProjectId
+
+	if project.Id == nil {
+		project.Id = &projectId
+	} else {
+		if *project.Id != projectId {
+			return api.EditProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Project ID %d in URL does not match project ID %d in body", projectId, *project.Id))}, nil
+		}
+	}
+
+	db_project := transform.ApiProjectToGormProject(*project)
+	if err := s.Database.UpdateProjectQuery(&db_project); err != nil {
+		switch {
+		case errors.Is(err, database.ErrRecordNotFound):
+			return api.EditProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		// TODO
+		// case errors.Is(err, database.???) error for trying to update status-/equivalenceRequired
+		default:
+			return api.EditProject500JSONResponse{}, err
+		}
+	}
+
+	return api.EditProject200JSONResponse(*project), nil
+
 }

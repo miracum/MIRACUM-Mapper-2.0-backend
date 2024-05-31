@@ -50,7 +50,7 @@ func TestGormProjectToAPIProjectDetails(t *testing.T) {
 
 	t.Run("normal case", func(t *testing.T) {
 		// When
-		apiProjectDetails := GormProjectToAPIProjectDetails(gormProject)
+		apiProjectDetails := GormProjectToApiProjectDetails(gormProject)
 
 		// Then
 		assert.Equal(t, int32(gormProject.ID), *apiProjectDetails.Id)
@@ -84,7 +84,7 @@ func TestGormProjectToAPIProjectDetails(t *testing.T) {
 		gormProject.UpdatedAt = time.Time{} // set UpdatedAt to zero value
 
 		// When
-		apiProjectDetails := GormProjectToAPIProjectDetails(gormProject)
+		apiProjectDetails := GormProjectToApiProjectDetails(gormProject)
 
 		// Then
 		assert.Equal(t, "", *apiProjectDetails.Modified) // Modified should be an empty string
@@ -92,8 +92,6 @@ func TestGormProjectToAPIProjectDetails(t *testing.T) {
 }
 
 func TestApiProjectDetailsToGormProject(t *testing.T) {
-	systemId := int32(1)
-
 	// Given
 	projectDetails := api.ProjectDetails{
 		Name:                "Test Name",
@@ -106,22 +104,22 @@ func TestApiProjectDetailsToGormProject(t *testing.T) {
 				Name: "Test Role",
 				Type: api.Source,
 				System: struct {
-					Id      *int32  `json:"id,omitempty"`
+					Id      int32   `json:"id"`
 					Name    *string `json:"name,omitempty"`
 					Version *string `json:"version,omitempty"`
 				}{
-					Id: &systemId,
+					Id: int32(1),
 				},
 			},
 			{
 				Name: "Test Role2",
 				Type: api.Source,
 				System: struct {
-					Id      *int32  `json:"id,omitempty"`
+					Id      int32   `json:"id"`
 					Name    *string `json:"name,omitempty"`
 					Version *string `json:"version,omitempty"`
 				}{
-					Id: &systemId,
+					Id: int32(2),
 				},
 			},
 		},
@@ -148,7 +146,7 @@ func TestApiProjectDetailsToGormProject(t *testing.T) {
 		// Add assertions for CodeSystemRoles
 		assert.Equal(t, projectDetails.CodeSystemRoles[0].Name, gormProject.CodeSystemRoles[0].Name)
 		assert.Equal(t, models.CodeSystemRoleType(projectDetails.CodeSystemRoles[0].Type), gormProject.CodeSystemRoles[0].Type)
-		assert.Equal(t, uint32(systemId), gormProject.CodeSystemRoles[0].CodeSystemID)
+		assert.Equal(t, uint32(projectDetails.CodeSystemRoles[0].System.Id), gormProject.CodeSystemRoles[0].CodeSystemID)
 		assert.Equal(t, uint32(0), gormProject.CodeSystemRoles[0].Position)
 		assert.Equal(t, uint32(1), gormProject.CodeSystemRoles[1].Position)
 
@@ -191,7 +189,7 @@ func TestGormProjectToAPIProject(t *testing.T) {
 
 	t.Run("normal case", func(t *testing.T) {
 		// When
-		apiProject := GormProjectToAPIProject(gormProject)
+		apiProject := GormProjectToApiProject(gormProject)
 
 		// Then
 		assert.Equal(t, int32(gormProject.ID), *apiProject.Id)
@@ -208,7 +206,7 @@ func TestGormProjectToAPIProject(t *testing.T) {
 		gormProject.UpdatedAt = time.Time{} // set UpdatedAt to zero value
 
 		// When
-		apiProject := GormProjectToAPIProject(gormProject)
+		apiProject := GormProjectToApiProject(gormProject)
 
 		// Then
 		assert.Equal(t, "", *apiProject.Modified) // Modified should be an empty string

@@ -18,7 +18,7 @@ import (
 func setupTestStuff(database *gorm.DB) (router *gin.Engine, w *httptest.ResponseRecorder) {
 	router = gin.Default()
 	// TODO change database from nil to mock database
-	svr := CreateServer(database, nil)
+	svr := CreateServerWithGormDB(database, nil)
 	strictHandler := api.NewStrictHandler(svr, nil)
 	api.RegisterHandlers(router, strictHandler)
 

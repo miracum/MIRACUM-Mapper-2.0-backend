@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"miracummapper/internal/api"
 	"miracummapper/internal/config"
+	"miracummapper/internal/database"
+	"miracummapper/internal/database/gormQuery"
 	middlewares "miracummapper/internal/server/middlewares"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -15,12 +17,12 @@ import (
 )
 
 type Server struct {
-	Database *gorm.DB
+	Database database.Datastore
 	Config   *config.Config
 }
 
-func CreateServer(database *gorm.DB, config *config.Config) *Server {
-	return &Server{Database: database, Config: config}
+func CreateServerWithGormDB(database *gorm.DB, config *config.Config) *Server {
+	return &Server{Database: &gormQuery.GormQuery{Database: database}, Config: config}
 }
 
 func CreateStrictMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareFunc, error) {
@@ -98,10 +100,10 @@ func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermiss
 	panic("unimplemented")
 }
 
-// EditProject implements api.StrictServerInterface.
-func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequestObject) (api.EditProjectResponseObject, error) {
-	panic("unimplemented")
-}
+// // EditProject implements api.StrictServerInterface.
+// func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequestObject) (api.EditProjectResponseObject, error) {
+// 	panic("unimplemented")
+// }
 
 // FindConceptByCode implements api.StrictServerInterface.
 func (s *Server) FindConceptByCode(ctx context.Context, request api.FindConceptByCodeRequestObject) (api.FindConceptByCodeResponseObject, error) {
