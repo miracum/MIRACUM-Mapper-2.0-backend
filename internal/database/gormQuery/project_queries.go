@@ -86,7 +86,7 @@ func (gq *GormQuery) GetProjectsQuery(projects *[]models.Project, pageSize int, 
 }
 
 // UpdateProject implements database.Datastore.
-func (gq *GormQuery) UpdateProjectQuery(project *models.Project) error {
+func (gq *GormQuery) UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		project_old := models.Project{}
 
@@ -99,10 +99,15 @@ func (gq *GormQuery) UpdateProjectQuery(project *models.Project) error {
 			}
 		}
 
-		// TODO avoid checking these fields in this function, move to endpoint logic
-		if project_old.StatusRequired != project.StatusRequired || project_old.EquivalenceRequired != project.EquivalenceRequired {
-			return database.NewDBError(database.ClientError, "StatusRequired and EquivalenceRequired cannot be updated")
+		// Call the check function
+		if err := checkFunc(&project_old, project); err != nil {
+			return err
 		}
+
+		// // TODO avoid checking these fields in this function, move to endpoint logic
+		// if project_old.StatusRequired != project.StatusRequired || project_old.EquivalenceRequired != project.EquivalenceRequired {
+		// 	return database.NewDBError(database.ClientError, "StatusRequired and EquivalenceRequired cannot be updated")
+		// }
 
 		// won't create new record because tx.First already checked that a project with that ID exists
 		if err := tx.Save(&project).Error; err != nil {

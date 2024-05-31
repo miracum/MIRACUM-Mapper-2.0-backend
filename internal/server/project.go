@@ -127,8 +127,15 @@ func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequest
 		}
 	}
 
+	checkFunc := func(oldProject, newProject *models.Project) error {
+		if oldProject.StatusRequired != newProject.StatusRequired || oldProject.EquivalenceRequired != newProject.EquivalenceRequired {
+			return database.NewDBError(database.ClientError, "StatusRequired and EquivalenceRequired cannot be changed")
+		}
+		return nil
+	}
+
 	db_project := transform.ApiProjectToGormProject(*project)
-	if err := s.Database.UpdateProjectQuery(&db_project); err != nil {
+	if err := s.Database.UpdateProjectQuery(&db_project, checkFunc); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.EditProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil

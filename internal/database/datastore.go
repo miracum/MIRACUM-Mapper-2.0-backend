@@ -11,7 +11,7 @@ type Datastore interface {
 	GetProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
 	AddProjectQuery(project *models.Project) error
 	DeleteProjectQuery(project *models.Project, projectId int32) error
-	UpdateProjectQuery(project *models.Project) error
+	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
 	//Add other methods here...
 }
 
