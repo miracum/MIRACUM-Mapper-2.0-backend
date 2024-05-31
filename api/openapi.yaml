@@ -4,10 +4,10 @@ info:
   title: MIRACUM Mapping Tool Backend
   # summary: A MIRACUM Mapping Tool Backend
   description: This is the backend for the MIRACUM Mapping Tool. It provides an API to manage projects with their corresponding mappings. Code Systems can be managed as well. The API uses Keycloak for authentication and authorization.
-  # termsOfService: 'https://miracum.org'
+  # termsOfService: "https://miracum.org"
   # contact:
   #   name: API Support
-  #   url: 'https://miracum.org'
+  #   url: "https://miracum.org"
   #   email: support@miracum.org
   license:
     name: GPL-3.0 License
@@ -32,7 +32,7 @@ tags:
     description: Operations about projects
   - name: project-permission
     description: Operations about project permissions
-  - name: project-code-system
+  - name: project-code-system-roles
     description: Operations about the defined systems of a project
   - name: mapping
     description: Operations about mappings
@@ -90,17 +90,13 @@ paths:
                 items:
                   "$ref": "#/components/schemas/Project" # id required
         "400":
-          description: Invalid request (e.g., negative page number or page, invalid sortBy or sortOrder values)
-          content:
-            application/json:
-              schema:
-                type: string
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Page not found (e.g., page number too high)
           content:
             application/json:
               schema:
-                type: string
+                "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
     post:
@@ -124,17 +120,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProjectDetails" # id required
         "400":
-          description: Invalid Input
-          content:
-            application/json:
-              schema:
-                type: string
+          "$ref": "#/components/responses/BadRequestError"
         "422":
           description: Validation Exception
           content:
             application/json:
               schema:
-                type: string
+                "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
       security:
@@ -157,9 +149,13 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ProjectDetails" # project id optional, permissions required
         "400":
-          description: Invalid project-id supplied # (e.g., negative id)
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
     put:
@@ -184,11 +180,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Project" # id required
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception # validate if id is provided in requestBody, it matches with the id in the path
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     delete:
       tags:
         - project
@@ -204,8 +210,14 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Project" # id required
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
       security:
@@ -230,9 +242,15 @@ paths:
                 items:
                   "$ref": "#/components/schemas/ProjectPermission"
         "400":
-          description: Invalid project-id supplied # (e.g., negative id)
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /project/{project_id}/permissions/{user_id}:
     get:
       tags:
@@ -251,9 +269,15 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
-          description: Invalid project-id supplied # (e.g., negative id)
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or user not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     post:
       tags:
         - project-permission
@@ -277,11 +301,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
-          description: Invalid Input
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or user not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception # e.g if trying to create a permission for a user that already has a permission for the project, or and invalid permission role
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - project-permission
@@ -305,11 +339,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or user not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     delete:
       tags:
         - project-permission
@@ -326,12 +370,20 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ProjectPermission"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or user not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /project/{project_id}/code-system-roles:
     get:
       tags:
-        - project-code-system
+        - project-code-system-roles
       summary: Get all code system roles for a project
       description: Get all code system roles (columns in the mapping table) for a project by project ID
       parameters:
@@ -347,42 +399,58 @@ paths:
                 items:
                   "$ref": "#/components/schemas/CodeSystemRole" # id required
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     # post:
     #   tags:
-    #     - project-code-system
+    #     - project-code-system-roles
     #   summary: create a new code system role (column in the mapping table) for a project by project ID
     #   description: create a new element for each mapping with this code system role
     #   parameters:
-    #     - $ref: '#/components/parameters/project_id'
+    #     - $ref: "#/components/parameters/project_id"
     #   operationId: addCodeSystemRole
     #   requestBody:
     #     required: true
     #     content:
     #       application/json:
     #         schema:
-    #           '$ref': '#/components/schemas/CodeSystemRole'
+    #           "$ref": "#/components/schemas/CodeSystemRole"
     #   responses:
-    #     '200':
+    #     "200":
     #       description: Success
     #       content:
     #         application/json:
     #           schema:
     #             type: array
     #             items:
-    #               '$ref': '#/components/schemas/CodeSystemRole' # id optional
-    #     '400':
-    #       description: Invalid ID supplied
-    #     '404':
+    #               "$ref": "#/components/schemas/CodeSystemRole" # id optional
+    #     "400":
+    #       "$ref": "#/components/responses/BadRequestError"
+    #     "404":
     #       description: Project not found
-    #     '422':
+    #       content:
+    #         application/json:
+    #           schema:
+    #             "$ref": "#/components/schemas/ErrorResponse"
+    #     "422":
     #       description: Validation Exception
+    #       content:
+    #         application/json:
+    #           schema:
+    #             "$ref": "#/components/schemas/ErrorResponse"
+    #     "500":
+    #       "$ref": "#/components/responses/InternalServerError"
   /project/{project_id}/code-system-roles/{code-system-role_id}:
     get:
       tags:
-        - project-code-system
+        - project-code-system-roles
       summary: Get a code system role by ID
       description: Get a code system role (column in the mapping table) by ID
       parameters:
@@ -397,12 +465,18 @@ paths:
               schema:
                 "$ref": "#/components/schemas/CodeSystemRole" # id required
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Code-System-Role not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
-        - project-code-system
+        - project-code-system-roles
       summary: Update a code system role by ID
       description: Update name or type from a code system role (column in the mapping table) by ID
       parameters:
@@ -423,31 +497,49 @@ paths:
               schema:
                 "$ref": "#/components/schemas/CodeSystemRole" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Code-System-Role not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description:
             Validation Error # if trying to change the system of the code-system-role. only name or type of the code-system-role can be changed
             # if code-system-role id is provided in the request body and doesn't match the code-system-role id in the path
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     # delete:
     #   tags:
-    #     - project-code-system
+    #     - project-code-system-roles
     #   summary: delete a code system role (column in the mapping table) by ID
-    #   description: ''
+    #   description: ""
     #   parameters:
-    #     - $ref: '#/components/parameters/project_id'
-    #     - $ref: '#/components/parameters/code-system-role_id'
+    #     - $ref: "#/components/parameters/project_id"
+    #     - $ref: "#/components/parameters/code-system-role_id"
     #   operationId: deleteCodeSystemRole
     #   responses:
-    #     '200':
+    #     "200":
     #       description: Success
     #       content:
     #         application/json:
     #           schema:
-    #             '$ref': '#/components/schemas/CodeSystemRole' # id optional
-    #     '404':
+    #             "$ref": "#/components/schemas/CodeSystemRole" # id optional
+    #     "400":
+    #       "$ref": "#/components/responses/BadRequestError"
+    #     "404":
     #       description: Project or Code-System-Role not found
+    #       content:
+    #         application/json:
+    #           schema:
+    #             "$ref": "#/components/schemas/ErrorResponse"
+    #     "500":
+    #       "$ref": "#/components/responses/InternalServerError"
   /project/{project_id}/mappings:
     get:
       tags:
@@ -478,9 +570,15 @@ paths:
                 items:
                   "$ref": "#/components/schemas/Mapping" # id required
         "400":
-          description: Invalid request (e.g., negative page number or page, invalid sortBy or sortOrder values)
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Page not found (e.g., page number too high)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     post:
       tags:
         - mapping
@@ -503,11 +601,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Mapping" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /project/{project_id}/mapping/{mapping_id}:
     get:
       tags:
@@ -526,9 +634,15 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Mapping" # id required
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - mapping
@@ -552,11 +666,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Mapping" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Error # if trying to change the project of the mapping
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     delete:
       tags:
         - mapping
@@ -574,9 +698,15 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Mapping" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /code-systems:
     get:
       tags:
@@ -594,9 +724,15 @@ paths:
                 items:
                   "$ref": "#/components/schemas/CodeSystem"
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Code-System-Role not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     post:
       tags:
         - code-system
@@ -617,11 +753,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
@@ -642,9 +788,15 @@ paths:
               schema:
                 "$ref": "#/components/schemas/CodeSystem" # id required
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - code-system
@@ -667,11 +819,21 @@ paths:
               schema:
                 "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Codesystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Error # if id is provided in the request body it must match the id in the path
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
@@ -691,9 +853,15 @@ paths:
               schema:
                 "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
-          description: Invalid ID supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Codesystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
@@ -726,6 +894,16 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Concept" # id optional
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /code-system/{code-system_id}/find-concept:
     get:
       tags:
@@ -758,9 +936,15 @@ paths:
                 items:
                   "$ref": "#/components/schemas/Concept" # id required
         "400":
-          description: Invalid code supplied
+          "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Concept not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
 components:
   parameters:
     project_id:
@@ -771,6 +955,7 @@ components:
       schema:
         type: integer
         format: int32
+        minimum: 1
     user_id:
       name: user_id
       in: path
@@ -786,6 +971,7 @@ components:
       schema:
         type: integer
         format: int32
+        minimum: 1
     mapping_id:
       name: mapping_id
       in: path
@@ -793,7 +979,8 @@ components:
       description: The ID of the mapping
       schema:
         type: integer
-        format: int64
+        format: int32
+        minimum: 1
     code-system_id:
       name: code-system_id
       in: path
@@ -802,6 +989,7 @@ components:
       schema:
         type: integer
         format: int32
+        minimum: 1
     page:
       name: page
       in: query
@@ -864,6 +1052,8 @@ components:
         status_required:
           type: boolean
         modified:
+          type: string
+        created:
           type: string
     ProjectDetails:
       allOf:
@@ -938,6 +1128,10 @@ components:
           type: string
         comment:
           type: string
+        created:
+          type: string
+        modified:
+          type: string
         elements:
           type: array
           items:
@@ -981,34 +1175,30 @@ components:
           type: string
         author:
           type: string
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-        message:
-          type: string
+    # Error:
+    #   type: object
+    #   properties:
+    #     code:
+    #       type: integer
+    #     message:
+    #       type: string
+    ErrorResponse:
+      type: string
   responses:
-    UnauthorizedError:
-      description: Unauthorized
+  #   UnauthorizedError:
+  #     description: Unauthorized
+  #     content:
+  #       application/json:
+  #         schema:
+  #           $ref: "#/components/schemas/Error"
+    BadRequestError:
+      description: Invalid Request (e.g., negative id supplied, invalid body (e.g. missing field) or query parameters)
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-    ValidationError:
-      description: Validation Error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+            type: string
     InternalServerError:
-      description: Internal Server Error
+      description: Internal Server Error due to database or implementation errors
       content:
         application/json:
           schema:
