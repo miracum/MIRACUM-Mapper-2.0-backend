@@ -1,0 +1,119 @@
+name: CI Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: .
+
+  check-oapi-codegen:
+    name: Check oapi-codegen output
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Check oapi-codegen output
+        run: |
+          go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+          cd tools
+          go generate -tags tools
+          git diff --exit-code
+
+  unit-test:
+    name: Test
+    needs: [lint, check-oapi-codegen]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Run tests
+        run: go test -v ./...
+
+  build:
+    name: Build
+    needs: [unit-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      - name: Build Go binary
+        run: go build -v -o my-go-app ./...
+
+      - name: Upload Go binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: miracummapper-binary
+          path: miracummapper
+
+      - name: Build Docker image
+        run: docker build -t miracummapper .
+
+      - name: Save Docker image
+        run: docker save my-go-app:latest > miracummapper.tar
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: miracummapper-image
+          path: miracummapper.tar
+
+  integration-test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+      miracum-mapper:
+        image: miracummapper
+        env:
+          MIRACUM_MAPPER_KEYCLOAK_ENDPOINT: http://keycloak:8080/auth
+          MIRACUM_MAPPER_KEYCLOAK_REALM: mapper
+          MIRACUM_MAPPER_KEYCLOAK_CLIENT_ID: mapper
+          MIRACUM_MAPPER_KEYCLOAK_CLIENT_SECRET: secret
+          MIRACUM_MAPPER_SKIP_SSL_CHECK: "true"
+          DB_HOST: postgres
+          DB_NAME: test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+        ports:
+          - 8080:8080
+        # options: --health-cmd "curl -fs -S --max-time 2 http://localhost:8080/health" --health-interval 30s --health-timeout 10s --health-retries 5
+    steps:
+      - name: Run integration tests
+        run: |
+          # TODO Run integration tests (Example here)
+          curl -fs -S --max-time 2 http://localhost:8080/ping

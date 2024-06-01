@@ -69,5 +69,8 @@ func main() {
 	log.Println("Normal token", string(normalJWS))
 	log.Println("Admin token", string(adminJWS))
 
-	r.Run(":" + config.Env.Port)
+	err = r.Run(":" + config.Env.Port)
+	if err != nil {
+		log.Fatalln("error running server:", err)
+	}
 }

@@ -33,7 +33,10 @@ func getGormConnection(config *config.Config) (*gorm.DB, error) {
 
 	initEnums(db)
 
-	db.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{})
+	err = db.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to auto migrate models: %v", err)
+	}
 
 	createTestData(db)
 
