@@ -36,6 +36,6 @@ type CodeSystemRole struct {
 	Position     uint32
 	ProjectID    uint32
 	CodeSystemID uint32
-	Elements     []Element
+	Elements     []Element `gorm:"constraint:OnDelete:CASCADE"`
 	CodeSystem   CodeSystem
 }

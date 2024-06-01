@@ -94,7 +94,7 @@ type CodeSystemRole struct {
 	Name     string `json:"name"`
 	Position int32  `json:"position"`
 	System   struct {
-		Id      *int32  `json:"id,omitempty"`
+		Id      int32   `json:"id"`
 		Name    *string `json:"name,omitempty"`
 		Version *string `json:"version,omitempty"`
 	} `json:"system"`
