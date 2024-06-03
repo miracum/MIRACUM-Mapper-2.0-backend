@@ -12,6 +12,9 @@ type Datastore interface {
 	AddProjectQuery(project *models.Project) error
 	DeleteProjectQuery(project *models.Project, projectId int32) error
 	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
+	GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error
+	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
+	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32, checkFunc func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error) error
 	//Add other methods here...
 }
 

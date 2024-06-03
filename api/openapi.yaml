@@ -1089,7 +1089,6 @@ components:
         - name
         - system
         - type
-        - position
       properties:
         id:
           type: integer
@@ -1112,9 +1111,6 @@ components:
         type:
           type: string
           enum: [source, destination]
-        position:
-          type: integer
-          format: int32
     Mapping:
       type: object
       properties:

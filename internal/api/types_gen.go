@@ -90,10 +90,9 @@ type CodeSystem struct {
 
 // CodeSystemRole defines model for CodeSystemRole.
 type CodeSystemRole struct {
-	Id       *int32 `json:"id,omitempty"`
-	Name     string `json:"name"`
-	Position int32  `json:"position"`
-	System   struct {
+	Id     *int32 `json:"id,omitempty"`
+	Name   string `json:"name"`
+	System struct {
 		Id      int32   `json:"id"`
 		Name    *string `json:"name,omitempty"`
 		Version *string `json:"version,omitempty"`

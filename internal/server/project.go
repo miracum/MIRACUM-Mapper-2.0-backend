@@ -57,12 +57,13 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 
 	project, err := transform.ApiProjectDetailsToGormProject(*projectDetails)
 	if err != nil {
-		switch {
-		case errors.Is(err, transform.ErrInvalidUUID):
-			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, nil
-		default:
-			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
-		}
+		return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		// switch {
+		// case errors.Is(err, transform.ErrInvalidUUID):
+		// 	return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, nil
+		// default:
+		// 	return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
+		// }
 	}
 
 	// Create the project in the database

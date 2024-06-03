@@ -1,16 +1,9 @@
 package transform
 
 import (
-	"errors"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database/models"
-
-	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalidUUID = errors.New("invalid uuid provided")
-	// Define other errors here...
+	"miracummapper/internal/utilities"
 )
 
 func GormProjectToApiProjectDetails(project models.Project) api.ProjectDetails {
@@ -32,25 +25,7 @@ func GormProjectToApiProjectDetails(project models.Project) api.ProjectDetails {
 		Version:             project.Version,
 	}
 
-	// Map CodeSystemRoles
-	for _, role := range project.CodeSystemRoles {
-		id := int32(role.ID)
-		projectDetails.CodeSystemRoles = append(projectDetails.CodeSystemRoles, api.CodeSystemRole{
-			Id:       &id,
-			Name:     role.Name,
-			Position: int32(role.Position),
-			System: struct {
-				Id      int32   `json:"id"`
-				Name    *string `json:"name,omitempty"`
-				Version *string `json:"version,omitempty"`
-			}{
-				Id:      int32(role.CodeSystemID),
-				Name:    &role.CodeSystem.Name,
-				Version: &role.CodeSystem.Version,
-			},
-			Type: api.CodeSystemRoleType(role.Type),
-		})
-	}
+	projectDetails.CodeSystemRoles = GormCodeSystemRolesToApiCodeSystemRoles(project.CodeSystemRoles)
 
 	// Map Permissions
 	var permissions []api.ProjectPermission
@@ -87,9 +62,9 @@ func ApiProjectDetailsToGormProject(projectDetails api.ProjectDetails) (*models.
 
 	// Append the ProjectPermissions
 	for _, permission := range *projectDetails.ProjectPermissions {
-		userID, err := uuid.Parse(permission.UserId)
+		userID, err := utilities.ParseUUID(permission.UserId)
 		if err != nil {
-			return nil, ErrInvalidUUID
+			return nil, err
 		}
 		project.Permissions = append(project.Permissions, models.ProjectPermission{
 			Role:   models.ProjectPermissionRole(permission.Role),
