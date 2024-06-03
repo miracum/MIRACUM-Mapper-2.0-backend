@@ -67,20 +67,34 @@ func (gq *GormQuery) AddProjectQuery(project *models.Project) error {
 
 // DeleteProject implements database.Datastore.
 func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32) error {
-	db := gq.Database.Delete(&project, projectId)
-	if db.Error != nil {
-		switch {
-		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
-		default:
+
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		// get ptoject and then delete it
+		if err := tx.First(&project, projectId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+			default:
+				return err
+			}
+		}
+
+		db := gq.Database.Delete(&project, projectId)
+		if db.Error != nil {
+			// switch {
+			// case errors.Is(db.Error, gorm.ErrRecordNotFound):
+			// 	return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+			// default:
 			return db.Error
+			// }
+		} else {
+			if db.RowsAffected == 0 {
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+			}
+			return nil
 		}
-	} else {
-		if db.RowsAffected == 0 {
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
-		}
-		return nil
-	}
+	})
+	return err
 }
 
 // GetProjectsQuery implements database.Datastore.
