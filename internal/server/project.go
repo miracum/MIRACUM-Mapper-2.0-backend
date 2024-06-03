@@ -51,6 +51,10 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 	// 	return api.AddProject422JSONResponse("CodeSystemRoles are required"), nil
 	// }
 
+	if projectDetails.Id != nil {
+		return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "ID must not be provided"}, nil
+	}
+
 	project, err := transform.ApiProjectDetailsToGormProject(*projectDetails)
 	if err != nil {
 		switch {
@@ -70,6 +74,9 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
 		}
 	}
+	// Create the project in the database
+	id := int32(project.Model.ID)
+	projectDetails.Id = &id
 	return api.AddProject200JSONResponse(*projectDetails), nil
 }
 
