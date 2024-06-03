@@ -14,11 +14,15 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 		return db.Order("Position ASC")
 	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId)
 	if db.Error != nil {
+		pgErr, ok := handlePgError(db.Error)
+		if !ok {
+			return db.Error
+		}
 		switch {
-		case errors.Is(db.Error, gorm.ErrRecordNotFound):
+		case errors.Is(pgErr, gorm.ErrRecordNotFound):
 			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
 		default:
-			return db.Error
+			return pgErr
 		}
 	} else {
 		return nil
@@ -30,7 +34,7 @@ func (gq *GormQuery) AddProjectQuery(project *models.Project) error {
 	db := gq.Database.Create(&project)
 	if db.Error != nil {
 		// cast error to postgres error
-		pgErr, ok := handlePgError(db)
+		pgErr, ok := handlePgError(db.Error)
 		if !ok {
 			return db.Error
 		}
