@@ -126,7 +126,7 @@ permissions: read-all
 
 jobs:
   lint:
-    uses: miracum/.github/.github/workflows/standard-lint.yaml@cc6fa0f9913128e1b27770bcd43df2c19e547a25 # v1.6.2
+    uses: miracum/.github/.github/workflows/standard-lint.yaml@614627d88ea531acb0b0f321f507b2c7c91a721d # v1.9.1
     permissions:
       contents: read
       pull-requests: write
@@ -185,9 +185,6 @@ jobs:
       pull-requests: write
       actions: read
       security-events: write
-    with:
-      enable-build-test-layer: true
-      enable-upload-test-image: true
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
     needs: [unit-test]
