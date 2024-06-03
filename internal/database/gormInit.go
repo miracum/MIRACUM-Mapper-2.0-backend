@@ -21,12 +21,12 @@ func NewGormConnection(config *config.Config) *gorm.DB {
 }
 
 func getGormConnection(config *config.Config) (*gorm.DB, error) {
-	db, err := createGormConnection(config)
-	if err != nil {
-		return nil, err
-	}
+	// db, err := createGormConnection(config)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	err = connectToDb(db, config)
+	db, err := connectToDb(config)
 	if err != nil {
 		return nil, err
 	}
@@ -89,19 +89,22 @@ func createGormConnection(config *config.Config) (*gorm.DB, error) {
 	return gormDB, nil
 }
 
-func connectToDb(db *gorm.DB, config *config.Config) error {
+func connectToDb(config *config.Config) (*gorm.DB, error) {
 	for i := 0; i < config.File.DatabaseConfig.Retry; i++ {
-		err := pingGormDB(db)
+		db, err := createGormConnection(config)
 		if err == nil {
-			log.Printf("Successfully connected to database: %s", config.Env.DBName)
-			return nil
+			err = pingGormDB(db)
+			if err == nil {
+				log.Printf("Successfully connected to database: %s", config.Env.DBName)
+				return db, nil
+			}
 		}
 		log.Printf("Failed to connect to database: %s. Retrying in %d seconds", config.Env.DBName, config.File.DatabaseConfig.Sleep)
 		if i != config.File.DatabaseConfig.Retry-1 {
 			time.Sleep(time.Duration(config.File.DatabaseConfig.Sleep) * time.Second)
 		}
 	}
-	return fmt.Errorf("failed to connect to database %s after %d retries", config.Env.DBName, config.File.DatabaseConfig.Retry)
+	return nil, fmt.Errorf("failed to connect to database %s after %d retries", config.Env.DBName, config.File.DatabaseConfig.Retry)
 }
 
 func pingGormDB(db *gorm.DB) error {
