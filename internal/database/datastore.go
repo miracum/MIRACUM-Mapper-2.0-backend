@@ -7,16 +7,24 @@ import (
 )
 
 type Datastore interface {
-	GetProjectQuery(project *models.Project, projectId int32) error
+	// Project
 	GetProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
-	AddProjectQuery(project *models.Project) error
-	DeleteProjectQuery(project *models.Project, projectId int32) error
+	GetProjectQuery(project *models.Project, projectId int32) error
+	CreateProjectQuery(project *models.Project) error
 	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
+	DeleteProjectQuery(project *models.Project, projectId int32) error
+
+	// CodeSystemRole
 	GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error
 	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
 	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32, checkFunc func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error) error
+
+	// ProjectPermission
 	GetProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
-	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
+	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
+	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
+	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
+	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
 	//Add other methods here...
 }
 

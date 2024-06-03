@@ -67,7 +67,7 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 	}
 
 	// Create the project in the database
-	if err := s.Database.AddProjectQuery(project); err != nil {
+	if err := s.Database.CreateProjectQuery(project); err != nil {
 		switch {
 		case errors.Is(err, database.ErrClientError):
 			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil

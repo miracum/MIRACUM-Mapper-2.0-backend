@@ -30,7 +30,7 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 }
 
 // AddProject implements database.Datastore.
-func (gq *GormQuery) AddProjectQuery(project *models.Project) error {
+func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 	db := gq.Database.Create(&project)
 	if db.Error != nil {
 		// cast error to postgres error
@@ -79,7 +79,7 @@ func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32
 			}
 		}
 
-		db := gq.Database.Delete(&project, projectId)
+		db := tx.Delete(&project, projectId)
 		if db.Error != nil {
 			// switch {
 			// case errors.Is(db.Error, gorm.ErrRecordNotFound):
