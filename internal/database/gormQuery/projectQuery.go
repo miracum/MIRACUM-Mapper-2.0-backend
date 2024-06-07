@@ -29,7 +29,7 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 	}
 }
 
-// AddProject implements database.Datastore.
+// CreateProject implements database.Datastore.
 func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 	db := gq.Database.Create(&project)
 	if db.Error != nil {
@@ -97,8 +97,8 @@ func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32
 	return err
 }
 
-// GetProjectsQuery implements database.Datastore.
-func (gq *GormQuery) GetProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error {
+// GetAllProjectsQuery implements database.Datastore.
+func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error {
 	db := gq.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&projects)
 	return db.Error
 }

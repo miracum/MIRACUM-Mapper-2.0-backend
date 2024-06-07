@@ -11,78 +11,6 @@ import (
 	"miracummapper/internal/utilities"
 )
 
-// AddPermission implements api.StrictServerInterface.
-func (s *Server) AddPermission(ctx context.Context, request api.AddPermissionRequestObject) (api.AddPermissionResponseObject, error) {
-
-	projectId := request.ProjectId
-	permission := *request.Body
-
-	dbPermission, err := transform.ApiProjectPermissionToGormProjectPermission(permission, projectId)
-	if err != nil {
-		return api.AddPermission422JSONResponse(err.Error()), nil
-	}
-
-	if err := s.Database.CreateProjectPermissionQuery(&dbPermission); err != nil {
-		switch {
-		case errors.Is(err, database.ErrClientError):
-			return api.AddPermission422JSONResponse(err.Error()), nil
-		default:
-			return api.AddPermission500JSONResponse{}, nil
-		}
-	}
-
-	return api.AddPermission200JSONResponse(permission), nil
-	//TODO return api.AddPermission201JSONResponse{}, nil
-}
-
-// DeletePermission implements api.StrictServerInterface.
-func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermissionRequestObject) (api.DeletePermissionResponseObject, error) {
-
-	projectId := request.ProjectId
-	userUuid, err := utilities.ParseUUID(request.UserId)
-	if err != nil {
-		// TODO return 422 instead of 400
-		return api.DeletePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
-	}
-
-	var permission models.ProjectPermission
-
-	if err := s.Database.DeleteProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
-		switch {
-		case errors.Is(err, database.ErrNotFound):
-			return api.DeletePermission404JSONResponse(err.Error()), nil
-		default:
-			return api.DeletePermission500JSONResponse{}, nil
-		}
-	}
-
-	api_permission := transform.GormProjectPermissionToApiProjectPermission(permission)
-	return api.DeletePermission200JSONResponse(api_permission), nil
-}
-
-// GetAllPermissions implements api.StrictServerInterface.
-func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermissionsRequestObject) (api.GetAllPermissionsResponseObject, error) {
-
-	projectId := request.ProjectId
-	var permissions []models.ProjectPermission = []models.ProjectPermission{}
-
-	if err := s.Database.GetProjectPermissionsQuery(&permissions, projectId); err != nil {
-		switch {
-		case errors.Is(err, database.ErrNotFound):
-			return api.GetAllPermissions404JSONResponse(err.Error()), nil
-		default:
-			return api.GetAllPermissions500JSONResponse{}, nil
-		}
-	}
-
-	var apiPermissions []api.ProjectPermission = []api.ProjectPermission{}
-	for _, permission := range permissions {
-		apiPermissions = append(apiPermissions, transform.GormProjectPermissionToApiProjectPermission(permission))
-	}
-
-	return api.GetAllPermissions200JSONResponse(apiPermissions), nil
-}
-
 // GetPermission implements api.StrictServerInterface.
 func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionRequestObject) (api.GetPermissionResponseObject, error) {
 
@@ -110,6 +38,53 @@ func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionReq
 	return api.GetPermission200JSONResponse(apiPermission), nil
 }
 
+// GetAllPermissions implements api.StrictServerInterface.
+func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermissionsRequestObject) (api.GetAllPermissionsResponseObject, error) {
+
+	projectId := request.ProjectId
+	var permissions []models.ProjectPermission = []models.ProjectPermission{}
+
+	if err := s.Database.GetProjectPermissionsQuery(&permissions, projectId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllPermissions404JSONResponse(err.Error()), nil
+		default:
+			return api.GetAllPermissions500JSONResponse{}, nil
+		}
+	}
+
+	var apiPermissions []api.ProjectPermission = []api.ProjectPermission{}
+	for _, permission := range permissions {
+		apiPermissions = append(apiPermissions, transform.GormProjectPermissionToApiProjectPermission(permission))
+	}
+
+	return api.GetAllPermissions200JSONResponse(apiPermissions), nil
+}
+
+// CreatePermission implements api.StrictServerInterface.
+func (s *Server) CreatePermission(ctx context.Context, request api.CreatePermissionRequestObject) (api.CreatePermissionResponseObject, error) {
+
+	projectId := request.ProjectId
+	permission := *request.Body
+
+	dbPermission, err := transform.ApiProjectPermissionToGormProjectPermission(permission, projectId)
+	if err != nil {
+		return api.CreatePermission422JSONResponse(err.Error()), nil
+	}
+
+	if err := s.Database.CreateProjectPermissionQuery(&dbPermission); err != nil {
+		switch {
+		case errors.Is(err, database.ErrClientError):
+			return api.CreatePermission422JSONResponse(err.Error()), nil
+		default:
+			return api.CreatePermission500JSONResponse{}, nil
+		}
+	}
+
+	return api.CreatePermission200JSONResponse(permission), nil
+	//TODO return api.CreatePermission201JSONResponse{}, nil
+}
+
 // UpdatePermission implements api.StrictServerInterface.
 func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermissionRequestObject) (api.UpdatePermissionResponseObject, error) {
 	projectId := request.ProjectId
@@ -130,4 +105,29 @@ func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermiss
 	}
 
 	return api.UpdatePermission200JSONResponse(permission), nil
+}
+
+// DeletePermission implements api.StrictServerInterface.
+func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermissionRequestObject) (api.DeletePermissionResponseObject, error) {
+
+	projectId := request.ProjectId
+	userUuid, err := utilities.ParseUUID(request.UserId)
+	if err != nil {
+		// TODO return 422 instead of 400
+		return api.DeletePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
+	}
+
+	var permission models.ProjectPermission
+
+	if err := s.Database.DeleteProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeletePermission404JSONResponse(err.Error()), nil
+		default:
+			return api.DeletePermission500JSONResponse{}, nil
+		}
+	}
+
+	api_permission := transform.GormProjectPermissionToApiProjectPermission(permission)
+	return api.DeletePermission200JSONResponse(api_permission), nil
 }

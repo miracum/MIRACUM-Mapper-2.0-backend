@@ -64,17 +64,17 @@ const (
 	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
 )
 
-// Defines values for GetProjectsParamsSortBy.
+// Defines values for GetAllProjectsParamsSortBy.
 const (
-	GetProjectsParamsSortByDateCreated GetProjectsParamsSortBy = "dateCreated"
-	GetProjectsParamsSortById          GetProjectsParamsSortBy = "id"
-	GetProjectsParamsSortByName        GetProjectsParamsSortBy = "name"
+	GetAllProjectsParamsSortByDateCreated GetAllProjectsParamsSortBy = "dateCreated"
+	GetAllProjectsParamsSortById          GetAllProjectsParamsSortBy = "id"
+	GetAllProjectsParamsSortByName        GetAllProjectsParamsSortBy = "name"
 )
 
-// Defines values for GetProjectsParamsSortOrder.
+// Defines values for GetAllProjectsParamsSortOrder.
 const (
-	GetProjectsParamsSortOrderAsc  GetProjectsParamsSortOrder = "asc"
-	GetProjectsParamsSortOrderDesc GetProjectsParamsSortOrder = "desc"
+	GetAllProjectsParamsSortOrderAsc  GetAllProjectsParamsSortOrder = "asc"
+	GetAllProjectsParamsSortOrderDesc GetAllProjectsParamsSortOrder = "desc"
 )
 
 // CodeSystem defines model for CodeSystem.
@@ -256,8 +256,8 @@ type GetAllMappingsParamsSortBy string
 // GetAllMappingsParamsSortOrder defines parameters for GetAllMappings.
 type GetAllMappingsParamsSortOrder string
 
-// GetProjectsParams defines parameters for GetProjects.
-type GetProjectsParams struct {
+// GetAllProjectsParams defines parameters for GetAllProjects.
+type GetAllProjectsParams struct {
 	// Page Page number (must be a positive integer)
 	Page *Page `form:"page,omitempty" json:"page,omitempty"`
 
@@ -265,26 +265,26 @@ type GetProjectsParams struct {
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
 	// SortBy Field to sort sortBy
-	SortBy *GetProjectsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+	SortBy *GetAllProjectsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
 	// SortOrder Order of sorting (asc or desc)
-	SortOrder *GetProjectsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+	SortOrder *GetAllProjectsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 }
 
-// GetProjectsParamsSortBy defines parameters for GetProjects.
-type GetProjectsParamsSortBy string
+// GetAllProjectsParamsSortBy defines parameters for GetAllProjects.
+type GetAllProjectsParamsSortBy string
 
-// GetProjectsParamsSortOrder defines parameters for GetProjects.
-type GetProjectsParamsSortOrder string
+// GetAllProjectsParamsSortOrder defines parameters for GetAllProjects.
+type GetAllProjectsParamsSortOrder string
 
 // UpdateCodeSystemJSONRequestBody defines body for UpdateCodeSystem for application/json ContentType.
 type UpdateCodeSystemJSONRequestBody = CodeSystem
 
-// AddCodeSystemJSONRequestBody defines body for AddCodeSystem for application/json ContentType.
-type AddCodeSystemJSONRequestBody = CodeSystem
+// CreateCodeSystemJSONRequestBody defines body for CreateCodeSystem for application/json ContentType.
+type CreateCodeSystemJSONRequestBody = CodeSystem
 
-// EditProjectJSONRequestBody defines body for EditProject for application/json ContentType.
-type EditProjectJSONRequestBody = Project
+// UpdateProjectJSONRequestBody defines body for UpdateProject for application/json ContentType.
+type UpdateProjectJSONRequestBody = Project
 
 // UpdateCodeSystemRoleJSONRequestBody defines body for UpdateCodeSystemRole for application/json ContentType.
 type UpdateCodeSystemRoleJSONRequestBody = CodeSystemRole
@@ -292,14 +292,14 @@ type UpdateCodeSystemRoleJSONRequestBody = CodeSystemRole
 // UpdateMappingJSONRequestBody defines body for UpdateMapping for application/json ContentType.
 type UpdateMappingJSONRequestBody = Mapping
 
-// AddMappingJSONRequestBody defines body for AddMapping for application/json ContentType.
-type AddMappingJSONRequestBody = Mapping
+// CreateMappingJSONRequestBody defines body for CreateMapping for application/json ContentType.
+type CreateMappingJSONRequestBody = Mapping
 
-// AddPermissionJSONRequestBody defines body for AddPermission for application/json ContentType.
-type AddPermissionJSONRequestBody = ProjectPermission
+// CreatePermissionJSONRequestBody defines body for CreatePermission for application/json ContentType.
+type CreatePermissionJSONRequestBody = ProjectPermission
 
 // UpdatePermissionJSONRequestBody defines body for UpdatePermission for application/json ContentType.
 type UpdatePermissionJSONRequestBody = ProjectPermission
 
-// AddProjectJSONRequestBody defines body for AddProject for application/json ContentType.
-type AddProjectJSONRequestBody = ProjectDetails
+// CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
+type CreateProjectJSONRequestBody = ProjectDetails

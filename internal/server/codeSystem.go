@@ -5,8 +5,8 @@ import (
 	"miracummapper/internal/api"
 )
 
-// AddCodeSystem implements api.StrictServerInterface.
-func (s *Server) AddCodeSystem(ctx context.Context, request api.AddCodeSystemRequestObject) (api.AddCodeSystemResponseObject, error) {
+// CreateCodeSystem implements api.StrictServerInterface.
+func (s *Server) CreateCodeSystem(ctx context.Context, request api.CreateCodeSystemRequestObject) (api.CreateCodeSystemResponseObject, error) {
 	panic("unimplemented")
 }
 

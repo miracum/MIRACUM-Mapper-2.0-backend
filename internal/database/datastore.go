@@ -8,8 +8,8 @@ import (
 
 type Datastore interface {
 	// Project
-	GetProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
 	GetProjectQuery(project *models.Project, projectId int32) error
+	GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
 	CreateProjectQuery(project *models.Project) error
 	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
 	DeleteProjectQuery(project *models.Project, projectId int32) error
@@ -20,11 +20,11 @@ type Datastore interface {
 	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32, checkFunc func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error) error
 
 	// ProjectPermission
-	GetProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
 	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
+	GetProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
 	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
-	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
+	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 
 	// Mapping
 	GetAllMappingsQuery(mappings *[]models.Mapping, pageSize int, offset int, sortBy string, sortOrder string) error

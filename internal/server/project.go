@@ -13,16 +13,16 @@ import (
 
 var (
 	// Define mappings from API parameters to database column names
-	projectSortColumns = map[api.GetProjectsParamsSortBy]string{
-		api.GetProjectsParamsSortByDateCreated: "created",
-		api.GetProjectsParamsSortById:          "id",
-		api.GetProjectsParamsSortByName:        "name",
+	projectSortColumns = map[api.GetAllProjectsParamsSortBy]string{
+		api.GetAllProjectsParamsSortByDateCreated: "created",
+		api.GetAllProjectsParamsSortById:          "id",
+		api.GetAllProjectsParamsSortByName:        "name",
 	}
 
 	// Define mappings from API parameters to sort orders
-	projectSortOrders = map[api.GetProjectsParamsSortOrder]string{
-		api.GetProjectsParamsSortOrderAsc:  "ASC",
-		api.GetProjectsParamsSortOrderDesc: "DESC",
+	projectSortOrders = map[api.GetAllProjectsParamsSortOrder]string{
+		api.GetAllProjectsParamsSortOrderAsc:  "ASC",
+		api.GetAllProjectsParamsSortOrderDesc: "DESC",
 	}
 )
 
@@ -43,26 +43,26 @@ func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestOb
 	return api.GetProject200JSONResponse(projectDetails), nil
 }
 
-// AddProject implements api.StrictServerInterface.
-func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestObject) (api.AddProjectResponseObject, error) {
+// CreateProject implements api.StrictServerInterface.
+func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectRequestObject) (api.CreateProjectResponseObject, error) {
 	projectDetails := request.Body
 
 	// if len(projectDetails.CodeSystemRoles) == 0 {
-	// 	return api.AddProject422JSONResponse("CodeSystemRoles are required"), nil
+	// 	return api.CreateProject422JSONResponse("CodeSystemRoles are required"), nil
 	// }
 
 	if projectDetails.Id != nil {
-		return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "ID must not be provided"}, nil
+		return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: "ID must not be provided"}, nil
 	}
 
 	project, err := transform.ApiProjectDetailsToGormProject(*projectDetails)
 	if err != nil {
-		return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		// switch {
 		// case errors.Is(err, transform.ErrInvalidUUID):
-		// 	return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, nil
+		// 	return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, nil
 		// default:
-		// 	return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
+		// 	return api.CreateProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
 		// }
 	}
 
@@ -70,19 +70,19 @@ func (s *Server) AddProject(ctx context.Context, request api.AddProjectRequestOb
 	if err := s.Database.CreateProjectQuery(project); err != nil {
 		switch {
 		case errors.Is(err, database.ErrClientError):
-			return api.AddProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+			return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		default:
-			return api.AddProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
+			return api.CreateProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
 		}
 	}
 	// Create the project in the database
 	id := int32(project.Model.ID)
 	projectDetails.Id = &id
-	return api.AddProject200JSONResponse(*projectDetails), nil
+	return api.CreateProject200JSONResponse(*projectDetails), nil
 }
 
-// GetProjects implements api.StrictServerInterface.
-func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequestObject) (api.GetProjectsResponseObject, error) {
+// GetAllProjects implements api.StrictServerInterface.
+func (s *Server) GetAllProjects(ctx context.Context, request api.GetAllProjectsRequestObject) (api.GetAllProjectsResponseObject, error) {
 
 	pageSize := *request.Params.PageSize
 	offset := utilities.GetOffset(*request.Params.Page, pageSize)
@@ -91,8 +91,8 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 
 	var projects []models.Project = []models.Project{}
 
-	if err := s.Database.GetProjectsQuery(&projects, pageSize, offset, sortBy, sortOrder); err != nil {
-		return api.GetProjects500JSONResponse{}, err
+	if err := s.Database.GetAllProjectsQuery(&projects, pageSize, offset, sortBy, sortOrder); err != nil {
+		return api.GetAllProjects500JSONResponse{}, err
 	}
 
 	var apiProjects []api.Project = []api.Project{}
@@ -100,7 +100,7 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 		apiProjects = append(apiProjects, transform.GormProjectToApiProject(project))
 	}
 
-	return api.GetProjects200JSONResponse(apiProjects), nil
+	return api.GetAllProjects200JSONResponse(apiProjects), nil
 }
 
 // DeleteProject implements api.StrictServerInterface.
@@ -122,8 +122,8 @@ func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectReq
 	return api.DeleteProject200JSONResponse(api_project), nil
 }
 
-// EditProject implements api.StrictServerInterface.
-func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequestObject) (api.EditProjectResponseObject, error) {
+// UpdateProject implements api.StrictServerInterface.
+func (s *Server) UpdateProject(ctx context.Context, request api.UpdateProjectRequestObject) (api.UpdateProjectResponseObject, error) {
 	project := request.Body
 	projectId := request.ProjectId
 
@@ -131,7 +131,7 @@ func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequest
 		project.Id = &projectId
 	} else {
 		if *project.Id != projectId {
-			return api.EditProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Project ID %d in URL does not match project ID %d in body", projectId, *project.Id))}, nil
+			return api.UpdateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Project ID %d in URL does not match project ID %d in body", projectId, *project.Id))}, nil
 		}
 	}
 
@@ -146,16 +146,16 @@ func (s *Server) EditProject(ctx context.Context, request api.EditProjectRequest
 	if err := s.Database.UpdateProjectQuery(&db_project, checkFunc); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.EditProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+			return api.UpdateProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
 		// TODO
 		case errors.Is(err, database.ErrClientError):
-			return api.EditProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+			return api.UpdateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		// case errors.Is(err, database.???) error for trying to update status-/equivalenceRequired
 		default:
-			return api.EditProject500JSONResponse{}, err
+			return api.UpdateProject500JSONResponse{}, err
 		}
 	}
 
-	return api.EditProject200JSONResponse(*project), nil
+	return api.UpdateProject200JSONResponse(*project), nil
 
 }

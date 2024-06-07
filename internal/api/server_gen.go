@@ -43,7 +43,7 @@ type ServerInterface interface {
 	GetAllCodeSystems(c *gin.Context)
 	// Create a new code system
 	// (POST /code-systems)
-	AddCodeSystem(c *gin.Context)
+	CreateCodeSystem(c *gin.Context)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(c *gin.Context)
@@ -55,7 +55,7 @@ type ServerInterface interface {
 	GetProject(c *gin.Context, projectId ProjectId)
 	// Update the project information
 	// (PUT /project/{project_id})
-	EditProject(c *gin.Context, projectId ProjectId)
+	UpdateProject(c *gin.Context, projectId ProjectId)
 	// Get all code system roles for a project
 	// (GET /project/{project_id}/code-system-roles)
 	GetAllCodeSystemRoles(c *gin.Context, projectId ProjectId)
@@ -70,7 +70,7 @@ type ServerInterface interface {
 	DeleteMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
 	// Get a mapping with its elements by ID
 	// (GET /project/{project_id}/mapping/{mapping_id})
-	GetMappingByID(c *gin.Context, projectId ProjectId, mappingId MappingId)
+	GetMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
 	// Update a mapping and its elements by ID
 	// (PUT /project/{project_id}/mapping/{mapping_id})
 	UpdateMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
@@ -79,7 +79,7 @@ type ServerInterface interface {
 	GetAllMappings(c *gin.Context, projectId ProjectId, params GetAllMappingsParams)
 	// Create a new mapping for a project
 	// (POST /project/{project_id}/mappings)
-	AddMapping(c *gin.Context, projectId ProjectId)
+	CreateMapping(c *gin.Context, projectId ProjectId)
 	// Get permissions for a project
 	// (GET /project/{project_id}/permissions)
 	GetAllPermissions(c *gin.Context, projectId ProjectId)
@@ -91,16 +91,16 @@ type ServerInterface interface {
 	GetPermission(c *gin.Context, projectId ProjectId, userId UserId)
 	// Create a new project permission for user
 	// (POST /project/{project_id}/permissions/{user_id})
-	AddPermission(c *gin.Context, projectId ProjectId, userId UserId)
+	CreatePermission(c *gin.Context, projectId ProjectId, userId UserId)
 	// Update a project permission for a user
 	// (PUT /project/{project_id}/permissions/{user_id})
 	UpdatePermission(c *gin.Context, projectId ProjectId, userId UserId)
 	// Get all projects
 	// (GET /projects)
-	GetProjects(c *gin.Context, params GetProjectsParams)
+	GetAllProjects(c *gin.Context, params GetAllProjectsParams)
 	// Create a new project
 	// (POST /projects)
-	AddProject(c *gin.Context)
+	CreateProject(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -331,8 +331,8 @@ func (siw *ServerInterfaceWrapper) GetAllCodeSystems(c *gin.Context) {
 	siw.Handler.GetAllCodeSystems(c)
 }
 
-// AddCodeSystem operation middleware
-func (siw *ServerInterfaceWrapper) AddCodeSystem(c *gin.Context) {
+// CreateCodeSystem operation middleware
+func (siw *ServerInterfaceWrapper) CreateCodeSystem(c *gin.Context) {
 
 	c.Set(OAuth2Scopes, []string{"admin"})
 
@@ -345,7 +345,7 @@ func (siw *ServerInterfaceWrapper) AddCodeSystem(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AddCodeSystem(c)
+	siw.Handler.CreateCodeSystem(c)
 }
 
 // Ping operation middleware
@@ -417,8 +417,8 @@ func (siw *ServerInterfaceWrapper) GetProject(c *gin.Context) {
 	siw.Handler.GetProject(c, projectId)
 }
 
-// EditProject operation middleware
-func (siw *ServerInterfaceWrapper) EditProject(c *gin.Context) {
+// UpdateProject operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProject(c *gin.Context) {
 
 	var err error
 
@@ -442,7 +442,7 @@ func (siw *ServerInterfaceWrapper) EditProject(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.EditProject(c, projectId)
+	siw.Handler.UpdateProject(c, projectId)
 }
 
 // GetAllCodeSystemRoles operation middleware
@@ -584,8 +584,8 @@ func (siw *ServerInterfaceWrapper) DeleteMapping(c *gin.Context) {
 	siw.Handler.DeleteMapping(c, projectId, mappingId)
 }
 
-// GetMappingByID operation middleware
-func (siw *ServerInterfaceWrapper) GetMappingByID(c *gin.Context) {
+// GetMapping operation middleware
+func (siw *ServerInterfaceWrapper) GetMapping(c *gin.Context) {
 
 	var err error
 
@@ -618,7 +618,7 @@ func (siw *ServerInterfaceWrapper) GetMappingByID(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetMappingByID(c, projectId, mappingId)
+	siw.Handler.GetMapping(c, projectId, mappingId)
 }
 
 // UpdateMapping operation middleware
@@ -721,8 +721,8 @@ func (siw *ServerInterfaceWrapper) GetAllMappings(c *gin.Context) {
 	siw.Handler.GetAllMappings(c, projectId, params)
 }
 
-// AddMapping operation middleware
-func (siw *ServerInterfaceWrapper) AddMapping(c *gin.Context) {
+// CreateMapping operation middleware
+func (siw *ServerInterfaceWrapper) CreateMapping(c *gin.Context) {
 
 	var err error
 
@@ -746,7 +746,7 @@ func (siw *ServerInterfaceWrapper) AddMapping(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AddMapping(c, projectId)
+	siw.Handler.CreateMapping(c, projectId)
 }
 
 // GetAllPermissions operation middleware
@@ -851,8 +851,8 @@ func (siw *ServerInterfaceWrapper) GetPermission(c *gin.Context) {
 	siw.Handler.GetPermission(c, projectId, userId)
 }
 
-// AddPermission operation middleware
-func (siw *ServerInterfaceWrapper) AddPermission(c *gin.Context) {
+// CreatePermission operation middleware
+func (siw *ServerInterfaceWrapper) CreatePermission(c *gin.Context) {
 
 	var err error
 
@@ -885,7 +885,7 @@ func (siw *ServerInterfaceWrapper) AddPermission(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AddPermission(c, projectId, userId)
+	siw.Handler.CreatePermission(c, projectId, userId)
 }
 
 // UpdatePermission operation middleware
@@ -925,8 +925,8 @@ func (siw *ServerInterfaceWrapper) UpdatePermission(c *gin.Context) {
 	siw.Handler.UpdatePermission(c, projectId, userId)
 }
 
-// GetProjects operation middleware
-func (siw *ServerInterfaceWrapper) GetProjects(c *gin.Context) {
+// GetAllProjects operation middleware
+func (siw *ServerInterfaceWrapper) GetAllProjects(c *gin.Context) {
 
 	var err error
 
@@ -935,7 +935,7 @@ func (siw *ServerInterfaceWrapper) GetProjects(c *gin.Context) {
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetProjectsParams
+	var params GetAllProjectsParams
 
 	// ------------- Optional query parameter "page" -------------
 
@@ -976,11 +976,11 @@ func (siw *ServerInterfaceWrapper) GetProjects(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetProjects(c, params)
+	siw.Handler.GetAllProjects(c, params)
 }
 
-// AddProject operation middleware
-func (siw *ServerInterfaceWrapper) AddProject(c *gin.Context) {
+// CreateProject operation middleware
+func (siw *ServerInterfaceWrapper) CreateProject(c *gin.Context) {
 
 	c.Set(OAuth2Scopes, []string{"admin"})
 
@@ -993,7 +993,7 @@ func (siw *ServerInterfaceWrapper) AddProject(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AddProject(c)
+	siw.Handler.CreateProject(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -1029,26 +1029,26 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/code-system/:code-system_id/concepts", wrapper.GetAllConcepts)
 	router.GET(options.BaseURL+"/code-system/:code-system_id/find-concept", wrapper.FindConceptByCode)
 	router.GET(options.BaseURL+"/code-systems", wrapper.GetAllCodeSystems)
-	router.POST(options.BaseURL+"/code-systems", wrapper.AddCodeSystem)
+	router.POST(options.BaseURL+"/code-systems", wrapper.CreateCodeSystem)
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.DELETE(options.BaseURL+"/project/:project_id", wrapper.DeleteProject)
 	router.GET(options.BaseURL+"/project/:project_id", wrapper.GetProject)
-	router.PUT(options.BaseURL+"/project/:project_id", wrapper.EditProject)
+	router.PUT(options.BaseURL+"/project/:project_id", wrapper.UpdateProject)
 	router.GET(options.BaseURL+"/project/:project_id/code-system-roles", wrapper.GetAllCodeSystemRoles)
 	router.GET(options.BaseURL+"/project/:project_id/code-system-roles/:code-system-role_id", wrapper.GetCodeSystemRole)
 	router.PUT(options.BaseURL+"/project/:project_id/code-system-roles/:code-system-role_id", wrapper.UpdateCodeSystemRole)
 	router.DELETE(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.DeleteMapping)
-	router.GET(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.GetMappingByID)
+	router.GET(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.GetMapping)
 	router.PUT(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.UpdateMapping)
 	router.GET(options.BaseURL+"/project/:project_id/mappings", wrapper.GetAllMappings)
-	router.POST(options.BaseURL+"/project/:project_id/mappings", wrapper.AddMapping)
+	router.POST(options.BaseURL+"/project/:project_id/mappings", wrapper.CreateMapping)
 	router.GET(options.BaseURL+"/project/:project_id/permissions", wrapper.GetAllPermissions)
 	router.DELETE(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.DeletePermission)
 	router.GET(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.GetPermission)
-	router.POST(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.AddPermission)
+	router.POST(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.CreatePermission)
 	router.PUT(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.UpdatePermission)
-	router.GET(options.BaseURL+"/projects", wrapper.GetProjects)
-	router.POST(options.BaseURL+"/projects", wrapper.AddProject)
+	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
+	router.POST(options.BaseURL+"/projects", wrapper.CreateProject)
 }
 
 type BadRequestErrorJSONResponse string
@@ -1342,55 +1342,55 @@ func (response GetAllCodeSystems500JSONResponse) VisitGetAllCodeSystemsResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddCodeSystemRequestObject struct {
-	Body *AddCodeSystemJSONRequestBody
+type CreateCodeSystemRequestObject struct {
+	Body *CreateCodeSystemJSONRequestBody
 }
 
-type AddCodeSystemResponseObject interface {
-	VisitAddCodeSystemResponse(w http.ResponseWriter) error
+type CreateCodeSystemResponseObject interface {
+	VisitCreateCodeSystemResponse(w http.ResponseWriter) error
 }
 
-type AddCodeSystem200JSONResponse CodeSystem
+type CreateCodeSystem200JSONResponse CodeSystem
 
-func (response AddCodeSystem200JSONResponse) VisitAddCodeSystemResponse(w http.ResponseWriter) error {
+func (response CreateCodeSystem200JSONResponse) VisitCreateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
+type CreateCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response AddCodeSystem400JSONResponse) VisitAddCodeSystemResponse(w http.ResponseWriter) error {
+func (response CreateCodeSystem400JSONResponse) VisitCreateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddCodeSystem404JSONResponse ErrorResponse
+type CreateCodeSystem404JSONResponse ErrorResponse
 
-func (response AddCodeSystem404JSONResponse) VisitAddCodeSystemResponse(w http.ResponseWriter) error {
+func (response CreateCodeSystem404JSONResponse) VisitCreateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddCodeSystem422JSONResponse ErrorResponse
+type CreateCodeSystem422JSONResponse ErrorResponse
 
-func (response AddCodeSystem422JSONResponse) VisitAddCodeSystemResponse(w http.ResponseWriter) error {
+func (response CreateCodeSystem422JSONResponse) VisitCreateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddCodeSystem500JSONResponse struct {
+type CreateCodeSystem500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response AddCodeSystem500JSONResponse) VisitAddCodeSystemResponse(w http.ResponseWriter) error {
+func (response CreateCodeSystem500JSONResponse) VisitCreateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1507,56 +1507,56 @@ func (response GetProject500JSONResponse) VisitGetProjectResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type EditProjectRequestObject struct {
+type UpdateProjectRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
-	Body      *EditProjectJSONRequestBody
+	Body      *UpdateProjectJSONRequestBody
 }
 
-type EditProjectResponseObject interface {
-	VisitEditProjectResponse(w http.ResponseWriter) error
+type UpdateProjectResponseObject interface {
+	VisitUpdateProjectResponse(w http.ResponseWriter) error
 }
 
-type EditProject200JSONResponse Project
+type UpdateProject200JSONResponse Project
 
-func (response EditProject200JSONResponse) VisitEditProjectResponse(w http.ResponseWriter) error {
+func (response UpdateProject200JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type EditProject400JSONResponse struct{ BadRequestErrorJSONResponse }
+type UpdateProject400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response EditProject400JSONResponse) VisitEditProjectResponse(w http.ResponseWriter) error {
+func (response UpdateProject400JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type EditProject404JSONResponse ErrorResponse
+type UpdateProject404JSONResponse ErrorResponse
 
-func (response EditProject404JSONResponse) VisitEditProjectResponse(w http.ResponseWriter) error {
+func (response UpdateProject404JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type EditProject422JSONResponse ErrorResponse
+type UpdateProject422JSONResponse ErrorResponse
 
-func (response EditProject422JSONResponse) VisitEditProjectResponse(w http.ResponseWriter) error {
+func (response UpdateProject422JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type EditProject500JSONResponse struct {
+type UpdateProject500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response EditProject500JSONResponse) VisitEditProjectResponse(w http.ResponseWriter) error {
+func (response UpdateProject500JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1760,47 +1760,47 @@ func (response DeleteMapping500JSONResponse) VisitDeleteMappingResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetMappingByIDRequestObject struct {
+type GetMappingRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 	MappingId MappingId `json:"mapping_id"`
 }
 
-type GetMappingByIDResponseObject interface {
-	VisitGetMappingByIDResponse(w http.ResponseWriter) error
+type GetMappingResponseObject interface {
+	VisitGetMappingResponse(w http.ResponseWriter) error
 }
 
-type GetMappingByID200JSONResponse Mapping
+type GetMapping200JSONResponse Mapping
 
-func (response GetMappingByID200JSONResponse) VisitGetMappingByIDResponse(w http.ResponseWriter) error {
+func (response GetMapping200JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetMappingByID400JSONResponse struct{ BadRequestErrorJSONResponse }
+type GetMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response GetMappingByID400JSONResponse) VisitGetMappingByIDResponse(w http.ResponseWriter) error {
+func (response GetMapping400JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetMappingByID404JSONResponse ErrorResponse
+type GetMapping404JSONResponse ErrorResponse
 
-func (response GetMappingByID404JSONResponse) VisitGetMappingByIDResponse(w http.ResponseWriter) error {
+func (response GetMapping404JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetMappingByID500JSONResponse struct {
+type GetMapping500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response GetMappingByID500JSONResponse) VisitGetMappingByIDResponse(w http.ResponseWriter) error {
+func (response GetMapping500JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1911,56 +1911,56 @@ func (response GetAllMappings500JSONResponse) VisitGetAllMappingsResponse(w http
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddMappingRequestObject struct {
+type CreateMappingRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
-	Body      *AddMappingJSONRequestBody
+	Body      *CreateMappingJSONRequestBody
 }
 
-type AddMappingResponseObject interface {
-	VisitAddMappingResponse(w http.ResponseWriter) error
+type CreateMappingResponseObject interface {
+	VisitCreateMappingResponse(w http.ResponseWriter) error
 }
 
-type AddMapping200JSONResponse Mapping
+type CreateMapping200JSONResponse Mapping
 
-func (response AddMapping200JSONResponse) VisitAddMappingResponse(w http.ResponseWriter) error {
+func (response CreateMapping200JSONResponse) VisitCreateMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
+type CreateMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response AddMapping400JSONResponse) VisitAddMappingResponse(w http.ResponseWriter) error {
+func (response CreateMapping400JSONResponse) VisitCreateMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddMapping404JSONResponse ErrorResponse
+type CreateMapping404JSONResponse ErrorResponse
 
-func (response AddMapping404JSONResponse) VisitAddMappingResponse(w http.ResponseWriter) error {
+func (response CreateMapping404JSONResponse) VisitCreateMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddMapping422JSONResponse ErrorResponse
+type CreateMapping422JSONResponse ErrorResponse
 
-func (response AddMapping422JSONResponse) VisitAddMappingResponse(w http.ResponseWriter) error {
+func (response CreateMapping422JSONResponse) VisitCreateMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddMapping500JSONResponse struct {
+type CreateMapping500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response AddMapping500JSONResponse) VisitAddMappingResponse(w http.ResponseWriter) error {
+func (response CreateMapping500JSONResponse) VisitCreateMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2107,57 +2107,57 @@ func (response GetPermission500JSONResponse) VisitGetPermissionResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddPermissionRequestObject struct {
+type CreatePermissionRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 	UserId    UserId    `json:"user_id"`
-	Body      *AddPermissionJSONRequestBody
+	Body      *CreatePermissionJSONRequestBody
 }
 
-type AddPermissionResponseObject interface {
-	VisitAddPermissionResponse(w http.ResponseWriter) error
+type CreatePermissionResponseObject interface {
+	VisitCreatePermissionResponse(w http.ResponseWriter) error
 }
 
-type AddPermission200JSONResponse ProjectPermission
+type CreatePermission200JSONResponse ProjectPermission
 
-func (response AddPermission200JSONResponse) VisitAddPermissionResponse(w http.ResponseWriter) error {
+func (response CreatePermission200JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddPermission400JSONResponse struct{ BadRequestErrorJSONResponse }
+type CreatePermission400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response AddPermission400JSONResponse) VisitAddPermissionResponse(w http.ResponseWriter) error {
+func (response CreatePermission400JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddPermission404JSONResponse ErrorResponse
+type CreatePermission404JSONResponse ErrorResponse
 
-func (response AddPermission404JSONResponse) VisitAddPermissionResponse(w http.ResponseWriter) error {
+func (response CreatePermission404JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddPermission422JSONResponse ErrorResponse
+type CreatePermission422JSONResponse ErrorResponse
 
-func (response AddPermission422JSONResponse) VisitAddPermissionResponse(w http.ResponseWriter) error {
+func (response CreatePermission422JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddPermission500JSONResponse struct {
+type CreatePermission500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response AddPermission500JSONResponse) VisitAddPermissionResponse(w http.ResponseWriter) error {
+func (response CreatePermission500JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2221,92 +2221,92 @@ func (response UpdatePermission500JSONResponse) VisitUpdatePermissionResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetProjectsRequestObject struct {
-	Params GetProjectsParams
+type GetAllProjectsRequestObject struct {
+	Params GetAllProjectsParams
 }
 
-type GetProjectsResponseObject interface {
-	VisitGetProjectsResponse(w http.ResponseWriter) error
+type GetAllProjectsResponseObject interface {
+	VisitGetAllProjectsResponse(w http.ResponseWriter) error
 }
 
-type GetProjects200JSONResponse []Project
+type GetAllProjects200JSONResponse []Project
 
-func (response GetProjects200JSONResponse) VisitGetProjectsResponse(w http.ResponseWriter) error {
+func (response GetAllProjects200JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetProjects400JSONResponse struct{ BadRequestErrorJSONResponse }
+type GetAllProjects400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response GetProjects400JSONResponse) VisitGetProjectsResponse(w http.ResponseWriter) error {
+func (response GetAllProjects400JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetProjects404JSONResponse ErrorResponse
+type GetAllProjects404JSONResponse ErrorResponse
 
-func (response GetProjects404JSONResponse) VisitGetProjectsResponse(w http.ResponseWriter) error {
+func (response GetAllProjects404JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetProjects500JSONResponse struct {
+type GetAllProjects500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response GetProjects500JSONResponse) VisitGetProjectsResponse(w http.ResponseWriter) error {
+func (response GetAllProjects500JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddProjectRequestObject struct {
-	Body *AddProjectJSONRequestBody
+type CreateProjectRequestObject struct {
+	Body *CreateProjectJSONRequestBody
 }
 
-type AddProjectResponseObject interface {
-	VisitAddProjectResponse(w http.ResponseWriter) error
+type CreateProjectResponseObject interface {
+	VisitCreateProjectResponse(w http.ResponseWriter) error
 }
 
-type AddProject200JSONResponse ProjectDetails
+type CreateProject200JSONResponse ProjectDetails
 
-func (response AddProject200JSONResponse) VisitAddProjectResponse(w http.ResponseWriter) error {
+func (response CreateProject200JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddProject400JSONResponse struct{ BadRequestErrorJSONResponse }
+type CreateProject400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response AddProject400JSONResponse) VisitAddProjectResponse(w http.ResponseWriter) error {
+func (response CreateProject400JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddProject422JSONResponse ErrorResponse
+type CreateProject422JSONResponse ErrorResponse
 
-func (response AddProject422JSONResponse) VisitAddProjectResponse(w http.ResponseWriter) error {
+func (response CreateProject422JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(422)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddProject500JSONResponse struct {
+type CreateProject500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response AddProject500JSONResponse) VisitAddProjectResponse(w http.ResponseWriter) error {
+func (response CreateProject500JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2335,7 +2335,7 @@ type StrictServerInterface interface {
 	GetAllCodeSystems(ctx context.Context, request GetAllCodeSystemsRequestObject) (GetAllCodeSystemsResponseObject, error)
 	// Create a new code system
 	// (POST /code-systems)
-	AddCodeSystem(ctx context.Context, request AddCodeSystemRequestObject) (AddCodeSystemResponseObject, error)
+	CreateCodeSystem(ctx context.Context, request CreateCodeSystemRequestObject) (CreateCodeSystemResponseObject, error)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(ctx context.Context, request PingRequestObject) (PingResponseObject, error)
@@ -2347,7 +2347,7 @@ type StrictServerInterface interface {
 	GetProject(ctx context.Context, request GetProjectRequestObject) (GetProjectResponseObject, error)
 	// Update the project information
 	// (PUT /project/{project_id})
-	EditProject(ctx context.Context, request EditProjectRequestObject) (EditProjectResponseObject, error)
+	UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error)
 	// Get all code system roles for a project
 	// (GET /project/{project_id}/code-system-roles)
 	GetAllCodeSystemRoles(ctx context.Context, request GetAllCodeSystemRolesRequestObject) (GetAllCodeSystemRolesResponseObject, error)
@@ -2362,7 +2362,7 @@ type StrictServerInterface interface {
 	DeleteMapping(ctx context.Context, request DeleteMappingRequestObject) (DeleteMappingResponseObject, error)
 	// Get a mapping with its elements by ID
 	// (GET /project/{project_id}/mapping/{mapping_id})
-	GetMappingByID(ctx context.Context, request GetMappingByIDRequestObject) (GetMappingByIDResponseObject, error)
+	GetMapping(ctx context.Context, request GetMappingRequestObject) (GetMappingResponseObject, error)
 	// Update a mapping and its elements by ID
 	// (PUT /project/{project_id}/mapping/{mapping_id})
 	UpdateMapping(ctx context.Context, request UpdateMappingRequestObject) (UpdateMappingResponseObject, error)
@@ -2371,7 +2371,7 @@ type StrictServerInterface interface {
 	GetAllMappings(ctx context.Context, request GetAllMappingsRequestObject) (GetAllMappingsResponseObject, error)
 	// Create a new mapping for a project
 	// (POST /project/{project_id}/mappings)
-	AddMapping(ctx context.Context, request AddMappingRequestObject) (AddMappingResponseObject, error)
+	CreateMapping(ctx context.Context, request CreateMappingRequestObject) (CreateMappingResponseObject, error)
 	// Get permissions for a project
 	// (GET /project/{project_id}/permissions)
 	GetAllPermissions(ctx context.Context, request GetAllPermissionsRequestObject) (GetAllPermissionsResponseObject, error)
@@ -2383,16 +2383,16 @@ type StrictServerInterface interface {
 	GetPermission(ctx context.Context, request GetPermissionRequestObject) (GetPermissionResponseObject, error)
 	// Create a new project permission for user
 	// (POST /project/{project_id}/permissions/{user_id})
-	AddPermission(ctx context.Context, request AddPermissionRequestObject) (AddPermissionResponseObject, error)
+	CreatePermission(ctx context.Context, request CreatePermissionRequestObject) (CreatePermissionResponseObject, error)
 	// Update a project permission for a user
 	// (PUT /project/{project_id}/permissions/{user_id})
 	UpdatePermission(ctx context.Context, request UpdatePermissionRequestObject) (UpdatePermissionResponseObject, error)
 	// Get all projects
 	// (GET /projects)
-	GetProjects(ctx context.Context, request GetProjectsRequestObject) (GetProjectsResponseObject, error)
+	GetAllProjects(ctx context.Context, request GetAllProjectsRequestObject) (GetAllProjectsResponseObject, error)
 	// Create a new project
 	// (POST /projects)
-	AddProject(ctx context.Context, request AddProjectRequestObject) (AddProjectResponseObject, error)
+	CreateProject(ctx context.Context, request CreateProjectRequestObject) (CreateProjectResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -2577,11 +2577,11 @@ func (sh *strictHandler) GetAllCodeSystems(ctx *gin.Context) {
 	}
 }
 
-// AddCodeSystem operation middleware
-func (sh *strictHandler) AddCodeSystem(ctx *gin.Context) {
-	var request AddCodeSystemRequestObject
+// CreateCodeSystem operation middleware
+func (sh *strictHandler) CreateCodeSystem(ctx *gin.Context) {
+	var request CreateCodeSystemRequestObject
 
-	var body AddCodeSystemJSONRequestBody
+	var body CreateCodeSystemJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
@@ -2590,10 +2590,10 @@ func (sh *strictHandler) AddCodeSystem(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.AddCodeSystem(ctx, request.(AddCodeSystemRequestObject))
+		return sh.ssi.CreateCodeSystem(ctx, request.(CreateCodeSystemRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AddCodeSystem")
+		handler = middleware(handler, "CreateCodeSystem")
 	}
 
 	response, err := handler(ctx, request)
@@ -2601,8 +2601,8 @@ func (sh *strictHandler) AddCodeSystem(ctx *gin.Context) {
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(AddCodeSystemResponseObject); ok {
-		if err := validResponse.VisitAddCodeSystemResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(CreateCodeSystemResponseObject); ok {
+		if err := validResponse.VisitCreateCodeSystemResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -2689,13 +2689,13 @@ func (sh *strictHandler) GetProject(ctx *gin.Context, projectId ProjectId) {
 	}
 }
 
-// EditProject operation middleware
-func (sh *strictHandler) EditProject(ctx *gin.Context, projectId ProjectId) {
-	var request EditProjectRequestObject
+// UpdateProject operation middleware
+func (sh *strictHandler) UpdateProject(ctx *gin.Context, projectId ProjectId) {
+	var request UpdateProjectRequestObject
 
 	request.ProjectId = projectId
 
-	var body EditProjectJSONRequestBody
+	var body UpdateProjectJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
@@ -2704,10 +2704,10 @@ func (sh *strictHandler) EditProject(ctx *gin.Context, projectId ProjectId) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.EditProject(ctx, request.(EditProjectRequestObject))
+		return sh.ssi.UpdateProject(ctx, request.(UpdateProjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "EditProject")
+		handler = middleware(handler, "UpdateProject")
 	}
 
 	response, err := handler(ctx, request)
@@ -2715,8 +2715,8 @@ func (sh *strictHandler) EditProject(ctx *gin.Context, projectId ProjectId) {
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(EditProjectResponseObject); ok {
-		if err := validResponse.VisitEditProjectResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(UpdateProjectResponseObject); ok {
+		if err := validResponse.VisitUpdateProjectResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -2843,18 +2843,18 @@ func (sh *strictHandler) DeleteMapping(ctx *gin.Context, projectId ProjectId, ma
 	}
 }
 
-// GetMappingByID operation middleware
-func (sh *strictHandler) GetMappingByID(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
-	var request GetMappingByIDRequestObject
+// GetMapping operation middleware
+func (sh *strictHandler) GetMapping(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
+	var request GetMappingRequestObject
 
 	request.ProjectId = projectId
 	request.MappingId = mappingId
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetMappingByID(ctx, request.(GetMappingByIDRequestObject))
+		return sh.ssi.GetMapping(ctx, request.(GetMappingRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetMappingByID")
+		handler = middleware(handler, "GetMapping")
 	}
 
 	response, err := handler(ctx, request)
@@ -2862,8 +2862,8 @@ func (sh *strictHandler) GetMappingByID(ctx *gin.Context, projectId ProjectId, m
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetMappingByIDResponseObject); ok {
-		if err := validResponse.VisitGetMappingByIDResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(GetMappingResponseObject); ok {
+		if err := validResponse.VisitGetMappingResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -2935,13 +2935,13 @@ func (sh *strictHandler) GetAllMappings(ctx *gin.Context, projectId ProjectId, p
 	}
 }
 
-// AddMapping operation middleware
-func (sh *strictHandler) AddMapping(ctx *gin.Context, projectId ProjectId) {
-	var request AddMappingRequestObject
+// CreateMapping operation middleware
+func (sh *strictHandler) CreateMapping(ctx *gin.Context, projectId ProjectId) {
+	var request CreateMappingRequestObject
 
 	request.ProjectId = projectId
 
-	var body AddMappingJSONRequestBody
+	var body CreateMappingJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
@@ -2950,10 +2950,10 @@ func (sh *strictHandler) AddMapping(ctx *gin.Context, projectId ProjectId) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.AddMapping(ctx, request.(AddMappingRequestObject))
+		return sh.ssi.CreateMapping(ctx, request.(CreateMappingRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AddMapping")
+		handler = middleware(handler, "CreateMapping")
 	}
 
 	response, err := handler(ctx, request)
@@ -2961,8 +2961,8 @@ func (sh *strictHandler) AddMapping(ctx *gin.Context, projectId ProjectId) {
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(AddMappingResponseObject); ok {
-		if err := validResponse.VisitAddMappingResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(CreateMappingResponseObject); ok {
+		if err := validResponse.VisitCreateMappingResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3053,14 +3053,14 @@ func (sh *strictHandler) GetPermission(ctx *gin.Context, projectId ProjectId, us
 	}
 }
 
-// AddPermission operation middleware
-func (sh *strictHandler) AddPermission(ctx *gin.Context, projectId ProjectId, userId UserId) {
-	var request AddPermissionRequestObject
+// CreatePermission operation middleware
+func (sh *strictHandler) CreatePermission(ctx *gin.Context, projectId ProjectId, userId UserId) {
+	var request CreatePermissionRequestObject
 
 	request.ProjectId = projectId
 	request.UserId = userId
 
-	var body AddPermissionJSONRequestBody
+	var body CreatePermissionJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
@@ -3069,10 +3069,10 @@ func (sh *strictHandler) AddPermission(ctx *gin.Context, projectId ProjectId, us
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.AddPermission(ctx, request.(AddPermissionRequestObject))
+		return sh.ssi.CreatePermission(ctx, request.(CreatePermissionRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AddPermission")
+		handler = middleware(handler, "CreatePermission")
 	}
 
 	response, err := handler(ctx, request)
@@ -3080,8 +3080,8 @@ func (sh *strictHandler) AddPermission(ctx *gin.Context, projectId ProjectId, us
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(AddPermissionResponseObject); ok {
-		if err := validResponse.VisitAddPermissionResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(CreatePermissionResponseObject); ok {
+		if err := validResponse.VisitCreatePermissionResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3125,17 +3125,17 @@ func (sh *strictHandler) UpdatePermission(ctx *gin.Context, projectId ProjectId,
 	}
 }
 
-// GetProjects operation middleware
-func (sh *strictHandler) GetProjects(ctx *gin.Context, params GetProjectsParams) {
-	var request GetProjectsRequestObject
+// GetAllProjects operation middleware
+func (sh *strictHandler) GetAllProjects(ctx *gin.Context, params GetAllProjectsParams) {
+	var request GetAllProjectsRequestObject
 
 	request.Params = params
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetProjects(ctx, request.(GetProjectsRequestObject))
+		return sh.ssi.GetAllProjects(ctx, request.(GetAllProjectsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetProjects")
+		handler = middleware(handler, "GetAllProjects")
 	}
 
 	response, err := handler(ctx, request)
@@ -3143,8 +3143,8 @@ func (sh *strictHandler) GetProjects(ctx *gin.Context, params GetProjectsParams)
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetProjectsResponseObject); ok {
-		if err := validResponse.VisitGetProjectsResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(GetAllProjectsResponseObject); ok {
+		if err := validResponse.VisitGetAllProjectsResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3152,11 +3152,11 @@ func (sh *strictHandler) GetProjects(ctx *gin.Context, params GetProjectsParams)
 	}
 }
 
-// AddProject operation middleware
-func (sh *strictHandler) AddProject(ctx *gin.Context) {
-	var request AddProjectRequestObject
+// CreateProject operation middleware
+func (sh *strictHandler) CreateProject(ctx *gin.Context) {
+	var request CreateProjectRequestObject
 
-	var body AddProjectJSONRequestBody
+	var body CreateProjectJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
@@ -3165,10 +3165,10 @@ func (sh *strictHandler) AddProject(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.AddProject(ctx, request.(AddProjectRequestObject))
+		return sh.ssi.CreateProject(ctx, request.(CreateProjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AddProject")
+		handler = middleware(handler, "CreateProject")
 	}
 
 	response, err := handler(ctx, request)
@@ -3176,8 +3176,8 @@ func (sh *strictHandler) AddProject(ctx *gin.Context) {
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(AddProjectResponseObject); ok {
-		if err := validResponse.VisitAddProjectResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(CreateProjectResponseObject); ok {
+		if err := validResponse.VisitCreateProjectResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3221,28 +3221,28 @@ var swaggerSpec = []string{
 	"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",
-	"9SpJaie604Hs6/N5Hu1A9qe2dS4z9PiHsi7N6D2S+aR30DSb4D+wJOOEFY5TLsEcL+I1xB8RsbVM0tbP",
-	"EIlEzqxzdq5cLaLUvpgpoEEZZyuUgpR4BW1dvLB7yb20oZ5Gc0OZTNqfWLMQzSPNRDTanXLuUZj6ktVX",
-	"oVcslbVwyW+3DNYUT+/KgrlhMX3X3p98zYrdEkoRppL7cL42uj6vYk7FvjihUcPn0yr6/+bnMm1a+H1F",
-	"U5YEC3o78wUXRZ3gfn5zpYTwqDHaIkP9dDb2LzVFUJaMemXwv/QmBarwS2wBgsU9IiymuUkf6jaUSKWR",
-	"7dtWYaxh24IsemaRTPOUSURYtW4ZKbyg8DzkkH4liPa1Gidg7/ROG+jqAGhfuqGKUcJsuRDhbILecpCG",
-	"77zSMGBfcwlCouqZfk+ktu3vjwk5HFYP7x7XDO/D+cZP3d4/Aa+4mW/oUK6gmnZ5VdPm3aK9IhNeC3s1",
-	"0AVLK66Z/6cJmPYHNi4NS4+5pRyk9u601+wZCXHIqkGnDexxG737QL0Wivc367b9CtBi0qO/A/w+L9BT",
-	"q3FpL/59PsRH+0TbixuED1TiYRXiFB68f92HQVszz9SnCf2+GcOpCVtrS4WWgqeHAnezMuRR8X3M+GUJ",
-	"7ceIYX5zivWVV5r0l4vsrdyd25zT0eldeZt4WPDMK7cNIpgKYUpdMAHKKFlXROtdcbP5mJpeuSJ91A3M",
-	"z+ZpKZgvvT7GhtXCkUYQUbIMrzbh7e/C76h9HYpLUwBRDObeu8CBTdb6MntU3KELpladlF5vDLcnNH+L",
-	"aK5DzwBnMJb7C3AfFs522EeyzYd3vmpAfjiv6xvSnyfnZX3GdrTLt9odJCvyiz3BL6vhRUuv4bp7waNR",
-	"cV92ePBS3nd+Ose1Cwcv4118VgmvubPpC3jtQ+UmeXH/elRcci+vtFfuMX8Vpb6FvXqCgUjz2SJvsfy3",
-	"VrLKx4wU52hNVuvnRwhRDtHrLq9gdwGXN1U9xCvJXc0PA6g6DehZzQ60rmDbOI/1IarXTB3956GCsEP4",
-	"Didv4JQre5xc2W792s8DaHw7odcJaCa0u/yAjt35ojLUF58BG/J9iFMSbFfBRRdgAjHBsu1AuE7v3Jcr",
-	"9iulKyk4ljQVDWBfnhFKAbgat5LF4zqY/pMcD1E/VEX4kzoNmrU8amCwF1K7ID6wEq5F2zlEcQi3Qct7",
-	"Qu0JtY0CuH5Q7UbuANffDzXI3gYvbjwSbo9WAdeE7IPXwn1DOvNkPf4ODR6otr1x/Hs5SJbKSWVPKntS",
-	"2aE6tcchaMDZvPbptQyvCHOl6VeVwLq5NvRZ0fULz8jeiv3lfPOiFjB3H9E0pV1FVJx8JfHw8nubQ2MS",
-	"y5yiYlFPwfFBwfGsxHzwoshwL9gq5QEuKrnvJtZ6acXWMloAiteYmQ8oLhUIe0XafQux7V4XkZgjbqC1",
-	"y0kPvnse+WrU6V5yl3savrLRPaL9Ymo06h661ULzYKZjN6Fm0O8GKM9SYMpd0q196XM+nVIeY7rmUs1/",
-	"mP0wC+w5F4IneWwEHqAg59MpzsgkJQLHeTrhYmUsv5t1k9iVycQivOC5qtwcrmxbNlXbZuO9V1vfu2KT",
-	"6n+EY4/OVUvUolP1QQaQ1LNJYEkYJP4zDIgva5HeBv128eeAYdIys1//2zJDOje+SNH+uz7DiBSfCSsI",
-	"uA/OXG//HwAA///EPgSlSWkAAA==",
+	"ZcnVDnWnM9nX5/Y82pnsT23uXHLo8c9lXcrReyrzee+gdTbxf2BJxgkrfKdcgjlhxGuIPyJiy5mkLaEh",
+	"EomcWf/sXLlyRKndMVNDgzLOVigFKfEK2up4YbeTe2lDPZPmhjLJtD+xZiGaR5qJaLQ769yjMPUlq69C",
+	"r1gqa+Hy324ZrDWe3pU1c8PC+q69P/yaFbsllCJMJfcRfW13fWrFHIx9fUKjjM9nVvT/zc9l5rRw/Yqm",
+	"LAnW9HamDC6KUsH9XOdKFeFRw7RFkvrp7O1fapagrBr1yuB/6c0LVOGX2BoEi3tEWExzk0HUbSiRSiPb",
+	"t63CWMO2BVn0zCKZ5imTiLBq6TJSeEHhecgn/UoQ7cs1TsDe6aA20NUB0L6MQxWjhNmKIcLZBL3lIA3f",
+	"eaVhwL7mEoRE1WP9nkjtyl0cDK2Hd5BrpvfhvOOnbvGfgF/cTDp0qFdQUbv8qmnzgtFe4Qmvh7066CKm",
+	"FefM/9NETfujG5eGpcfcVA5SgHfabfYMhzhk1aDTBva4jd59oF6Lx/vrddt+BWgx6dHfAX6fHOgp2Li0",
+	"t/8+H+KjfULuxTXCB6rzsApxihHev/jDoK2ZbOrThH7vjOHUxK61pUJLwdNDgbtZHvKo+D5mBLOE9mNE",
+	"Mb85xfrKy036a0b2Vu7Obc7p6PSuvFI8LHzmlduGEUyZMKUunABlnKwrpvWuuN58TE2v3JM+6gbmZ/O0",
+	"FMzXXx9jw2rhSCOIKFkGWJvw9hfidxTADsWlqYIoBnPvXejAZmx9rT0qLtIF86snJH/bSK7DzoBmMI77",
+	"K3AfFsp22EdC8+EdrxqQH87j+ob058l5WJ+xFe3yq3YHyIrsYk/gy2p40dJruO5e8GhU3NcdHryW952f",
+	"znHtwsHreBefVcNrLm36Cl77ULlKXlzAHhW33Ms77ZWLzF9FrW9hr55gENJ8t8hbLP+xlazyNSPFOVqT",
+	"1fr5EcKTQ/S6yyvYXcHlTVUP8UpqV/PDAKpOA3pWswOtO9g2xmN9iOo9U0f/eUdF2CHch5NDcEqVPU6q",
+	"bLeK7ecENL6f0OsHNDPaXa5AxwZ9URnqi0+ADflGxCkHtqviogswgZBg2XYgXKd37usV+9XSlRQcS5qK",
+	"BrCvzwhlAFyRW8nicX1M/1mOhyggqiL8SR0IzVoeNS7YC6ldEB9YCtei7XyiOITboOU9ofaE2kYFXD+o",
+	"diN3gPfvhxpkb7subzwSdI9WA9dE7YNXw31DavNknf4OJR6oub3R/Hv5SK4Q9aSyJ5U9qexAndrjHDTg",
+	"eF77AluGV4S58vSrSnjdXB363Bj7hedlb93+cr5+UYucu89pmvquIjxOvpLAePnlzaGRiWVOUbGupyj5",
+	"oCh5VmI+eF9kuC9s9fIA95XcFxRrvbRuaxktAMVrzMynFJcKhL0s7b6KGHSyi5DMEbfR2jWlB99Dj3xJ",
+	"6nRDuctJDV/d6B7Rfj41GnUP3WqheTDTsftQM/p3A5RnKTDlruvWPvs5n04pjzFdc6nmP8x+mAW2nQvB",
+	"kzw2Ag9QkPPpFGdkkhKB4zydcLEyxt/NuknsymRlEV7wXFXuEFd2Lpu2bbPx3muu710xS/W/yLFH56ox",
+	"atGpeiIDSOrZJLAkDBL/TQbEl7WQb4N+uwh0wDBpmeWv/6GZIZ0bn6do/5GfYUSKb4YVBNzXZ663/w8A",
+	"AP//n9nshVZpAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

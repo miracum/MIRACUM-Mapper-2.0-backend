@@ -50,32 +50,32 @@ func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsR
 	return api.GetAllMappings200JSONResponse(mapping), nil
 }
 
-// AddMapping implements api.StrictServerInterface.
-func (s *Server) AddMapping(ctx context.Context, request api.AddMappingRequestObject) (api.AddMappingResponseObject, error) {
+// CreateMapping implements api.StrictServerInterface.
+func (s *Server) CreateMapping(ctx context.Context, request api.CreateMappingRequestObject) (api.CreateMappingResponseObject, error) {
 
 	project_id := request.ProjectId
 	mappingDetails := request.Body
 
 	if mappingDetails.Id != nil {
-		return api.AddMapping400JSONResponse{BadRequestErrorJSONResponse: "ID must not be provided"}, nil
+		return api.CreateMapping400JSONResponse{BadRequestErrorJSONResponse: "ID must not be provided"}, nil
 	}
 
 	mapping, err := transform.ApiMappingToGormMapping(*mappingDetails, project_id)
 	if err != nil {
-		return api.AddMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		return api.CreateMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 	}
 
 	if err := s.Database.CreateMappingQuery(&mapping); err != nil {
 		switch {
 		case errors.Is(err, database.ErrClientError):
-			return api.AddMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+			return api.CreateMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		default:
-			return api.AddMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to add the mapping"}, err
+			return api.CreateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to add the mapping"}, err
 		}
 	}
 	id := int64(mapping.ID) // TODO this could result in a negative number
 	mappingDetails.Id = &id
-	return api.AddMapping200JSONResponse(*mappingDetails), nil
+	return api.CreateMapping200JSONResponse(*mappingDetails), nil
 }
 
 // DeleteMapping implements api.StrictServerInterface.
@@ -83,8 +83,8 @@ func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingReq
 	panic("unimplemented")
 }
 
-// GetMappingByID implements api.StrictServerInterface.
-func (s *Server) GetMappingByID(ctx context.Context, request api.GetMappingByIDRequestObject) (api.GetMappingByIDResponseObject, error) {
+// GetMapping implements api.StrictServerInterface.
+func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestObject) (api.GetMappingResponseObject, error) {
 	panic("unimplemented")
 }
 
