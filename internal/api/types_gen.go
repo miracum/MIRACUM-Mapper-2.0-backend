@@ -10,8 +10,8 @@ const (
 
 // Defines values for CodeSystemRoleType.
 const (
-	Destination CodeSystemRoleType = "destination"
-	Source      CodeSystemRoleType = "source"
+	Source CodeSystemRoleType = "source"
+	Target CodeSystemRoleType = "target"
 )
 
 // Defines values for MappingEquivalence.

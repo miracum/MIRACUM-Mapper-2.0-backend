@@ -1110,7 +1110,7 @@ components:
               type: string
         type:
           type: string
-          enum: [source, destination]
+          enum: [source, target]
     Mapping:
       type: object
       properties:
