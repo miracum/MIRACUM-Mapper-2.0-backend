@@ -13,22 +13,26 @@ import (
 
 // AddPermission implements api.StrictServerInterface.
 func (s *Server) AddPermission(ctx context.Context, request api.AddPermissionRequestObject) (api.AddPermissionResponseObject, error) {
+
 	projectId := request.ProjectId
 	permission := *request.Body
 
-	// TODO user_id in path has to be removed
-
 	dbPermission, err := transform.ApiProjectPermissionToGormProjectPermission(permission, projectId)
 	if err != nil {
-		return api.AddPermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
+		return api.AddPermission422JSONResponse(err.Error()), nil
 	}
 
 	if err := s.Database.CreateProjectPermissionQuery(&dbPermission); err != nil {
-		return api.AddPermission500JSONResponse{}, err
+		switch {
+		case errors.Is(err, database.ErrClientError):
+			return api.AddPermission422JSONResponse(err.Error()), err
+		default:
+			return api.AddPermission500JSONResponse{}, err
+		}
 	}
 
 	return api.AddPermission200JSONResponse(permission), nil
-	//return api.AddPermission201JSONResponse{}, nil
+	//TODO return api.AddPermission201JSONResponse{}, nil
 }
 
 // DeletePermission implements api.StrictServerInterface.
@@ -37,6 +41,7 @@ func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermiss
 	projectId := request.ProjectId
 	userUuid, err := utilities.ParseUUID(request.UserId)
 	if err != nil {
+		// TODO return 422 instead of 400
 		return api.DeletePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, err
 	}
 
@@ -62,7 +67,12 @@ func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermis
 	var permissions []models.ProjectPermission = []models.ProjectPermission{}
 
 	if err := s.Database.GetProjectPermissionsQuery(&permissions, projectId); err != nil {
-		return api.GetAllPermissions500JSONResponse{}, err
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllPermissions404JSONResponse(err.Error()), err
+		default:
+			return api.GetAllPermissions500JSONResponse{}, err
+		}
 	}
 
 	var apiPermissions []api.ProjectPermission = []api.ProjectPermission{}
@@ -77,11 +87,22 @@ func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermis
 func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionRequestObject) (api.GetPermissionResponseObject, error) {
 
 	projectId := request.ProjectId
+	userUuid, err := utilities.ParseUUID(request.UserId)
+	if err != nil {
+		// TODO return 422 instead of 400
+		return api.GetPermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, err
+	}
 
 	var permission models.ProjectPermission
 
-	if err := s.Database.GetProjectPermissionQuery(&permission, projectId); err != nil {
-		return api.GetPermission500JSONResponse{}, err
+	if err := s.Database.GetProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetPermission404JSONResponse(err.Error()), err
+		default:
+			// TODO returns empty body?
+			return api.GetPermission500JSONResponse{}, err
+		}
 	}
 
 	apiPermission := transform.GormProjectPermissionToApiProjectPermission(permission)
@@ -92,21 +113,20 @@ func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionReq
 // UpdatePermission implements api.StrictServerInterface.
 func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermissionRequestObject) (api.UpdatePermissionResponseObject, error) {
 	projectId := request.ProjectId
-	userId := request.UserId
 	permission := *request.Body
-
-	// TODO delete if user id got deleted in path
-	if userId != permission.UserId {
-		return api.UpdatePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("User_id in path %s and UserId %s in body do not match", userId, permission.UserId))}, nil
-	}
 
 	dbPermission, err := transform.ApiProjectPermissionToGormProjectPermission(permission, projectId)
 	if err != nil {
-		return api.UpdatePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
+		return api.UpdatePermission422JSONResponse(err.Error()), nil
 	}
 
 	if err := s.Database.UpdateProjectPermissionQuery(&dbPermission, projectId); err != nil {
-		return api.UpdatePermission500JSONResponse{}, err
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.UpdatePermission404JSONResponse(err.Error()), err
+		default:
+			return api.UpdatePermission500JSONResponse{}, err
+		}
 	}
 
 	return api.UpdatePermission200JSONResponse(permission), nil

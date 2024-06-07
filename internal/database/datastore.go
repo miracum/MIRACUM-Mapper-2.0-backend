@@ -21,7 +21,7 @@ type Datastore interface {
 
 	// ProjectPermission
 	GetProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
-	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
+	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
 	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
