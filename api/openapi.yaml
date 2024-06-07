@@ -67,7 +67,7 @@ paths:
         - project
       summary: Get all projects
       description: Get all projects with pagination. Sorting can also be specified by query parameters.
-      operationId: getProjects
+      operationId: getAllProjects
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/pageSize"
@@ -105,7 +105,7 @@ paths:
       summary: Create a new project
       description: Create a new project with permissions and code system roles (the columns in the mapping table). Code system roles can not be changed after creation.
       parameters: []
-      operationId: addProject
+      operationId: createProject
       requestBody:
         required: true
         content:
@@ -165,7 +165,7 @@ paths:
       description: Update the project information. Does not update the permissions for the users or the code system roles (the columns in the mapping table).
       parameters:
         - $ref: "#/components/parameters/project_id"
-      operationId: editProject
+      operationId: updateProject
       requestBody:
         required: true
         content:
@@ -286,7 +286,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/project_id"
         - $ref: "#/components/parameters/user_id"
-      operationId: addPermission
+      operationId: createPermission
       requestBody:
         required: true
         content:
@@ -415,7 +415,7 @@ paths:
     #   description: create a new element for each mapping with this code system role
     #   parameters:
     #     - $ref: "#/components/parameters/project_id"
-    #   operationId: addCodeSystemRole
+    #   operationId: createCodeSystemRole
     #   requestBody:
     #     required: true
     #     content:
@@ -586,7 +586,7 @@ paths:
       description: Create a new mapping for a project by project ID including all needed elements (specified by code_system_roles from the corresponding project)
       parameters:
         - $ref: "#/components/parameters/project_id"
-      operationId: addMapping
+      operationId: createMapping
       requestBody:
         required: true
         content:
@@ -625,7 +625,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/project_id"
         - $ref: "#/components/parameters/mapping_id"
-      operationId: getMappingByID
+      operationId: getMapping
       responses:
         "200":
           description: Success
@@ -738,7 +738,7 @@ paths:
         - code-system
       summary: Create a new code system
       description: Create a new code system. Only admins can create code systems.
-      operationId: addCodeSystem
+      operationId: createCodeSystem
       requestBody:
         required: true
         content:
