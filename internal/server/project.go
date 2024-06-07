@@ -13,16 +13,16 @@ import (
 
 var (
 	// Define mappings from API parameters to database column names
-	sortColumns = map[api.GetProjectsParamsSortBy]string{
-		"dateCreated": "created",
-		"id":          "id",
-		"name":        "name",
+	projectSortColumns = map[api.GetProjectsParamsSortBy]string{
+		api.GetProjectsParamsSortByDateCreated: "created",
+		api.GetProjectsParamsSortById:          "id",
+		api.GetProjectsParamsSortByName:        "name",
 	}
 
 	// Define mappings from API parameters to sort orders
-	sortOrders = map[api.GetProjectsParamsSortOrder]string{
-		"asc":  "ASC",
-		"desc": "DESC",
+	projectSortOrders = map[api.GetProjectsParamsSortOrder]string{
+		api.GetProjectsParamsSortOrderAsc:  "ASC",
+		api.GetProjectsParamsSortOrderDesc: "DESC",
 	}
 )
 
@@ -86,8 +86,8 @@ func (s *Server) GetProjects(ctx context.Context, request api.GetProjectsRequest
 
 	pageSize := *request.Params.PageSize
 	offset := utilities.GetOffset(*request.Params.Page, pageSize)
-	sortBy := sortColumns[*request.Params.SortBy]
-	sortOrder := sortOrders[*request.Params.SortOrder]
+	sortBy := projectSortColumns[*request.Params.SortBy]
+	sortOrder := projectSortOrders[*request.Params.SortOrder]
 
 	var projects []models.Project = []models.Project{}
 

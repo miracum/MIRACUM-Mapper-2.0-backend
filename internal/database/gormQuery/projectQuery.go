@@ -12,7 +12,7 @@ import (
 func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
 	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
 		return db.Order("Position ASC")
-	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId)
+	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId) // TODO & is not necessary here
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
 		if !ok {

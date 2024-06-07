@@ -25,6 +25,13 @@ type Datastore interface {
 	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
 	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
+
+	// Mapping
+	GetAllMappingsQuery(mappings *[]models.Mapping, pageSize int, offset int, sortBy string, sortOrder string) error
+	GetMappingQuery(mapping *models.Mapping, mappingId int32) error
+	CreateMappingQuery(mapping *models.Mapping) error
+	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(oldMapping, newMapping *models.Mapping) error) error
+	DeleteMappingQuery(mapping *models.Mapping, mappingId int32) error
 	//Add other methods here...
 }
 

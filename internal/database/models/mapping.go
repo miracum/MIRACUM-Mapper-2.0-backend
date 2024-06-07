@@ -42,7 +42,7 @@ func (e Status) Value() (driver.Value, error) {
 
 // Mapping defines model for Mapping.
 type Mapping struct {
-	Model
+	ModelBigId
 	ProjectID   uint32
 	Equivalence *Equivalence `gorm:"type:Equivalence"`
 	Status      *Status      `gorm:"type:Status"`
