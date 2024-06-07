@@ -156,6 +156,18 @@ func createTestData(gormDB *gorm.DB) {
 	// Save the test user to the database
 	gormDB.FirstOrCreate(&testUser, models.User{Id: testUser.Id})
 
+	// Create a test user
+	testUser2 := models.User{
+		Id:          uuid.MustParse("b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a20"), // Generate a new UUID
+		UserName:    "Test Use2",
+		LogName:     "testuse2",
+		Affiliation: "Test Affiliatio2",
+		// Initialize ProjectPermissions if needed
+	}
+
+	// Save the test user 2 to the database
+	gormDB.FirstOrCreate(&testUser2, models.User{Id: testUser2.Id})
+
 	description := "Example Code System"
 	codeSystem := models.CodeSystem{
 		Uri:             "http://example.com/codesystem",
