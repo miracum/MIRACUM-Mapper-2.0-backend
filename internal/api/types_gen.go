@@ -10,8 +10,8 @@ const (
 
 // Defines values for CodeSystemRoleType.
 const (
-	Destination CodeSystemRoleType = "destination"
-	Source      CodeSystemRoleType = "source"
+	Source CodeSystemRoleType = "source"
+	Target CodeSystemRoleType = "target"
 )
 
 // Defines values for MappingEquivalence.
@@ -106,7 +106,7 @@ type CodeSystemRoleType string
 // Concept defines model for Concept.
 type Concept struct {
 	Code    *string `json:"code,omitempty"`
-	Id      *int    `json:"id,omitempty"`
+	Id      *uint64 `json:"id,omitempty"`
 	Meaning *string `json:"meaning,omitempty"`
 }
 

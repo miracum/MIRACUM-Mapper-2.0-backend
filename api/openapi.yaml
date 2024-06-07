@@ -1110,7 +1110,7 @@ components:
               type: string
         type:
           type: string
-          enum: [source, destination]
+          enum: [source, target]
     Mapping:
       type: object
       properties:
@@ -1145,6 +1145,7 @@ components:
       properties:
         id:
           type: integer
+          format: uint64
         code:
           type: string
         meaning:
