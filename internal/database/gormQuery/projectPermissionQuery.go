@@ -49,20 +49,17 @@ func (gq *GormQuery) CreateProjectPermissionQuery(projectPermission *models.Proj
 func (gq *GormQuery) GetProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("project_id = ?", projectId).Preload("User").Find(&projectPermissions).Error; err != nil {
-			switch {
-			case errors.Is(err, gorm.ErrRecordNotFound):
-				var project models.Project
-				if err := tx.First(&project, projectId).Error; err != nil {
-					if errors.Is(err, gorm.ErrRecordNotFound) {
-						return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
-					}
-					return err
-				} else {
-					*projectPermissions = []models.ProjectPermission{}
-					return nil
+			return err
+		} else if len(*projectPermissions) == 0 {
+			var project models.Project
+			if err := tx.First(&project, projectId).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
 				}
-			default:
 				return err
+			} else {
+				*projectPermissions = []models.ProjectPermission{}
+				return nil
 			}
 		}
 		return nil

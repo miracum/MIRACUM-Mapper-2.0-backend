@@ -25,9 +25,9 @@ func (s *Server) AddPermission(ctx context.Context, request api.AddPermissionReq
 	if err := s.Database.CreateProjectPermissionQuery(&dbPermission); err != nil {
 		switch {
 		case errors.Is(err, database.ErrClientError):
-			return api.AddPermission422JSONResponse(err.Error()), err
+			return api.AddPermission422JSONResponse(err.Error()), nil
 		default:
-			return api.AddPermission500JSONResponse{}, err
+			return api.AddPermission500JSONResponse{}, nil
 		}
 	}
 
@@ -42,7 +42,7 @@ func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermiss
 	userUuid, err := utilities.ParseUUID(request.UserId)
 	if err != nil {
 		// TODO return 422 instead of 400
-		return api.DeletePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, err
+		return api.DeletePermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
 	}
 
 	var permission models.ProjectPermission
@@ -50,9 +50,9 @@ func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermiss
 	if err := s.Database.DeleteProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.DeletePermission404JSONResponse(err.Error()), err
+			return api.DeletePermission404JSONResponse(err.Error()), nil
 		default:
-			return api.DeletePermission500JSONResponse{}, err
+			return api.DeletePermission500JSONResponse{}, nil
 		}
 	}
 
@@ -69,9 +69,9 @@ func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermis
 	if err := s.Database.GetProjectPermissionsQuery(&permissions, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.GetAllPermissions404JSONResponse(err.Error()), err
+			return api.GetAllPermissions404JSONResponse(err.Error()), nil
 		default:
-			return api.GetAllPermissions500JSONResponse{}, err
+			return api.GetAllPermissions500JSONResponse{}, nil
 		}
 	}
 
@@ -90,7 +90,7 @@ func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionReq
 	userUuid, err := utilities.ParseUUID(request.UserId)
 	if err != nil {
 		// TODO return 422 instead of 400
-		return api.GetPermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, err
+		return api.GetPermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
 	}
 
 	var permission models.ProjectPermission
@@ -98,10 +98,10 @@ func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionReq
 	if err := s.Database.GetProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.GetPermission404JSONResponse(err.Error()), err
+			return api.GetPermission404JSONResponse(err.Error()), nil
 		default:
 			// TODO returns empty body?
-			return api.GetPermission500JSONResponse{}, err
+			return api.GetPermission500JSONResponse{}, nil
 		}
 	}
 
@@ -123,9 +123,9 @@ func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermiss
 	if err := s.Database.UpdateProjectPermissionQuery(&dbPermission, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.UpdatePermission404JSONResponse(err.Error()), err
+			return api.UpdatePermission404JSONResponse(err.Error()), nil
 		default:
-			return api.UpdatePermission500JSONResponse{}, err
+			return api.UpdatePermission500JSONResponse{}, nil
 		}
 	}
 
