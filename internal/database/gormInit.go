@@ -168,7 +168,7 @@ func createTestData(gormDB *gorm.DB) {
 	// Save the test user 2 to the database
 	gormDB.FirstOrCreate(&testUser2, models.User{Id: testUser2.Id})
 
-	description := "Example Code System"
+	description := "Example Code System 1"
 	codeSystem := models.CodeSystem{
 		Uri:             "http://example.com/codesystem",
 		Version:         "1.0",
@@ -180,4 +180,36 @@ func createTestData(gormDB *gorm.DB) {
 	}
 
 	gormDB.FirstOrCreate(&codeSystem)
+
+	description2 := "Example Code System 2"
+
+	codeSystem2 := models.CodeSystem{
+		Model:       models.Model{ID: 2},
+		Uri:         "http://example.com/codesystem2",
+		Version:     "1.0",
+		Name:        "Example Code System 2",
+		Description: &description2,
+	}
+
+	gormDB.FirstOrCreate(&codeSystem2)
+
+	// create concept for code system 1
+	concept1 := models.Concept{
+		CodeSystemID: codeSystem.ID,
+		Code:         "1",
+		Display:      "Concept 1",
+	}
+
+	gormDB.FirstOrCreate(&concept1)
+
+	// create concept for code system 2
+
+	concept2 := models.Concept{
+		ModelBigId:   models.ModelBigId{ID: 2},
+		CodeSystemID: codeSystem2.ID,
+		Code:         "2",
+		Display:      "Concept 2",
+	}
+
+	gormDB.FirstOrCreate(&concept2)
 }

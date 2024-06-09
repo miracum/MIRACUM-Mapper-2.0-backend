@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql/driver"
+	"errors"
 )
 
 type Equivalence string
@@ -15,7 +16,14 @@ const (
 )
 
 func (e *Equivalence) Scan(value interface{}) error {
-	*e = Equivalence(value.([]byte))
+	switch v := value.(type) {
+	case []byte:
+		*e = Equivalence(v)
+	case string:
+		*e = Equivalence([]byte(v))
+	default:
+		return errors.New("Invalid type for Equivalence")
+	}
 	return nil
 }
 
@@ -32,7 +40,14 @@ const (
 )
 
 func (e *Status) Scan(value interface{}) error {
-	*e = Status(value.([]byte))
+	switch v := value.(type) {
+	case []byte:
+		*e = Status(v)
+	case string:
+		*e = Status([]byte(v))
+	default:
+		return errors.New("Invalid type for Status")
+	}
 	return nil
 }
 
