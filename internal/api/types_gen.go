@@ -14,13 +14,36 @@ const (
 	Target CodeSystemRoleType = "target"
 )
 
+// Defines values for CreateMappingEquivalence.
+const (
+	CreateMappingEquivalenceEquivalent                 CreateMappingEquivalence = "equivalent"
+	CreateMappingEquivalenceNotRelated                 CreateMappingEquivalence = "not-related"
+	CreateMappingEquivalenceRelatedTo                  CreateMappingEquivalence = "related-to"
+	CreateMappingEquivalenceSourceIsBroaderThanTarget  CreateMappingEquivalence = "source-is-broader-than-target"
+	CreateMappingEquivalenceSourceIsNarrowerThanTarget CreateMappingEquivalence = "source-is-narrower-than-target"
+)
+
+// Defines values for CreateMappingStatus.
+const (
+	CreateMappingStatusActive   CreateMappingStatus = "active"
+	CreateMappingStatusInactive CreateMappingStatus = "inactive"
+	CreateMappingStatusPending  CreateMappingStatus = "pending"
+)
+
 // Defines values for MappingEquivalence.
 const (
-	Equivalent                 MappingEquivalence = "equivalent"
-	NotRelated                 MappingEquivalence = "not-related"
-	RelatedTo                  MappingEquivalence = "related-to"
-	SourceIsBroaderThanTarget  MappingEquivalence = "source-is-broader-than-target"
-	SourceIsNarrowerThanTarget MappingEquivalence = "source-is-narrower-than-target"
+	MappingEquivalenceEquivalent                 MappingEquivalence = "equivalent"
+	MappingEquivalenceNotRelated                 MappingEquivalence = "not-related"
+	MappingEquivalenceRelatedTo                  MappingEquivalence = "related-to"
+	MappingEquivalenceSourceIsBroaderThanTarget  MappingEquivalence = "source-is-broader-than-target"
+	MappingEquivalenceSourceIsNarrowerThanTarget MappingEquivalence = "source-is-narrower-than-target"
+)
+
+// Defines values for MappingStatus.
+const (
+	MappingStatusActive   MappingStatus = "active"
+	MappingStatusInactive MappingStatus = "inactive"
+	MappingStatusPending  MappingStatus = "pending"
 )
 
 // Defines values for ProjectPermissionRole.
@@ -28,6 +51,22 @@ const (
 	Editor       ProjectPermissionRole = "editor"
 	ProjectOwner ProjectPermissionRole = "project_owner"
 	Reviewer     ProjectPermissionRole = "reviewer"
+)
+
+// Defines values for UpdateMappingEquivalence.
+const (
+	Equivalent                 UpdateMappingEquivalence = "equivalent"
+	NotRelated                 UpdateMappingEquivalence = "not-related"
+	RelatedTo                  UpdateMappingEquivalence = "related-to"
+	SourceIsBroaderThanTarget  UpdateMappingEquivalence = "source-is-broader-than-target"
+	SourceIsNarrowerThanTarget UpdateMappingEquivalence = "source-is-narrower-than-target"
+)
+
+// Defines values for UpdateMappingStatus.
+const (
+	Active   UpdateMappingStatus = "active"
+	Inactive UpdateMappingStatus = "inactive"
+	Pending  UpdateMappingStatus = "pending"
 )
 
 // Defines values for SortOrder.
@@ -105,33 +144,56 @@ type CodeSystemRoleType string
 
 // Concept defines model for Concept.
 type Concept struct {
-	Code    *string `json:"code,omitempty"`
-	Id      *uint64 `json:"id,omitempty"`
-	Meaning *string `json:"meaning,omitempty"`
+	Code    string `json:"code"`
+	Id      int64  `json:"id"`
+	Meaning string `json:"meaning"`
 }
+
+// CreateMapping defines model for CreateMapping.
+type CreateMapping struct {
+	Comment     *string                   `json:"comment,omitempty"`
+	Elements    *[]Element                `json:"elements,omitempty"`
+	Equivalence *CreateMappingEquivalence `json:"equivalence,omitempty"`
+	Status      *CreateMappingStatus      `json:"status,omitempty"`
+}
+
+// CreateMappingEquivalence defines model for CreateMapping.Equivalence.
+type CreateMappingEquivalence string
+
+// CreateMappingStatus defines model for CreateMapping.Status.
+type CreateMappingStatus string
 
 // Element defines model for Element.
 type Element struct {
-	Concept  *Concept `json:"concept,omitempty"`
-	SystemId *int32   `json:"system-id,omitempty"`
+	CodeSystemRole *int32 `json:"codeSystemRole,omitempty"`
+	Concept        *int64 `json:"concept,omitempty"`
 }
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = string
 
+// FullElement defines model for FullElement.
+type FullElement struct {
+	CodeSystemRole *int32   `json:"codeSystemRole,omitempty"`
+	Concept        *Concept `json:"concept,omitempty"`
+}
+
 // Mapping defines model for Mapping.
 type Mapping struct {
 	Comment     *string             `json:"comment,omitempty"`
-	Created     *string             `json:"created,omitempty"`
-	Elements    *[]Element          `json:"elements,omitempty"`
+	Created     string              `json:"created"`
+	Elements    []FullElement       `json:"elements"`
 	Equivalence *MappingEquivalence `json:"equivalence,omitempty"`
-	Id          *int64              `json:"id,omitempty"`
-	Modified    *string             `json:"modified,omitempty"`
-	Status      *string             `json:"status,omitempty"`
+	Id          int64               `json:"id"`
+	Modified    string              `json:"modified"`
+	Status      *MappingStatus      `json:"status,omitempty"`
 }
 
 // MappingEquivalence defines model for Mapping.Equivalence.
 type MappingEquivalence string
+
+// MappingStatus defines model for Mapping.Status.
+type MappingStatus string
 
 // Project defines model for Project.
 type Project struct {
@@ -168,6 +230,21 @@ type ProjectPermission struct {
 
 // ProjectPermissionRole defines model for ProjectPermission.Role.
 type ProjectPermissionRole string
+
+// UpdateMapping defines model for UpdateMapping.
+type UpdateMapping struct {
+	Comment     *string                   `json:"comment,omitempty"`
+	Elements    *[]Element                `json:"elements,omitempty"`
+	Equivalence *UpdateMappingEquivalence `json:"equivalence,omitempty"`
+	Id          int64                     `json:"id"`
+	Status      *UpdateMappingStatus      `json:"status,omitempty"`
+}
+
+// UpdateMappingEquivalence defines model for UpdateMapping.Equivalence.
+type UpdateMappingEquivalence string
+
+// UpdateMappingStatus defines model for UpdateMapping.Status.
+type UpdateMappingStatus string
 
 // CodeSystemRoleId defines model for code-system-role_id.
 type CodeSystemRoleId = int32
@@ -289,11 +366,11 @@ type UpdateProjectJSONRequestBody = Project
 // UpdateCodeSystemRoleJSONRequestBody defines body for UpdateCodeSystemRole for application/json ContentType.
 type UpdateCodeSystemRoleJSONRequestBody = CodeSystemRole
 
-// UpdateMappingJSONRequestBody defines body for UpdateMapping for application/json ContentType.
-type UpdateMappingJSONRequestBody = Mapping
-
 // CreateMappingJSONRequestBody defines body for CreateMapping for application/json ContentType.
-type CreateMappingJSONRequestBody = Mapping
+type CreateMappingJSONRequestBody = CreateMapping
+
+// UpdateMappingJSONRequestBody defines body for UpdateMapping for application/json ContentType.
+type UpdateMappingJSONRequestBody = UpdateMapping
 
 // CreatePermissionJSONRequestBody defines body for CreatePermission for application/json ContentType.
 type CreatePermissionJSONRequestBody = ProjectPermission

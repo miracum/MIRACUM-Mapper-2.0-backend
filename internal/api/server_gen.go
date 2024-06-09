@@ -71,15 +71,15 @@ type ServerInterface interface {
 	// Get a mapping with its elements by ID
 	// (GET /project/{project_id}/mapping/{mapping_id})
 	GetMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
-	// Update a mapping and its elements by ID
-	// (PUT /project/{project_id}/mapping/{mapping_id})
-	UpdateMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
 	// Get all mappings for a project by project ID
 	// (GET /project/{project_id}/mappings)
 	GetAllMappings(c *gin.Context, projectId ProjectId, params GetAllMappingsParams)
 	// Create a new mapping for a project
 	// (POST /project/{project_id}/mappings)
 	CreateMapping(c *gin.Context, projectId ProjectId)
+	// Update a mapping and its elements by their concept IDs
+	// (PUT /project/{project_id}/mappings)
+	UpdateMapping(c *gin.Context, projectId ProjectId)
 	// Get permissions for a project
 	// (GET /project/{project_id}/permissions)
 	GetAllPermissions(c *gin.Context, projectId ProjectId)
@@ -621,43 +621,6 @@ func (siw *ServerInterfaceWrapper) GetMapping(c *gin.Context) {
 	siw.Handler.GetMapping(c, projectId, mappingId)
 }
 
-// UpdateMapping operation middleware
-func (siw *ServerInterfaceWrapper) UpdateMapping(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Path parameter "mapping_id" -------------
-	var mappingId MappingId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "mapping_id", c.Param("mapping_id"), &mappingId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter mapping_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UpdateMapping(c, projectId, mappingId)
-}
-
 // GetAllMappings operation middleware
 func (siw *ServerInterfaceWrapper) GetAllMappings(c *gin.Context) {
 
@@ -747,6 +710,34 @@ func (siw *ServerInterfaceWrapper) CreateMapping(c *gin.Context) {
 	}
 
 	siw.Handler.CreateMapping(c, projectId)
+}
+
+// UpdateMapping operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMapping(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateMapping(c, projectId)
 }
 
 // GetAllPermissions operation middleware
@@ -1039,9 +1030,9 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PUT(options.BaseURL+"/project/:project_id/code-system-roles/:code-system-role_id", wrapper.UpdateCodeSystemRole)
 	router.DELETE(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.DeleteMapping)
 	router.GET(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.GetMapping)
-	router.PUT(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.UpdateMapping)
 	router.GET(options.BaseURL+"/project/:project_id/mappings", wrapper.GetAllMappings)
 	router.POST(options.BaseURL+"/project/:project_id/mappings", wrapper.CreateMapping)
+	router.PUT(options.BaseURL+"/project/:project_id/mappings", wrapper.UpdateMapping)
 	router.GET(options.BaseURL+"/project/:project_id/permissions", wrapper.GetAllPermissions)
 	router.DELETE(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.DeletePermission)
 	router.GET(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.GetPermission)
@@ -1807,63 +1798,6 @@ func (response GetMapping500JSONResponse) VisitGetMappingResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateMappingRequestObject struct {
-	ProjectId ProjectId `json:"project_id"`
-	MappingId MappingId `json:"mapping_id"`
-	Body      *UpdateMappingJSONRequestBody
-}
-
-type UpdateMappingResponseObject interface {
-	VisitUpdateMappingResponse(w http.ResponseWriter) error
-}
-
-type UpdateMapping200JSONResponse Mapping
-
-func (response UpdateMapping200JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response UpdateMapping400JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateMapping404JSONResponse ErrorResponse
-
-func (response UpdateMapping404JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateMapping422JSONResponse ErrorResponse
-
-func (response UpdateMapping422JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateMapping500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response UpdateMapping500JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type GetAllMappingsRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 	Params    GetAllMappingsParams
@@ -1961,6 +1895,62 @@ type CreateMapping500JSONResponse struct {
 }
 
 func (response CreateMapping500JSONResponse) VisitCreateMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMappingRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	Body      *UpdateMappingJSONRequestBody
+}
+
+type UpdateMappingResponseObject interface {
+	VisitUpdateMappingResponse(w http.ResponseWriter) error
+}
+
+type UpdateMapping200JSONResponse Mapping
+
+func (response UpdateMapping200JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response UpdateMapping400JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMapping404JSONResponse ErrorResponse
+
+func (response UpdateMapping404JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMapping422JSONResponse ErrorResponse
+
+func (response UpdateMapping422JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateMapping500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdateMapping500JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2363,15 +2353,15 @@ type StrictServerInterface interface {
 	// Get a mapping with its elements by ID
 	// (GET /project/{project_id}/mapping/{mapping_id})
 	GetMapping(ctx context.Context, request GetMappingRequestObject) (GetMappingResponseObject, error)
-	// Update a mapping and its elements by ID
-	// (PUT /project/{project_id}/mapping/{mapping_id})
-	UpdateMapping(ctx context.Context, request UpdateMappingRequestObject) (UpdateMappingResponseObject, error)
 	// Get all mappings for a project by project ID
 	// (GET /project/{project_id}/mappings)
 	GetAllMappings(ctx context.Context, request GetAllMappingsRequestObject) (GetAllMappingsResponseObject, error)
 	// Create a new mapping for a project
 	// (POST /project/{project_id}/mappings)
 	CreateMapping(ctx context.Context, request CreateMappingRequestObject) (CreateMappingResponseObject, error)
+	// Update a mapping and its elements by their concept IDs
+	// (PUT /project/{project_id}/mappings)
+	UpdateMapping(ctx context.Context, request UpdateMappingRequestObject) (UpdateMappingResponseObject, error)
 	// Get permissions for a project
 	// (GET /project/{project_id}/permissions)
 	GetAllPermissions(ctx context.Context, request GetAllPermissionsRequestObject) (GetAllPermissionsResponseObject, error)
@@ -2871,42 +2861,6 @@ func (sh *strictHandler) GetMapping(ctx *gin.Context, projectId ProjectId, mappi
 	}
 }
 
-// UpdateMapping operation middleware
-func (sh *strictHandler) UpdateMapping(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
-	var request UpdateMappingRequestObject
-
-	request.ProjectId = projectId
-	request.MappingId = mappingId
-
-	var body UpdateMappingJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateMapping(ctx, request.(UpdateMappingRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateMapping")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(UpdateMappingResponseObject); ok {
-		if err := validResponse.VisitUpdateMappingResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // GetAllMappings operation middleware
 func (sh *strictHandler) GetAllMappings(ctx *gin.Context, projectId ProjectId, params GetAllMappingsParams) {
 	var request GetAllMappingsRequestObject
@@ -2963,6 +2917,41 @@ func (sh *strictHandler) CreateMapping(ctx *gin.Context, projectId ProjectId) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(CreateMappingResponseObject); ok {
 		if err := validResponse.VisitCreateMappingResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMapping operation middleware
+func (sh *strictHandler) UpdateMapping(ctx *gin.Context, projectId ProjectId) {
+	var request UpdateMappingRequestObject
+
+	request.ProjectId = projectId
+
+	var body UpdateMappingJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMapping(ctx, request.(UpdateMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UpdateMappingResponseObject); ok {
+		if err := validResponse.VisitUpdateMappingResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3188,61 +3177,63 @@ func (sh *strictHandler) CreateProject(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AP//n9nshVZpAAA=",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

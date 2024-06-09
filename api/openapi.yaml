@@ -592,7 +592,7 @@ paths:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/Mapping" # id prohibited/ignored
+              "$ref": "#/components/schemas/CreateMapping" # id prohibited/ignored
       responses:
         "200":
           description: Success
@@ -610,6 +610,43 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - mapping
+      summary: Update a mapping and its elements by their concept IDs
+      description: Update a mapping by ID and all included elements by using the corresponding concept IDs. The order of the elements must match the order of the columns (codesystem-roles) of the project.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: updateMapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateMapping" # id required
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping" # id optional
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Error # if trying to change the project of the mapping
           content:
             application/json:
               schema:
@@ -637,44 +674,6 @@ paths:
           "$ref": "#/components/responses/BadRequestError"
         "404":
           description: Project or Mapping not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
-    put:
-      tags:
-        - mapping
-      summary: Update a mapping and its elements by ID
-      description: Update a mapping by ID and all included elements. The elements include the concept with the system-id.
-      parameters:
-        - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/mapping_id"
-      operationId: updateMapping
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Mapping" # id required
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Mapping" # id optional
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project or Mapping not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation Error # if trying to change the project of the mapping
           content:
             application/json:
               schema:
@@ -1111,45 +1110,82 @@ components:
         type:
           type: string
           enum: [source, target]
-    Mapping:
+
+    #############################      
+    CreateMapping:
       type: object
+      # required:
+      #   - elements
       properties:
-        id:
-          type: integer
-          format: int64
         equivalence:
           type: string
           enum: [related-to, equivalent, source-is-narrower-than-target, source-is-broader-than-target, not-related]
         status:
           type: string
+          enum: [active, inactive, pending]
         comment:
-          type: string
-        created:
-          type: string
-        modified:
           type: string
         elements:
           type: array
           items:
             $ref: "#/components/schemas/Element"
+    UpdateMapping:
+      allOf:
+        - $ref: "#/components/schemas/CreateMapping"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+    Mapping:
+      allOf:
+        - $ref: "#/components/schemas/UpdateMapping"
+        - type: object
+          required: 
+            - modified
+            - created
+            - elements
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/FullElement"
+            created:
+              type: string
+            modified:
+              type: string
     Element:
-      type: object
       properties:
-        concept:
-          $ref: "#/components/schemas/Concept"
-        system-id:
+        codeSystemRole:
           type: integer
           format: int32
+        concept:
+          type: integer
+          format: int64
+    FullElement:
+      allOf:
+        - $ref: "#/components/schemas/Element"
+        - type: object
+          properties:
+            concept:
+              $ref: "#/components/schemas/Concept"
     Concept:
       type: object
+      required:
+        - id
+        - code
+        - meaning
       properties:
         id:
           type: integer
-          format: uint64
+          format: int64
         code:
           type: string
         meaning:
           type: string
+    
     CodeSystem:
       type: object
       required:
@@ -1172,13 +1208,6 @@ components:
           type: string
         author:
           type: string
-    # Error:
-    #   type: object
-    #   properties:
-    #     code:
-    #       type: integer
-    #     message:
-    #       type: string
     ErrorResponse:
       type: string
   responses:
