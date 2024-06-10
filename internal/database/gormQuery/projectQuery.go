@@ -11,7 +11,7 @@ import (
 
 func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
 	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
-		return db.Order("Position ASC")
+		return db.Order("Position ASC") // TODO maybe sort at the end is also possible
 	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId) // TODO & is not necessary here
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
@@ -69,7 +69,7 @@ func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32) error {
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		// get ptoject and then delete it
+		// get project so it can be returned in the api and then delete it
 		if err := tx.First(&project, projectId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):

@@ -30,6 +30,57 @@ var (
 	}
 )
 
+var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32, error) {
+	var errorMessages []string
+
+	if !project.StatusRequired && mapping.Status != nil {
+		errorMessages = append(errorMessages, "The project does not allow to set a status.")
+	}
+	if !project.EquivalenceRequired && mapping.Equivalence != nil {
+		errorMessages = append(errorMessages, "The project does not allow to set an equivalence.")
+	}
+
+	codeSystemRoleIDs := make(map[uint32]bool)
+	for _, element := range mapping.Elements {
+		isValid := false
+		for _, role := range project.CodeSystemRoles {
+			if element.CodeSystemRoleID == role.ID {
+				if _, exists := codeSystemRoleIDs[role.ID]; exists {
+					errorMessages = append(errorMessages, fmt.Sprintf("Duplicate CodeSystemRoleID %d", role.ID))
+				} else {
+					codeSystemRoleIDs[role.ID] = true
+					isValid = true
+				}
+				if role.CodeSystemID != element.Concept.CodeSystemID {
+					errorMessages = append(errorMessages, fmt.Sprintf("The CodeSystemRole %d has the CodeSystem %d which does not match the CodeSystem %d of the Concept %d", role.ID, role.CodeSystemID, element.Concept.CodeSystemID, *element.ConceptID))
+				}
+				break
+			}
+			// since the roles are ordered in ascending order, we can break here because all remaining roles will have an ID greater than the codeSystemRoleID of the element
+			if element.CodeSystemRoleID < role.ID {
+				break
+			}
+		}
+
+		if !isValid { // || element.CodeSystemRoleID > project.CodeSystemRoles[len(project.CodeSystemRoles)-1].ID
+			errorMessages = append(errorMessages, fmt.Sprintf("Invalid mapping: CodeSystemRoleID %d is not valid", element.CodeSystemRoleID))
+		}
+	}
+
+	if len(errorMessages) > 0 {
+		return nil, database.NewDBError(database.ClientError, strings.Join(errorMessages, "; "))
+	}
+
+	unusedCodeSystemRoleIDs := make([]uint32, 0)
+	for _, role := range project.CodeSystemRoles {
+		if _, exists := codeSystemRoleIDs[role.ID]; !exists {
+			unusedCodeSystemRoleIDs = append(unusedCodeSystemRoleIDs, role.ID)
+		}
+	}
+
+	return unusedCodeSystemRoleIDs, nil
+}
+
 // GetAllMappings implements api.StrictServerInterface.
 func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsRequestObject) (api.GetAllMappingsResponseObject, error) {
 
@@ -42,7 +93,12 @@ func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsR
 	var mappings []models.Mapping = []models.Mapping{}
 
 	if err := s.Database.GetAllMappingsQuery(&mappings, projectId, pageSize, offset, sortBy, sortOrder); err != nil {
-		return api.GetAllMappings500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the mappings"}, nil
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllMappings404JSONResponse(err.Error()), nil
+		default:
+			return api.GetAllMappings500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the mappings"}, nil
+		}
 	}
 
 	var mapping []api.Mapping = []api.Mapping{}
@@ -61,67 +117,45 @@ func (s *Server) CreateMapping(ctx context.Context, request api.CreateMappingReq
 
 	mapping := transform.ApiCreateMappingToGormMapping(*createMapping, projectId)
 
-	checkFunc := func(mapping *models.Mapping, project *models.Project) error {
-		var errorMessages []string
-
-		if !project.StatusRequired && mapping.Status != nil {
-			errorMessages = append(errorMessages, "The project does not allow to set a status")
-		}
-		if !project.EquivalenceRequired && mapping.Equivalence != nil {
-			errorMessages = append(errorMessages, "The project does not allow to set an equivalence")
-		}
-
-		codeSystemRoleIDs := make(map[uint32]bool)
-		for _, element := range mapping.Elements {
-			isValid := false
-			for _, role := range project.CodeSystemRoles {
-				if element.CodeSystemRoleID == role.ID {
-					if _, exists := codeSystemRoleIDs[role.ID]; exists {
-						errorMessages = append(errorMessages, fmt.Sprintf("Duplicate CodeSystemRoleID %d", role.ID))
-					} else {
-						codeSystemRoleIDs[role.ID] = true
-						isValid = true
-					}
-					if role.CodeSystemID != element.Concept.CodeSystemID {
-						errorMessages = append(errorMessages, fmt.Sprintf("The CodeSystemRole %d has the CodeSystem %d which does not match the CodeSystem %d of the Concept %d", role.ID, role.CodeSystemID, element.Concept.CodeSystemID, element.ConceptID))
-					}
-					break
-				}
-				// since the roles are ordered in ascending order, we can break here because all remaining roles will have an ID greater than the codeSystemRoleID of the element
-				if element.CodeSystemRoleID < role.ID {
-					break
-				}
-			}
-
-			if !isValid || element.CodeSystemRoleID > project.CodeSystemRoles[len(project.CodeSystemRoles)-1].ID {
-				errorMessages = append(errorMessages, fmt.Sprintf("Invalid mapping: CodeSystemRoleID %d is not valid", element.CodeSystemRoleID))
-			}
-		}
-
-		if len(errorMessages) > 0 {
-			return database.NewDBError(database.ClientError, strings.Join(errorMessages, "; "))
-		}
-
-		return nil
-	}
-
 	if err := s.Database.CreateMappingQuery(&mapping, checkFunc); err != nil {
 		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.CreateMapping404JSONResponse(err.Error()), nil
 		case errors.Is(err, database.ErrClientError):
-			return api.CreateMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+			return api.CreateMapping422JSONResponse(err.Error()), nil
 		default:
-			return api.CreateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to add the mapping"}, err
+			return api.CreateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to add the mapping"}, nil
 		}
 	}
-	id := uint64(mapping.ID) // TODO this could result in a negative number
-	mapping.ModelBigId.ID = id
+	// id := uint64(mapping.ID) // TODO this could result in a negative number
+	// mapping.ModelBigId.ID = id
 
 	return api.CreateMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
 }
 
 // DeleteMapping implements api.StrictServerInterface.
 func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingRequestObject) (api.DeleteMappingResponseObject, error) {
-	panic("unimplemented")
+
+	projectId := int(request.ProjectId)
+	mappingId := request.MappingId
+
+	mapping := models.Mapping{
+		ModelBigId: models.ModelBigId{
+			ID: uint64(mappingId),
+		},
+		ProjectID: uint32(projectId),
+	}
+
+	if err := s.Database.DeleteMappingQuery(&mapping); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeleteMapping404JSONResponse(err.Error()), nil
+		default:
+			return api.DeleteMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to delete the mapping"}, nil
+		}
+	}
+
+	return api.DeleteMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
 }
 
 // GetMapping implements api.StrictServerInterface.
@@ -133,8 +167,12 @@ func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestOb
 	mapping := models.Mapping{}
 
 	if err := s.Database.GetMappingQuery(&mapping, projectId, mappingId); err != nil {
-		// TODO error handling, 404 etc
-		return api.GetMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to add the mapping"}, nil
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetMapping404JSONResponse(err.Error()), nil
+		default:
+			return api.GetMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the mapping"}, nil
+		}
 	}
 
 	return api.GetMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
@@ -142,5 +180,42 @@ func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestOb
 
 // UpdateMapping implements api.StrictServerInterface.
 func (s *Server) UpdateMapping(ctx context.Context, request api.UpdateMappingRequestObject) (api.UpdateMappingResponseObject, error) {
-	panic("unimplemented")
+	projectId := request.ProjectId
+	updateMapping := *request.Body
+
+	dbMapping := transform.ApiUpdateMappingToGormMapping(updateMapping, projectId)
+
+	if err := s.Database.UpdateMappingQuery(&dbMapping, checkFunc, true); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.UpdateMapping404JSONResponse(err.Error()), nil
+		case errors.Is(err, database.ErrClientError):
+			return api.UpdateMapping422JSONResponse(err.Error()), nil
+		default:
+			return api.UpdateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to update the mapping"}, nil
+		}
+	}
+
+	return api.UpdateMapping200JSONResponse(transform.GormMappingToApiMapping(dbMapping)), nil
+}
+
+// PatchMapping implements api.StrictServerInterface.
+func (s *Server) PatchMapping(ctx context.Context, request api.PatchMappingRequestObject) (api.PatchMappingResponseObject, error) {
+	projectId := request.ProjectId
+	updateMapping := *request.Body
+
+	dbMapping := transform.ApiUpdateMappingToGormMapping(updateMapping, projectId)
+
+	if err := s.Database.UpdateMappingQuery(&dbMapping, checkFunc, false); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.PatchMapping404JSONResponse(err.Error()), nil
+		case errors.Is(err, database.ErrClientError):
+			return api.PatchMapping422JSONResponse(err.Error()), nil
+		default:
+			return api.PatchMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to update the mapping"}, nil
+		}
+	}
+
+	return api.PatchMapping200JSONResponse(transform.GormMappingToApiMapping(dbMapping)), nil
 }
