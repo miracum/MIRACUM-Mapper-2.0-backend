@@ -87,6 +87,19 @@ const (
 	GetAllConceptsParamsSortOrderDesc GetAllConceptsParamsSortOrder = "desc"
 )
 
+// Defines values for GetAllProjectsParamsSortBy.
+const (
+	GetAllProjectsParamsSortByDateCreated GetAllProjectsParamsSortBy = "dateCreated"
+	GetAllProjectsParamsSortById          GetAllProjectsParamsSortBy = "id"
+	GetAllProjectsParamsSortByName        GetAllProjectsParamsSortBy = "name"
+)
+
+// Defines values for GetAllProjectsParamsSortOrder.
+const (
+	GetAllProjectsParamsSortOrderAsc  GetAllProjectsParamsSortOrder = "asc"
+	GetAllProjectsParamsSortOrderDesc GetAllProjectsParamsSortOrder = "desc"
+)
+
 // Defines values for GetAllMappingsParamsSortBy.
 const (
 	GetAllMappingsParamsSortByComment     GetAllMappingsParamsSortBy = "comment"
@@ -101,19 +114,6 @@ const (
 const (
 	GetAllMappingsParamsSortOrderAsc  GetAllMappingsParamsSortOrder = "asc"
 	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
-)
-
-// Defines values for GetAllProjectsParamsSortBy.
-const (
-	GetAllProjectsParamsSortByDateCreated GetAllProjectsParamsSortBy = "dateCreated"
-	GetAllProjectsParamsSortById          GetAllProjectsParamsSortBy = "id"
-	GetAllProjectsParamsSortByName        GetAllProjectsParamsSortBy = "name"
-)
-
-// Defines values for GetAllProjectsParamsSortOrder.
-const (
-	GetAllProjectsParamsSortOrderAsc  GetAllProjectsParamsSortOrder = "asc"
-	GetAllProjectsParamsSortOrderDesc GetAllProjectsParamsSortOrder = "desc"
 )
 
 // CodeSystem defines model for CodeSystem.
@@ -256,7 +256,7 @@ type CodeSystemId = int32
 type Limit = int
 
 // MappingId defines model for mapping_id.
-type MappingId = int32
+type MappingId = int64
 
 // Page defines model for page.
 type Page = int
@@ -312,27 +312,6 @@ type FindConceptByCodeParams struct {
 	MeaningSearch *string `form:"meaningSearch,omitempty" json:"meaningSearch,omitempty"`
 }
 
-// GetAllMappingsParams defines parameters for GetAllMappings.
-type GetAllMappingsParams struct {
-	// Page Page number (must be a positive integer)
-	Page *Page `form:"page,omitempty" json:"page,omitempty"`
-
-	// PageSize Number of items per page (minimum 1, maximum 100)
-	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// SortBy Field to sort by
-	SortBy *GetAllMappingsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
-
-	// SortOrder Order of sorting (asc or desc)
-	SortOrder *GetAllMappingsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-}
-
-// GetAllMappingsParamsSortBy defines parameters for GetAllMappings.
-type GetAllMappingsParamsSortBy string
-
-// GetAllMappingsParamsSortOrder defines parameters for GetAllMappings.
-type GetAllMappingsParamsSortOrder string
-
 // GetAllProjectsParams defines parameters for GetAllProjects.
 type GetAllProjectsParams struct {
 	// Page Page number (must be a positive integer)
@@ -354,17 +333,44 @@ type GetAllProjectsParamsSortBy string
 // GetAllProjectsParamsSortOrder defines parameters for GetAllProjects.
 type GetAllProjectsParamsSortOrder string
 
+// GetAllMappingsParams defines parameters for GetAllMappings.
+type GetAllMappingsParams struct {
+	// Page Page number (must be a positive integer)
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize Number of items per page (minimum 1, maximum 100)
+	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// SortBy Field to sort by
+	SortBy *GetAllMappingsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Order of sorting (asc or desc)
+	SortOrder *GetAllMappingsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+}
+
+// GetAllMappingsParamsSortBy defines parameters for GetAllMappings.
+type GetAllMappingsParamsSortBy string
+
+// GetAllMappingsParamsSortOrder defines parameters for GetAllMappings.
+type GetAllMappingsParamsSortOrder string
+
 // UpdateCodeSystemJSONRequestBody defines body for UpdateCodeSystem for application/json ContentType.
 type UpdateCodeSystemJSONRequestBody = CodeSystem
 
 // CreateCodeSystemJSONRequestBody defines body for CreateCodeSystem for application/json ContentType.
 type CreateCodeSystemJSONRequestBody = CodeSystem
 
+// CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
+type CreateProjectJSONRequestBody = ProjectDetails
+
 // UpdateProjectJSONRequestBody defines body for UpdateProject for application/json ContentType.
 type UpdateProjectJSONRequestBody = Project
 
 // UpdateCodeSystemRoleJSONRequestBody defines body for UpdateCodeSystemRole for application/json ContentType.
 type UpdateCodeSystemRoleJSONRequestBody = CodeSystemRole
+
+// PatchMappingJSONRequestBody defines body for PatchMapping for application/json ContentType.
+type PatchMappingJSONRequestBody = UpdateMapping
 
 // CreateMappingJSONRequestBody defines body for CreateMapping for application/json ContentType.
 type CreateMappingJSONRequestBody = CreateMapping
@@ -377,6 +383,3 @@ type CreatePermissionJSONRequestBody = ProjectPermission
 
 // UpdatePermissionJSONRequestBody defines body for UpdatePermission for application/json ContentType.
 type UpdatePermissionJSONRequestBody = ProjectPermission
-
-// CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
-type CreateProjectJSONRequestBody = ProjectDetails

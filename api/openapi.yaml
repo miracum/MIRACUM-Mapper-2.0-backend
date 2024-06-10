@@ -132,7 +132,7 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /project/{project_id}:
+  /projects/{project_id}:
     get:
       tags:
         - project
@@ -223,7 +223,7 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /project/{project_id}/permissions:
+  /projects/{project_id}/permissions:
     get:
       tags:
         - project-permission
@@ -251,7 +251,7 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/permissions/{user_id}:
+  /projects/{project_id}/permissions/{user_id}:
     get:
       tags:
         - project-permission
@@ -380,7 +380,7 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/code-system-roles:
+  /projects/{project_id}/code-system-roles:
     get:
       tags:
         - project-code-system-roles
@@ -447,7 +447,7 @@ paths:
     #             "$ref": "#/components/schemas/ErrorResponse"
     #     "500":
     #       "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/code-system-roles/{code-system-role_id}:
+  /projects/{project_id}/code-system-roles/{code-system-role_id}:
     get:
       tags:
         - project-code-system-roles
@@ -540,7 +540,7 @@ paths:
     #             "$ref": "#/components/schemas/ErrorResponse"
     #     "500":
     #       "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/mappings:
+  /projects/{project_id}/mappings:
     get:
       tags:
         - mapping
@@ -620,7 +620,7 @@ paths:
       tags:
         - mapping
       summary: Update a mapping and its elements by their concept IDs
-      description: Update a mapping by ID and all included elements by using the corresponding concept IDs. The order of the elements must match the order of the columns (codesystem-roles) of the project.
+      description: Update a mapping by ID and all included elements by using the corresponding concept IDs.
       parameters:
         - $ref: "#/components/parameters/project_id"
       operationId: updateMapping
@@ -653,7 +653,44 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/mapping/{mapping_id}:
+    patch:
+      tags:
+        - mapping
+      summary: Update a mapping and its elements by their concept IDs
+      description: Update a mapping by ID and all included elements by using the corresponding concept IDs. Missing elements are deleted.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: patchMapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateMapping"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Error # if trying to change the project of the mapping
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/mappings/{mapping_id}:
     get:
       tags:
         - mapping
@@ -978,7 +1015,7 @@ components:
       description: The ID of the mapping
       schema:
         type: integer
-        format: int32
+        format: int64
         minimum: 1
     code-system_id:
       name: code-system_id

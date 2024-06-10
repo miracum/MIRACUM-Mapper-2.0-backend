@@ -47,60 +47,63 @@ type ServerInterface interface {
 	// Check if the server is running
 	// (GET /ping)
 	Ping(c *gin.Context)
-	// Delete a project
-	// (DELETE /project/{project_id})
-	DeleteProject(c *gin.Context, projectId ProjectId)
-	// Get project details
-	// (GET /project/{project_id})
-	GetProject(c *gin.Context, projectId ProjectId)
-	// Update the project information
-	// (PUT /project/{project_id})
-	UpdateProject(c *gin.Context, projectId ProjectId)
-	// Get all code system roles for a project
-	// (GET /project/{project_id}/code-system-roles)
-	GetAllCodeSystemRoles(c *gin.Context, projectId ProjectId)
-	// Get a code system role by ID
-	// (GET /project/{project_id}/code-system-roles/{code-system-role_id})
-	GetCodeSystemRole(c *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId)
-	// Update a code system role by ID
-	// (PUT /project/{project_id}/code-system-roles/{code-system-role_id})
-	UpdateCodeSystemRole(c *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId)
-	// Delete a mapping and its elements by ID
-	// (DELETE /project/{project_id}/mapping/{mapping_id})
-	DeleteMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
-	// Get a mapping with its elements by ID
-	// (GET /project/{project_id}/mapping/{mapping_id})
-	GetMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
-	// Get all mappings for a project by project ID
-	// (GET /project/{project_id}/mappings)
-	GetAllMappings(c *gin.Context, projectId ProjectId, params GetAllMappingsParams)
-	// Create a new mapping for a project
-	// (POST /project/{project_id}/mappings)
-	CreateMapping(c *gin.Context, projectId ProjectId)
-	// Update a mapping and its elements by their concept IDs
-	// (PUT /project/{project_id}/mappings)
-	UpdateMapping(c *gin.Context, projectId ProjectId)
-	// Get permissions for a project
-	// (GET /project/{project_id}/permissions)
-	GetAllPermissions(c *gin.Context, projectId ProjectId)
-	// Delete a project permission for a user
-	// (DELETE /project/{project_id}/permissions/{user_id})
-	DeletePermission(c *gin.Context, projectId ProjectId, userId UserId)
-	// Get project permission for a specific user
-	// (GET /project/{project_id}/permissions/{user_id})
-	GetPermission(c *gin.Context, projectId ProjectId, userId UserId)
-	// Create a new project permission for user
-	// (POST /project/{project_id}/permissions/{user_id})
-	CreatePermission(c *gin.Context, projectId ProjectId, userId UserId)
-	// Update a project permission for a user
-	// (PUT /project/{project_id}/permissions/{user_id})
-	UpdatePermission(c *gin.Context, projectId ProjectId, userId UserId)
 	// Get all projects
 	// (GET /projects)
 	GetAllProjects(c *gin.Context, params GetAllProjectsParams)
 	// Create a new project
 	// (POST /projects)
 	CreateProject(c *gin.Context)
+	// Delete a project
+	// (DELETE /projects/{project_id})
+	DeleteProject(c *gin.Context, projectId ProjectId)
+	// Get project details
+	// (GET /projects/{project_id})
+	GetProject(c *gin.Context, projectId ProjectId)
+	// Update the project information
+	// (PUT /projects/{project_id})
+	UpdateProject(c *gin.Context, projectId ProjectId)
+	// Get all code system roles for a project
+	// (GET /projects/{project_id}/code-system-roles)
+	GetAllCodeSystemRoles(c *gin.Context, projectId ProjectId)
+	// Get a code system role by ID
+	// (GET /projects/{project_id}/code-system-roles/{code-system-role_id})
+	GetCodeSystemRole(c *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId)
+	// Update a code system role by ID
+	// (PUT /projects/{project_id}/code-system-roles/{code-system-role_id})
+	UpdateCodeSystemRole(c *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId)
+	// Get all mappings for a project by project ID
+	// (GET /projects/{project_id}/mappings)
+	GetAllMappings(c *gin.Context, projectId ProjectId, params GetAllMappingsParams)
+	// Update a mapping and its elements by their concept IDs
+	// (PATCH /projects/{project_id}/mappings)
+	PatchMapping(c *gin.Context, projectId ProjectId)
+	// Create a new mapping for a project
+	// (POST /projects/{project_id}/mappings)
+	CreateMapping(c *gin.Context, projectId ProjectId)
+	// Update a mapping and its elements by their concept IDs
+	// (PUT /projects/{project_id}/mappings)
+	UpdateMapping(c *gin.Context, projectId ProjectId)
+	// Delete a mapping and its elements by ID
+	// (DELETE /projects/{project_id}/mappings/{mapping_id})
+	DeleteMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
+	// Get a mapping with its elements by ID
+	// (GET /projects/{project_id}/mappings/{mapping_id})
+	GetMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
+	// Get permissions for a project
+	// (GET /projects/{project_id}/permissions)
+	GetAllPermissions(c *gin.Context, projectId ProjectId)
+	// Delete a project permission for a user
+	// (DELETE /projects/{project_id}/permissions/{user_id})
+	DeletePermission(c *gin.Context, projectId ProjectId, userId UserId)
+	// Get project permission for a specific user
+	// (GET /projects/{project_id}/permissions/{user_id})
+	GetPermission(c *gin.Context, projectId ProjectId, userId UserId)
+	// Create a new project permission for user
+	// (POST /projects/{project_id}/permissions/{user_id})
+	CreatePermission(c *gin.Context, projectId ProjectId, userId UserId)
+	// Update a project permission for a user
+	// (PUT /projects/{project_id}/permissions/{user_id})
+	UpdatePermission(c *gin.Context, projectId ProjectId, userId UserId)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -361,6 +364,77 @@ func (siw *ServerInterfaceWrapper) Ping(c *gin.Context) {
 	siw.Handler.Ping(c)
 }
 
+// GetAllProjects operation middleware
+func (siw *ServerInterfaceWrapper) GetAllProjects(c *gin.Context) {
+
+	var err error
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllProjectsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", c.Request.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sortBy" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortBy", c.Request.URL.Query(), &params.SortBy)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortBy: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sortOrder" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortOrder", c.Request.URL.Query(), &params.SortOrder)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortOrder: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAllProjects(c, params)
+}
+
+// CreateProject operation middleware
+func (siw *ServerInterfaceWrapper) CreateProject(c *gin.Context) {
+
+	c.Set(OAuth2Scopes, []string{"admin"})
+
+	c.Set(BearerAuthScopes, []string{"admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateProject(c)
+}
+
 // DeleteProject operation middleware
 func (siw *ServerInterfaceWrapper) DeleteProject(c *gin.Context) {
 
@@ -547,6 +621,153 @@ func (siw *ServerInterfaceWrapper) UpdateCodeSystemRole(c *gin.Context) {
 	siw.Handler.UpdateCodeSystemRole(c, projectId, codeSystemRoleId)
 }
 
+// GetAllMappings operation middleware
+func (siw *ServerInterfaceWrapper) GetAllMappings(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllMappingsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", c.Request.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sortBy" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortBy", c.Request.URL.Query(), &params.SortBy)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortBy: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sortOrder" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortOrder", c.Request.URL.Query(), &params.SortOrder)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortOrder: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAllMappings(c, projectId, params)
+}
+
+// PatchMapping operation middleware
+func (siw *ServerInterfaceWrapper) PatchMapping(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PatchMapping(c, projectId)
+}
+
+// CreateMapping operation middleware
+func (siw *ServerInterfaceWrapper) CreateMapping(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateMapping(c, projectId)
+}
+
+// UpdateMapping operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMapping(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateMapping(c, projectId)
+}
+
 // DeleteMapping operation middleware
 func (siw *ServerInterfaceWrapper) DeleteMapping(c *gin.Context) {
 
@@ -619,125 +840,6 @@ func (siw *ServerInterfaceWrapper) GetMapping(c *gin.Context) {
 	}
 
 	siw.Handler.GetMapping(c, projectId, mappingId)
-}
-
-// GetAllMappings operation middleware
-func (siw *ServerInterfaceWrapper) GetAllMappings(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetAllMappingsParams
-
-	// ------------- Optional query parameter "page" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "page", c.Request.URL.Query(), &params.Page)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "pageSize" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sortBy" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sortBy", c.Request.URL.Query(), &params.SortBy)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortBy: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sortOrder" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sortOrder", c.Request.URL.Query(), &params.SortOrder)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortOrder: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetAllMappings(c, projectId, params)
-}
-
-// CreateMapping operation middleware
-func (siw *ServerInterfaceWrapper) CreateMapping(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.CreateMapping(c, projectId)
-}
-
-// UpdateMapping operation middleware
-func (siw *ServerInterfaceWrapper) UpdateMapping(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UpdateMapping(c, projectId)
 }
 
 // GetAllPermissions operation middleware
@@ -916,77 +1018,6 @@ func (siw *ServerInterfaceWrapper) UpdatePermission(c *gin.Context) {
 	siw.Handler.UpdatePermission(c, projectId, userId)
 }
 
-// GetAllProjects operation middleware
-func (siw *ServerInterfaceWrapper) GetAllProjects(c *gin.Context) {
-
-	var err error
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetAllProjectsParams
-
-	// ------------- Optional query parameter "page" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "page", c.Request.URL.Query(), &params.Page)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "pageSize" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sortBy" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sortBy", c.Request.URL.Query(), &params.SortBy)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortBy: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sortOrder" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sortOrder", c.Request.URL.Query(), &params.SortOrder)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortOrder: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetAllProjects(c, params)
-}
-
-// CreateProject operation middleware
-func (siw *ServerInterfaceWrapper) CreateProject(c *gin.Context) {
-
-	c.Set(OAuth2Scopes, []string{"admin"})
-
-	c.Set(BearerAuthScopes, []string{"admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.CreateProject(c)
-}
-
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -1022,24 +1053,25 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/code-systems", wrapper.GetAllCodeSystems)
 	router.POST(options.BaseURL+"/code-systems", wrapper.CreateCodeSystem)
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
-	router.DELETE(options.BaseURL+"/project/:project_id", wrapper.DeleteProject)
-	router.GET(options.BaseURL+"/project/:project_id", wrapper.GetProject)
-	router.PUT(options.BaseURL+"/project/:project_id", wrapper.UpdateProject)
-	router.GET(options.BaseURL+"/project/:project_id/code-system-roles", wrapper.GetAllCodeSystemRoles)
-	router.GET(options.BaseURL+"/project/:project_id/code-system-roles/:code-system-role_id", wrapper.GetCodeSystemRole)
-	router.PUT(options.BaseURL+"/project/:project_id/code-system-roles/:code-system-role_id", wrapper.UpdateCodeSystemRole)
-	router.DELETE(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.DeleteMapping)
-	router.GET(options.BaseURL+"/project/:project_id/mapping/:mapping_id", wrapper.GetMapping)
-	router.GET(options.BaseURL+"/project/:project_id/mappings", wrapper.GetAllMappings)
-	router.POST(options.BaseURL+"/project/:project_id/mappings", wrapper.CreateMapping)
-	router.PUT(options.BaseURL+"/project/:project_id/mappings", wrapper.UpdateMapping)
-	router.GET(options.BaseURL+"/project/:project_id/permissions", wrapper.GetAllPermissions)
-	router.DELETE(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.DeletePermission)
-	router.GET(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.GetPermission)
-	router.POST(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.CreatePermission)
-	router.PUT(options.BaseURL+"/project/:project_id/permissions/:user_id", wrapper.UpdatePermission)
 	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
 	router.POST(options.BaseURL+"/projects", wrapper.CreateProject)
+	router.DELETE(options.BaseURL+"/projects/:project_id", wrapper.DeleteProject)
+	router.GET(options.BaseURL+"/projects/:project_id", wrapper.GetProject)
+	router.PUT(options.BaseURL+"/projects/:project_id", wrapper.UpdateProject)
+	router.GET(options.BaseURL+"/projects/:project_id/code-system-roles", wrapper.GetAllCodeSystemRoles)
+	router.GET(options.BaseURL+"/projects/:project_id/code-system-roles/:code-system-role_id", wrapper.GetCodeSystemRole)
+	router.PUT(options.BaseURL+"/projects/:project_id/code-system-roles/:code-system-role_id", wrapper.UpdateCodeSystemRole)
+	router.GET(options.BaseURL+"/projects/:project_id/mappings", wrapper.GetAllMappings)
+	router.PATCH(options.BaseURL+"/projects/:project_id/mappings", wrapper.PatchMapping)
+	router.POST(options.BaseURL+"/projects/:project_id/mappings", wrapper.CreateMapping)
+	router.PUT(options.BaseURL+"/projects/:project_id/mappings", wrapper.UpdateMapping)
+	router.DELETE(options.BaseURL+"/projects/:project_id/mappings/:mapping_id", wrapper.DeleteMapping)
+	router.GET(options.BaseURL+"/projects/:project_id/mappings/:mapping_id", wrapper.GetMapping)
+	router.GET(options.BaseURL+"/projects/:project_id/permissions", wrapper.GetAllPermissions)
+	router.DELETE(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.DeletePermission)
+	router.GET(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.GetPermission)
+	router.POST(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.CreatePermission)
+	router.PUT(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.UpdatePermission)
 }
 
 type BadRequestErrorJSONResponse string
@@ -1406,6 +1438,98 @@ func (response Ping200JSONResponse) VisitPingResponse(w http.ResponseWriter) err
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetAllProjectsRequestObject struct {
+	Params GetAllProjectsParams
+}
+
+type GetAllProjectsResponseObject interface {
+	VisitGetAllProjectsResponse(w http.ResponseWriter) error
+}
+
+type GetAllProjects200JSONResponse []Project
+
+func (response GetAllProjects200JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllProjects400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetAllProjects400JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllProjects404JSONResponse ErrorResponse
+
+func (response GetAllProjects404JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllProjects500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetAllProjects500JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProjectRequestObject struct {
+	Body *CreateProjectJSONRequestBody
+}
+
+type CreateProjectResponseObject interface {
+	VisitCreateProjectResponse(w http.ResponseWriter) error
+}
+
+type CreateProject200JSONResponse ProjectDetails
+
+func (response CreateProject200JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProject400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response CreateProject400JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProject422JSONResponse ErrorResponse
+
+func (response CreateProject422JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProject500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response CreateProject500JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type DeleteProjectRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 }
@@ -1704,100 +1828,6 @@ func (response UpdateCodeSystemRole500JSONResponse) VisitUpdateCodeSystemRoleRes
 	return json.NewEncoder(w).Encode(response)
 }
 
-type DeleteMappingRequestObject struct {
-	ProjectId ProjectId `json:"project_id"`
-	MappingId MappingId `json:"mapping_id"`
-}
-
-type DeleteMappingResponseObject interface {
-	VisitDeleteMappingResponse(w http.ResponseWriter) error
-}
-
-type DeleteMapping200JSONResponse Mapping
-
-func (response DeleteMapping200JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response DeleteMapping400JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteMapping404JSONResponse ErrorResponse
-
-func (response DeleteMapping404JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteMapping500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteMapping500JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetMappingRequestObject struct {
-	ProjectId ProjectId `json:"project_id"`
-	MappingId MappingId `json:"mapping_id"`
-}
-
-type GetMappingResponseObject interface {
-	VisitGetMappingResponse(w http.ResponseWriter) error
-}
-
-type GetMapping200JSONResponse Mapping
-
-func (response GetMapping200JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response GetMapping400JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetMapping404JSONResponse ErrorResponse
-
-func (response GetMapping404JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetMapping500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response GetMapping500JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type GetAllMappingsRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 	Params    GetAllMappingsParams
@@ -1839,6 +1869,62 @@ type GetAllMappings500JSONResponse struct {
 }
 
 func (response GetAllMappings500JSONResponse) VisitGetAllMappingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMappingRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	Body      *PatchMappingJSONRequestBody
+}
+
+type PatchMappingResponseObject interface {
+	VisitPatchMappingResponse(w http.ResponseWriter) error
+}
+
+type PatchMapping200JSONResponse Mapping
+
+func (response PatchMapping200JSONResponse) VisitPatchMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response PatchMapping400JSONResponse) VisitPatchMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMapping404JSONResponse ErrorResponse
+
+func (response PatchMapping404JSONResponse) VisitPatchMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMapping422JSONResponse ErrorResponse
+
+func (response PatchMapping422JSONResponse) VisitPatchMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMapping500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PatchMapping500JSONResponse) VisitPatchMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1951,6 +2037,100 @@ type UpdateMapping500JSONResponse struct {
 }
 
 func (response UpdateMapping500JSONResponse) VisitUpdateMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMappingRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	MappingId MappingId `json:"mapping_id"`
+}
+
+type DeleteMappingResponseObject interface {
+	VisitDeleteMappingResponse(w http.ResponseWriter) error
+}
+
+type DeleteMapping200JSONResponse Mapping
+
+func (response DeleteMapping200JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response DeleteMapping400JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMapping404JSONResponse ErrorResponse
+
+func (response DeleteMapping404JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMapping500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteMapping500JSONResponse) VisitDeleteMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMappingRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	MappingId MappingId `json:"mapping_id"`
+}
+
+type GetMappingResponseObject interface {
+	VisitGetMappingResponse(w http.ResponseWriter) error
+}
+
+type GetMapping200JSONResponse Mapping
+
+func (response GetMapping200JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMapping400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetMapping400JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMapping404JSONResponse ErrorResponse
+
+func (response GetMapping404JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMapping500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetMapping500JSONResponse) VisitGetMappingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2211,98 +2391,6 @@ func (response UpdatePermission500JSONResponse) VisitUpdatePermissionResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetAllProjectsRequestObject struct {
-	Params GetAllProjectsParams
-}
-
-type GetAllProjectsResponseObject interface {
-	VisitGetAllProjectsResponse(w http.ResponseWriter) error
-}
-
-type GetAllProjects200JSONResponse []Project
-
-func (response GetAllProjects200JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllProjects400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response GetAllProjects400JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllProjects404JSONResponse ErrorResponse
-
-func (response GetAllProjects404JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllProjects500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response GetAllProjects500JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProjectRequestObject struct {
-	Body *CreateProjectJSONRequestBody
-}
-
-type CreateProjectResponseObject interface {
-	VisitCreateProjectResponse(w http.ResponseWriter) error
-}
-
-type CreateProject200JSONResponse ProjectDetails
-
-func (response CreateProject200JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProject400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response CreateProject400JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProject422JSONResponse ErrorResponse
-
-func (response CreateProject422JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreateProject500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response CreateProject500JSONResponse) VisitCreateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Delete a code system by ID
@@ -2329,60 +2417,63 @@ type StrictServerInterface interface {
 	// Check if the server is running
 	// (GET /ping)
 	Ping(ctx context.Context, request PingRequestObject) (PingResponseObject, error)
-	// Delete a project
-	// (DELETE /project/{project_id})
-	DeleteProject(ctx context.Context, request DeleteProjectRequestObject) (DeleteProjectResponseObject, error)
-	// Get project details
-	// (GET /project/{project_id})
-	GetProject(ctx context.Context, request GetProjectRequestObject) (GetProjectResponseObject, error)
-	// Update the project information
-	// (PUT /project/{project_id})
-	UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error)
-	// Get all code system roles for a project
-	// (GET /project/{project_id}/code-system-roles)
-	GetAllCodeSystemRoles(ctx context.Context, request GetAllCodeSystemRolesRequestObject) (GetAllCodeSystemRolesResponseObject, error)
-	// Get a code system role by ID
-	// (GET /project/{project_id}/code-system-roles/{code-system-role_id})
-	GetCodeSystemRole(ctx context.Context, request GetCodeSystemRoleRequestObject) (GetCodeSystemRoleResponseObject, error)
-	// Update a code system role by ID
-	// (PUT /project/{project_id}/code-system-roles/{code-system-role_id})
-	UpdateCodeSystemRole(ctx context.Context, request UpdateCodeSystemRoleRequestObject) (UpdateCodeSystemRoleResponseObject, error)
-	// Delete a mapping and its elements by ID
-	// (DELETE /project/{project_id}/mapping/{mapping_id})
-	DeleteMapping(ctx context.Context, request DeleteMappingRequestObject) (DeleteMappingResponseObject, error)
-	// Get a mapping with its elements by ID
-	// (GET /project/{project_id}/mapping/{mapping_id})
-	GetMapping(ctx context.Context, request GetMappingRequestObject) (GetMappingResponseObject, error)
-	// Get all mappings for a project by project ID
-	// (GET /project/{project_id}/mappings)
-	GetAllMappings(ctx context.Context, request GetAllMappingsRequestObject) (GetAllMappingsResponseObject, error)
-	// Create a new mapping for a project
-	// (POST /project/{project_id}/mappings)
-	CreateMapping(ctx context.Context, request CreateMappingRequestObject) (CreateMappingResponseObject, error)
-	// Update a mapping and its elements by their concept IDs
-	// (PUT /project/{project_id}/mappings)
-	UpdateMapping(ctx context.Context, request UpdateMappingRequestObject) (UpdateMappingResponseObject, error)
-	// Get permissions for a project
-	// (GET /project/{project_id}/permissions)
-	GetAllPermissions(ctx context.Context, request GetAllPermissionsRequestObject) (GetAllPermissionsResponseObject, error)
-	// Delete a project permission for a user
-	// (DELETE /project/{project_id}/permissions/{user_id})
-	DeletePermission(ctx context.Context, request DeletePermissionRequestObject) (DeletePermissionResponseObject, error)
-	// Get project permission for a specific user
-	// (GET /project/{project_id}/permissions/{user_id})
-	GetPermission(ctx context.Context, request GetPermissionRequestObject) (GetPermissionResponseObject, error)
-	// Create a new project permission for user
-	// (POST /project/{project_id}/permissions/{user_id})
-	CreatePermission(ctx context.Context, request CreatePermissionRequestObject) (CreatePermissionResponseObject, error)
-	// Update a project permission for a user
-	// (PUT /project/{project_id}/permissions/{user_id})
-	UpdatePermission(ctx context.Context, request UpdatePermissionRequestObject) (UpdatePermissionResponseObject, error)
 	// Get all projects
 	// (GET /projects)
 	GetAllProjects(ctx context.Context, request GetAllProjectsRequestObject) (GetAllProjectsResponseObject, error)
 	// Create a new project
 	// (POST /projects)
 	CreateProject(ctx context.Context, request CreateProjectRequestObject) (CreateProjectResponseObject, error)
+	// Delete a project
+	// (DELETE /projects/{project_id})
+	DeleteProject(ctx context.Context, request DeleteProjectRequestObject) (DeleteProjectResponseObject, error)
+	// Get project details
+	// (GET /projects/{project_id})
+	GetProject(ctx context.Context, request GetProjectRequestObject) (GetProjectResponseObject, error)
+	// Update the project information
+	// (PUT /projects/{project_id})
+	UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error)
+	// Get all code system roles for a project
+	// (GET /projects/{project_id}/code-system-roles)
+	GetAllCodeSystemRoles(ctx context.Context, request GetAllCodeSystemRolesRequestObject) (GetAllCodeSystemRolesResponseObject, error)
+	// Get a code system role by ID
+	// (GET /projects/{project_id}/code-system-roles/{code-system-role_id})
+	GetCodeSystemRole(ctx context.Context, request GetCodeSystemRoleRequestObject) (GetCodeSystemRoleResponseObject, error)
+	// Update a code system role by ID
+	// (PUT /projects/{project_id}/code-system-roles/{code-system-role_id})
+	UpdateCodeSystemRole(ctx context.Context, request UpdateCodeSystemRoleRequestObject) (UpdateCodeSystemRoleResponseObject, error)
+	// Get all mappings for a project by project ID
+	// (GET /projects/{project_id}/mappings)
+	GetAllMappings(ctx context.Context, request GetAllMappingsRequestObject) (GetAllMappingsResponseObject, error)
+	// Update a mapping and its elements by their concept IDs
+	// (PATCH /projects/{project_id}/mappings)
+	PatchMapping(ctx context.Context, request PatchMappingRequestObject) (PatchMappingResponseObject, error)
+	// Create a new mapping for a project
+	// (POST /projects/{project_id}/mappings)
+	CreateMapping(ctx context.Context, request CreateMappingRequestObject) (CreateMappingResponseObject, error)
+	// Update a mapping and its elements by their concept IDs
+	// (PUT /projects/{project_id}/mappings)
+	UpdateMapping(ctx context.Context, request UpdateMappingRequestObject) (UpdateMappingResponseObject, error)
+	// Delete a mapping and its elements by ID
+	// (DELETE /projects/{project_id}/mappings/{mapping_id})
+	DeleteMapping(ctx context.Context, request DeleteMappingRequestObject) (DeleteMappingResponseObject, error)
+	// Get a mapping with its elements by ID
+	// (GET /projects/{project_id}/mappings/{mapping_id})
+	GetMapping(ctx context.Context, request GetMappingRequestObject) (GetMappingResponseObject, error)
+	// Get permissions for a project
+	// (GET /projects/{project_id}/permissions)
+	GetAllPermissions(ctx context.Context, request GetAllPermissionsRequestObject) (GetAllPermissionsResponseObject, error)
+	// Delete a project permission for a user
+	// (DELETE /projects/{project_id}/permissions/{user_id})
+	DeletePermission(ctx context.Context, request DeletePermissionRequestObject) (DeletePermissionResponseObject, error)
+	// Get project permission for a specific user
+	// (GET /projects/{project_id}/permissions/{user_id})
+	GetPermission(ctx context.Context, request GetPermissionRequestObject) (GetPermissionResponseObject, error)
+	// Create a new project permission for user
+	// (POST /projects/{project_id}/permissions/{user_id})
+	CreatePermission(ctx context.Context, request CreatePermissionRequestObject) (CreatePermissionResponseObject, error)
+	// Update a project permission for a user
+	// (PUT /projects/{project_id}/permissions/{user_id})
+	UpdatePermission(ctx context.Context, request UpdatePermissionRequestObject) (UpdatePermissionResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -2625,6 +2716,66 @@ func (sh *strictHandler) Ping(ctx *gin.Context) {
 	}
 }
 
+// GetAllProjects operation middleware
+func (sh *strictHandler) GetAllProjects(ctx *gin.Context, params GetAllProjectsParams) {
+	var request GetAllProjectsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAllProjects(ctx, request.(GetAllProjectsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAllProjects")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetAllProjectsResponseObject); ok {
+		if err := validResponse.VisitGetAllProjectsResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateProject operation middleware
+func (sh *strictHandler) CreateProject(ctx *gin.Context) {
+	var request CreateProjectRequestObject
+
+	var body CreateProjectJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateProject(ctx, request.(CreateProjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateProject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(CreateProjectResponseObject); ok {
+		if err := validResponse.VisitCreateProjectResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteProject operation middleware
 func (sh *strictHandler) DeleteProject(ctx *gin.Context, projectId ProjectId) {
 	var request DeleteProjectRequestObject
@@ -2805,62 +2956,6 @@ func (sh *strictHandler) UpdateCodeSystemRole(ctx *gin.Context, projectId Projec
 	}
 }
 
-// DeleteMapping operation middleware
-func (sh *strictHandler) DeleteMapping(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
-	var request DeleteMappingRequestObject
-
-	request.ProjectId = projectId
-	request.MappingId = mappingId
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteMapping(ctx, request.(DeleteMappingRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteMapping")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(DeleteMappingResponseObject); ok {
-		if err := validResponse.VisitDeleteMappingResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// GetMapping operation middleware
-func (sh *strictHandler) GetMapping(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
-	var request GetMappingRequestObject
-
-	request.ProjectId = projectId
-	request.MappingId = mappingId
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetMapping(ctx, request.(GetMappingRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetMapping")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetMappingResponseObject); ok {
-		if err := validResponse.VisitGetMappingResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // GetAllMappings operation middleware
 func (sh *strictHandler) GetAllMappings(ctx *gin.Context, projectId ProjectId, params GetAllMappingsParams) {
 	var request GetAllMappingsRequestObject
@@ -2882,6 +2977,41 @@ func (sh *strictHandler) GetAllMappings(ctx *gin.Context, projectId ProjectId, p
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetAllMappingsResponseObject); ok {
 		if err := validResponse.VisitGetAllMappingsResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PatchMapping operation middleware
+func (sh *strictHandler) PatchMapping(ctx *gin.Context, projectId ProjectId) {
+	var request PatchMappingRequestObject
+
+	request.ProjectId = projectId
+
+	var body PatchMappingJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PatchMapping(ctx, request.(PatchMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PatchMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PatchMappingResponseObject); ok {
+		if err := validResponse.VisitPatchMappingResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -2952,6 +3082,62 @@ func (sh *strictHandler) UpdateMapping(ctx *gin.Context, projectId ProjectId) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UpdateMappingResponseObject); ok {
 		if err := validResponse.VisitUpdateMappingResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMapping operation middleware
+func (sh *strictHandler) DeleteMapping(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
+	var request DeleteMappingRequestObject
+
+	request.ProjectId = projectId
+	request.MappingId = mappingId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMapping(ctx, request.(DeleteMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteMappingResponseObject); ok {
+		if err := validResponse.VisitDeleteMappingResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMapping operation middleware
+func (sh *strictHandler) GetMapping(ctx *gin.Context, projectId ProjectId, mappingId MappingId) {
+	var request GetMappingRequestObject
+
+	request.ProjectId = projectId
+	request.MappingId = mappingId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMapping(ctx, request.(GetMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetMappingResponseObject); ok {
+		if err := validResponse.VisitGetMappingResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3114,126 +3300,66 @@ func (sh *strictHandler) UpdatePermission(ctx *gin.Context, projectId ProjectId,
 	}
 }
 
-// GetAllProjects operation middleware
-func (sh *strictHandler) GetAllProjects(ctx *gin.Context, params GetAllProjectsParams) {
-	var request GetAllProjectsRequestObject
-
-	request.Params = params
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetAllProjects(ctx, request.(GetAllProjectsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetAllProjects")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetAllProjectsResponseObject); ok {
-		if err := validResponse.VisitGetAllProjectsResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// CreateProject operation middleware
-func (sh *strictHandler) CreateProject(ctx *gin.Context) {
-	var request CreateProjectRequestObject
-
-	var body CreateProjectJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.CreateProject(ctx, request.(CreateProjectRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "CreateProject")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(CreateProjectResponseObject); ok {
-		if err := validResponse.VisitCreateProjectResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
