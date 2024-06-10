@@ -36,6 +36,7 @@ type Datastore interface {
 	// CodeSystem
 	GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error
 	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
+	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 }
 
 type ErrorType int

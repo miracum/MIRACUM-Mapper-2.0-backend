@@ -29,3 +29,28 @@ func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSyste
 		return nil
 	}
 }
+
+func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		// get codeSystem so it can be returned in the api and then delete it
+		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			default:
+				return err
+			}
+		}
+
+		db := tx.Delete(&codeSystem, codeSystemId)
+		if db.Error != nil {
+			return db.Error
+		} else {
+			if db.RowsAffected == 0 {
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			}
+			return nil
+		}
+	})
+	return err
+}

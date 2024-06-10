@@ -29,9 +29,6 @@ type ServerInterface interface {
 	// Get a code system by ID
 	// (GET /code-system/{code-system_id})
 	GetCodeSystem(c *gin.Context, codeSystemId CodeSystemId)
-	// Update a code system by ID
-	// (PUT /code-system/{code-system_id})
-	UpdateCodeSystem(c *gin.Context, codeSystemId CodeSystemId)
 	// Get all concepts for a code system by ID
 	// (GET /code-system/{code-system_id}/concepts)
 	GetAllConcepts(c *gin.Context, codeSystemId CodeSystemId, params GetAllConceptsParams)
@@ -44,6 +41,9 @@ type ServerInterface interface {
 	// Create a new code system
 	// (POST /code-systems)
 	CreateCodeSystem(c *gin.Context)
+	// Update a code system by ID
+	// (PUT /code-systems)
+	UpdateCodeSystem(c *gin.Context)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(c *gin.Context)
@@ -169,34 +169,6 @@ func (siw *ServerInterfaceWrapper) GetCodeSystem(c *gin.Context) {
 	}
 
 	siw.Handler.GetCodeSystem(c, codeSystemId)
-}
-
-// UpdateCodeSystem operation middleware
-func (siw *ServerInterfaceWrapper) UpdateCodeSystem(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "code-system_id" -------------
-	var codeSystemId CodeSystemId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system_id", c.Param("code-system_id"), &codeSystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"admin"})
-
-	c.Set(BearerAuthScopes, []string{"admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UpdateCodeSystem(c, codeSystemId)
 }
 
 // GetAllConcepts operation middleware
@@ -349,6 +321,23 @@ func (siw *ServerInterfaceWrapper) CreateCodeSystem(c *gin.Context) {
 	}
 
 	siw.Handler.CreateCodeSystem(c)
+}
+
+// UpdateCodeSystem operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCodeSystem(c *gin.Context) {
+
+	c.Set(OAuth2Scopes, []string{"admin"})
+
+	c.Set(BearerAuthScopes, []string{"admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateCodeSystem(c)
 }
 
 // Ping operation middleware
@@ -1047,11 +1036,11 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.DELETE(options.BaseURL+"/code-system/:code-system_id", wrapper.DeleteCodeSystem)
 	router.GET(options.BaseURL+"/code-system/:code-system_id", wrapper.GetCodeSystem)
-	router.PUT(options.BaseURL+"/code-system/:code-system_id", wrapper.UpdateCodeSystem)
 	router.GET(options.BaseURL+"/code-system/:code-system_id/concepts", wrapper.GetAllConcepts)
 	router.GET(options.BaseURL+"/code-system/:code-system_id/find-concept", wrapper.FindConceptByCode)
 	router.GET(options.BaseURL+"/code-systems", wrapper.GetAllCodeSystems)
 	router.POST(options.BaseURL+"/code-systems", wrapper.CreateCodeSystem)
+	router.PUT(options.BaseURL+"/code-systems", wrapper.UpdateCodeSystem)
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
 	router.POST(options.BaseURL+"/projects", wrapper.CreateProject)
@@ -1164,62 +1153,6 @@ type GetCodeSystem500JSONResponse struct {
 }
 
 func (response GetCodeSystem500JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateCodeSystemRequestObject struct {
-	CodeSystemId CodeSystemId `json:"code-system_id"`
-	Body         *UpdateCodeSystemJSONRequestBody
-}
-
-type UpdateCodeSystemResponseObject interface {
-	VisitUpdateCodeSystemResponse(w http.ResponseWriter) error
-}
-
-type UpdateCodeSystem200JSONResponse CodeSystem
-
-func (response UpdateCodeSystem200JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response UpdateCodeSystem400JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateCodeSystem404JSONResponse ErrorResponse
-
-func (response UpdateCodeSystem404JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateCodeSystem422JSONResponse ErrorResponse
-
-func (response UpdateCodeSystem422JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateCodeSystem500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response UpdateCodeSystem500JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1414,6 +1347,61 @@ type CreateCodeSystem500JSONResponse struct {
 }
 
 func (response CreateCodeSystem500JSONResponse) VisitCreateCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateCodeSystemRequestObject struct {
+	Body *UpdateCodeSystemJSONRequestBody
+}
+
+type UpdateCodeSystemResponseObject interface {
+	VisitUpdateCodeSystemResponse(w http.ResponseWriter) error
+}
+
+type UpdateCodeSystem200JSONResponse CodeSystem
+
+func (response UpdateCodeSystem200JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response UpdateCodeSystem400JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateCodeSystem404JSONResponse ErrorResponse
+
+func (response UpdateCodeSystem404JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateCodeSystem422JSONResponse ErrorResponse
+
+func (response UpdateCodeSystem422JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateCodeSystem500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdateCodeSystem500JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2399,9 +2387,6 @@ type StrictServerInterface interface {
 	// Get a code system by ID
 	// (GET /code-system/{code-system_id})
 	GetCodeSystem(ctx context.Context, request GetCodeSystemRequestObject) (GetCodeSystemResponseObject, error)
-	// Update a code system by ID
-	// (PUT /code-system/{code-system_id})
-	UpdateCodeSystem(ctx context.Context, request UpdateCodeSystemRequestObject) (UpdateCodeSystemResponseObject, error)
 	// Get all concepts for a code system by ID
 	// (GET /code-system/{code-system_id}/concepts)
 	GetAllConcepts(ctx context.Context, request GetAllConceptsRequestObject) (GetAllConceptsResponseObject, error)
@@ -2414,6 +2399,9 @@ type StrictServerInterface interface {
 	// Create a new code system
 	// (POST /code-systems)
 	CreateCodeSystem(ctx context.Context, request CreateCodeSystemRequestObject) (CreateCodeSystemResponseObject, error)
+	// Update a code system by ID
+	// (PUT /code-systems)
+	UpdateCodeSystem(ctx context.Context, request UpdateCodeSystemRequestObject) (UpdateCodeSystemResponseObject, error)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(ctx context.Context, request PingRequestObject) (PingResponseObject, error)
@@ -2542,41 +2530,6 @@ func (sh *strictHandler) GetCodeSystem(ctx *gin.Context, codeSystemId CodeSystem
 	}
 }
 
-// UpdateCodeSystem operation middleware
-func (sh *strictHandler) UpdateCodeSystem(ctx *gin.Context, codeSystemId CodeSystemId) {
-	var request UpdateCodeSystemRequestObject
-
-	request.CodeSystemId = codeSystemId
-
-	var body UpdateCodeSystemJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateCodeSystem(ctx, request.(UpdateCodeSystemRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateCodeSystem")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(UpdateCodeSystemResponseObject); ok {
-		if err := validResponse.VisitUpdateCodeSystemResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // GetAllConcepts operation middleware
 func (sh *strictHandler) GetAllConcepts(ctx *gin.Context, codeSystemId CodeSystemId, params GetAllConceptsParams) {
 	var request GetAllConceptsRequestObject
@@ -2684,6 +2637,39 @@ func (sh *strictHandler) CreateCodeSystem(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(CreateCodeSystemResponseObject); ok {
 		if err := validResponse.VisitCreateCodeSystemResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateCodeSystem operation middleware
+func (sh *strictHandler) UpdateCodeSystem(ctx *gin.Context) {
+	var request UpdateCodeSystemRequestObject
+
+	var body UpdateCodeSystemJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateCodeSystem(ctx, request.(UpdateCodeSystemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateCodeSystem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UpdateCodeSystemResponseObject); ok {
+		if err := validResponse.VisitUpdateCodeSystemResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3331,36 +3317,36 @@ var swaggerSpec = []string{
 	"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",
-	"Xv1wNYpEkWWYb3pRpqMCK+HOcbvxauBI+VAtvP4CMgjWFg5/AXkE4SOB8HLvICyR1LH/PTDKiwCMjOE0",
-	"TO0Vpm2/2jMD7htxeh9fs2RzMLDVQ993R5jfU9e+PDl5OCH+g1OSGAumXIXHV/bd3Opk6d2o34KZ2jCP",
-	"BmX3uZCmyDU0Vl6I3ud4pcwtZfK55JW1H0UOsY4hqKbNVEnwhHmVpqdOsvsSfrS1h06NDmynk5SqbX2Z",
-	"3hJIE2Vyq0fX/3m96cnW6R9DqTob73Z+sv2YEJGneBOMVG6VusoO3vu0HRjGsCHBVnjheAYPOIMHcK1G",
-	"d7PYA6i+JFQ7pS6sG6T7W6I8NieBmk7PzjiyKRjj/OkvHbsB83htyI3tJ2TwOUGv0K8kI/ILNYGSxsLp",
-	"9ebUcOHQysAUmbQZXnuw0hvXC6HzwB1s19kB3TXqy38PnM5uQu+Mts2ASY/q4L7qwLDkELpgKxGHKIEh",
-	"x3qf8e1OYqf1RPQwiPHKCZ4caGy0XO2ketCxedLxBUvhwIdKtdN9Xh0TAbiYwDbCiMKNP1LbqTPZqy24",
-	"aqXsD+STtapTjp7Z/o2fR/PM/lRKzyayHt8766JIr2/m0ktBHa2zAECTnBFaWlCFAO1nxGuIPyFiavGE",
-	"qf8iAvGCGivtTNpaWqGMMl0AhnJGVygDIfAK2qQ8N4fKvdhQT3fZqXTi70+sRIjmkRIiGlBx0UOY+pbV",
-	"d6F3Wby9sCUidhtsgmTrcVnPpOTK4zVpDXTpubw4FeyL/d5zJ8uupu5X5MXq5KrzYW3yXofxyuIIknwb",
-	"zmyV5x9qiCyLFJX7+u1YJbq43Kl1VxGbeyXnkjG0Jqv18wPYJnmFecdPV5c90CaxzS0vq/IIHY5q3toQ",
-	"6Jnx3dIiowIR6lf6I4kXKTy3mdBaL8VttUYLQPEaU50SXUrgxuix2c2QpXNeFpkfwsxp1LA8sJETmn3/",
-	"hs7Rxth0QD7IGf9Qm95W1xiGpawdmWxgV9shNyRNzcFms9WKt65sQLPM1bs1bla4qgH1f/21R04X1iib",
-	"0iR4zaozHV4Ra8ezsrrYcdAUZHl8PB2/9WvNgPfRoSfn7cMvMTrM4B4RGqeFro5RbVIipEK2a7uPMyZk",
-	"AX4jiD6wuv/GgV0zcBro6rJxerLpPkYJNeWD2ul4w0BouQuvYUC/FgK4QH7IeldrqCMvvze0HswqeiRz",
-	"6MkS4wlYYs2Eege9djOsps1L3zvF3h0Re0lo04Gedeb+1CnB/tD9hRbpMU+VvdTAH4+bHWP9Flk16LSR",
-	"PW6jdyes17LN7p0Hd/0MaEnp4N+Bfpf67ilHvDCvZPhyjI92SSiX73Z4oCpGw4hjBuz+pY0abc1Sij4q",
-	"9NtnFGc6M6tUFVpylu0L3M3ix0fF9yFrJitoP0Z27rsj1jdeTNlfEbkzubvPORff2mrKlYGwHhPNVE6V",
-	"LU14wcTRytCZDl+78q+9l1S+c49zWBWy90TU4v5JKPPBu6heXhIflffk/cu75a3XbyJLVd04fHrm8qMm",
-	"pobw2tMy7mVR2mDAMl73XJBwBoAJNuqLcmnqtIIXTV9sUCFcFLJ+a88Vh529ERP0zr6UpuyIOdhYfRJI",
-	"9ivp3pXvtvrqojeN9wA8rGVQm/bJmATuPuTTtgQcrRShiBQ1HrmbryVruqi7Pd/spunRC14CQTGbAtR4",
-	"/ax2hLfu2hs/os15O/7zjkzzV0zpxuX4I6WPYdkwl7cTrYu3vTcS93zgdjjrxzP1eKYez9QmN7e72NPb",
-	"6mWqw6pUBvK5q3RkH0Td7gl6b4g9aJT4O6LXntDdwlEI3Z3eXU9aYygudTionMyFg8yhY9jkXtdiI1tj",
-	"kgQjO0ckf99IrsNOg2YgjrvVcuMNY/1F8Y2Kk674Z1fBuzfVV5+fHvIWtWOKeltFVBdgAgH7qu1QvE5v",
-	"7Qvedit2rUawMqlRrIVj/g4k6GwVaiXjYXWwe3PdQ1T4+RB/UqpY7+VBLYpeSG3D+MBa1dbYNpwUh3Ab",
-	"VL1H1B5R2yhR7QfVduTucFFnkL7tvE/zONA9WJFqE7UPXq76HdHmyUZKO0g8kLm9odN72Ui2UvxI2SNl",
-	"j5QdyKmtjlD39SnzmuNo1H2PqtXiSg2mBDZ0bDpK15CyPAMq7YX62ut559NpymKcrpmQ859mP80C1Tzn",
-	"nCVFrJc0MIKYT6c4J5OMcBwX2YTxlSavXYDmYJe6bAfhBSukd8vfKwoydT1tMd47teR6e9eO6//g0w6d",
-	"fWe2NY6/aQOGVE+TwJJQSNy7UxBb1tzjxvjtcrYB02RVGVj93zEb0rnxGpn2vyE3bJDy3X7lAPYtUVd3",
-	"/w8AAP//+58v3rVvAAA=",
+	"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",
+	"9/8AAAD//w2qgWF0bwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

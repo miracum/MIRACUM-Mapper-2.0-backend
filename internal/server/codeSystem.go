@@ -30,7 +30,8 @@ func (s *Server) DeleteCodeSystem(ctx context.Context, request api.DeleteCodeSys
 			// TODO or: return api.DeleteCodeSystem500JSONResponse{InternalServerErrorJSONResponse: database.InternalServerErrorMessage}, nil
 		}
 	}
-	panic("unimplemented")
+
+	return api.DeleteCodeSystem200JSONResponse(transform.GormCodeSystemToApiCodeSystem(codeSystem)), nil
 }
 
 // GetAllCodeSystems implements api.StrictServerInterface.

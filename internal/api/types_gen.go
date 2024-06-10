@@ -364,11 +364,11 @@ type GetAllMappingsParamsSortBy string
 // GetAllMappingsParamsSortOrder defines parameters for GetAllMappings.
 type GetAllMappingsParamsSortOrder string
 
-// UpdateCodeSystemJSONRequestBody defines body for UpdateCodeSystem for application/json ContentType.
-type UpdateCodeSystemJSONRequestBody = CodeSystem
-
 // CreateCodeSystemJSONRequestBody defines body for CreateCodeSystem for application/json ContentType.
 type CreateCodeSystemJSONRequestBody = CreateCodeSystem
+
+// UpdateCodeSystemJSONRequestBody defines body for UpdateCodeSystem for application/json ContentType.
+type UpdateCodeSystemJSONRequestBody = CodeSystem
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
 type CreateProjectJSONRequestBody = ProjectDetails

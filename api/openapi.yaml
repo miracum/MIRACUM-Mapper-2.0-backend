@@ -807,39 +807,11 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /code-system/{code-system_id}:
-    get:
-      tags:
-        - code-system
-      summary: Get a code system by ID
-      description: Get a code system by ID.
-      parameters:
-        - $ref: "#/components/parameters/code-system_id"
-      operationId: getCodeSystem
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CodeSystem" # id required
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: CodeSystem not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - code-system
       summary: Update a code system by ID
       description: Update a code system by ID. Only admins can update code systems.
-      parameters:
-        - $ref: "#/components/parameters/code-system_id"
       operationId: updateCodeSystem
       requestBody:
         required: true
@@ -873,6 +845,32 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /code-system/{code-system_id}:
+    get:
+      tags:
+        - code-system
+      summary: Get a code system by ID
+      description: Get a code system by ID.
+      parameters:
+        - $ref: "#/components/parameters/code-system_id"
+      operationId: getCodeSystem
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystem" # id required
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     delete:
       tags:
         - code-system
