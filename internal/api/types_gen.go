@@ -120,7 +120,7 @@ const (
 type CodeSystem struct {
 	Author      *string `json:"author,omitempty"`
 	Description *string `json:"description,omitempty"`
-	Id          *int32  `json:"id,omitempty"`
+	Id          int32   `json:"id"`
 	Name        string  `json:"name"`
 	Title       *string `json:"title,omitempty"`
 	Uri         string  `json:"uri"`
@@ -147,6 +147,16 @@ type Concept struct {
 	Code    string `json:"code"`
 	Id      int64  `json:"id"`
 	Meaning string `json:"meaning"`
+}
+
+// CreateCodeSystem defines model for CreateCodeSystem.
+type CreateCodeSystem struct {
+	Author      *string `json:"author,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Title       *string `json:"title,omitempty"`
+	Uri         string  `json:"uri"`
+	Version     string  `json:"version"`
 }
 
 // CreateMapping defines model for CreateMapping.
@@ -358,7 +368,7 @@ type GetAllMappingsParamsSortOrder string
 type UpdateCodeSystemJSONRequestBody = CodeSystem
 
 // CreateCodeSystemJSONRequestBody defines body for CreateCodeSystem for application/json ContentType.
-type CreateCodeSystemJSONRequestBody = CodeSystem
+type CreateCodeSystemJSONRequestBody = CreateCodeSystem
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
 type CreateProjectJSONRequestBody = ProjectDetails

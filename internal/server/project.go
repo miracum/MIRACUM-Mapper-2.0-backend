@@ -27,14 +27,15 @@ var (
 )
 
 func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
+	projectId := request.ProjectId
 	var project models.Project
 
-	if err := s.Database.GetProjectQuery(&project, request.ProjectId); err != nil {
+	if err := s.Database.GetProjectQuery(&project, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.GetProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", request.ProjectId)), nil
+			return api.GetProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
 		default:
-			return api.GetProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the projects"}, err
+			return api.GetProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project"}, err
 		}
 	}
 

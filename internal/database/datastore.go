@@ -32,7 +32,10 @@ type Datastore interface {
 	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error
 	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error
 	DeleteMappingQuery(mapping *models.Mapping) error
-	//Add other methods here...
+
+	// CodeSystem
+	GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error
+	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 }
 
 type ErrorType int

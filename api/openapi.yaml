@@ -780,7 +780,7 @@ paths:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/CodeSystem" # id prohibited/ignored
+              "$ref": "#/components/schemas/CreateCodeSystem" # id prohibited/ignored
       responses:
         "200":
           description: Success
@@ -1222,17 +1222,13 @@ components:
           type: string
         meaning:
           type: string
-    
-    CodeSystem:
+    CreateCodeSystem:
       type: object
       required:
         - uri
         - version
         - name
       properties:
-        id:
-          type: integer
-          format: int32
         uri:
           type: string
         version:
@@ -1245,6 +1241,16 @@ components:
           type: string
         author:
           type: string
+    CodeSystem:
+      allOf:
+        - $ref: "#/components/schemas/CreateCodeSystem"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int32
     ErrorResponse:
       type: string
   responses:

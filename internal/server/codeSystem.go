@@ -2,7 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"miracummapper/internal/api"
+	"miracummapper/internal/database"
+	"miracummapper/internal/database/models"
+	"miracummapper/internal/database/transform"
 )
 
 // CreateCodeSystem implements api.StrictServerInterface.
@@ -12,17 +17,60 @@ func (s *Server) CreateCodeSystem(ctx context.Context, request api.CreateCodeSys
 
 // DeleteCodeSystem implements api.StrictServerInterface.
 func (s *Server) DeleteCodeSystem(ctx context.Context, request api.DeleteCodeSystemRequestObject) (api.DeleteCodeSystemResponseObject, error) {
+	codeSystemId := request.CodeSystemId
+	var codeSystem models.CodeSystem
+
+	if err := s.Database.DeleteCodeSystemQuery(&codeSystem, codeSystemId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeleteCodeSystem404JSONResponse(err.Error()), nil
+		default:
+			return api.DeleteCodeSystem500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to delete the CodeSystem"}, nil
+			// TODO or: return api.DeleteCodeSystem500JSONResponse{InternalServerErrorJSONResponse: err.Error()}, nil
+			// TODO or: return api.DeleteCodeSystem500JSONResponse{InternalServerErrorJSONResponse: database.InternalServerErrorMessage}, nil
+		}
+	}
 	panic("unimplemented")
 }
 
 // GetAllCodeSystems implements api.StrictServerInterface.
 func (s *Server) GetAllCodeSystems(ctx context.Context, request api.GetAllCodeSystemsRequestObject) (api.GetAllCodeSystemsResponseObject, error) {
-	panic("unimplemented")
+	var codeSystems []models.CodeSystem
+
+	if err := s.Database.GetAllCodeSystemsQuery(&codeSystems); err != nil {
+		// switch {
+		// case errors.Is(err, database.ErrNotFound):
+		// 	return api.GetAllCodeSystems404JSONResponse("No CodeSystems found"), nil
+		// default:
+		// 	return api.GetAllCodeSystems500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystems"}, err
+		// }
+		return api.GetAllCodeSystems500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystems"}, nil
+	}
+
+	var apiCodeSystems []api.CodeSystem = []api.CodeSystem{}
+	for _, codeSystem := range codeSystems {
+		apiCodeSystems = append(apiCodeSystems, transform.GormCodeSystemToApiCodeSystem(codeSystem))
+	}
+
+	return api.GetAllCodeSystems200JSONResponse(apiCodeSystems), nil
 }
 
 // GetCodeSystem implements api.StrictServerInterface.
 func (s *Server) GetCodeSystem(ctx context.Context, request api.GetCodeSystemRequestObject) (api.GetCodeSystemResponseObject, error) {
-	panic("unimplemented")
+	codeSystemId := request.CodeSystemId
+	var codeSystem models.CodeSystem
+
+	if err := s.Database.GetCodeSystemQuery(&codeSystem, codeSystemId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetCodeSystem404JSONResponse(fmt.Sprintf("CodeSystem with ID %d couldn't be found.", request.CodeSystemId)), nil
+		default:
+			return api.GetCodeSystem500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystem"}, nil
+		}
+	}
+
+	return api.GetCodeSystem200JSONResponse(transform.GormCodeSystemToApiCodeSystem(codeSystem)), nil
+
 }
 
 // UpdateCodeSystem implements api.StrictServerInterface.
