@@ -300,10 +300,10 @@ type GetAllConceptsParams struct {
 	// SortOrder Order of sorting (asc or desc)
 	SortOrder *GetAllConceptsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 
-	// CodeSearch search string for the code field
+	// CodeSearch search for the code
 	CodeSearch *string `form:"codeSearch,omitempty" json:"codeSearch,omitempty"`
 
-	// MeaningSearch search string for the meaning field
+	// MeaningSearch search for meaning
 	MeaningSearch *string `form:"meaningSearch,omitempty" json:"meaningSearch,omitempty"`
 }
 

@@ -39,6 +39,9 @@ type Datastore interface {
 	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error
+
+	// Concept
+	GetAllConceptsQuery(concepts *[]models.Concept, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 }
 
 type ErrorType int

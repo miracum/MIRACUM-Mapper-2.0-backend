@@ -212,4 +212,47 @@ func createTestData(gormDB *gorm.DB) {
 	}
 
 	gormDB.FirstOrCreate(&concept2)
+
+	// words := []string{"nein", "awesome", "42", "Pills", "Nina", "Loinc", "word7", "word8", "word9", "Very", "and", "for", "some", "Boomer", "Go", "hallo", "blub", "egal", "buch", "katze", "hund", "henrik", "computer", "geben", "halten", "tastatur", "applaudieren", "kontrolle", "schlüssel", "schlange", "schlafen", "schlüsselbund"}
+
+	// rand.Seed(1)
+
+	// count := 2
+	// for j := 0; j < 1000; j++ {
+	// 	concepts := make([]models.Concept, 1000)
+	// 	for i := 0; i < 1000; i++ {
+	// 		//code := fmt.Sprintf("%d", rand.Intn(10000)) // generate a random code
+	// 		// select 3 random words from the list
+	// 		meaning := words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))]
+
+	// 		count = count + rand.Intn(10) + 1
+	// 		concepts[i] = models.Concept{
+	// 			ModelBigId:   models.ModelBigId{ID: uint64(count)},
+	// 			CodeSystemID: 1,
+	// 			Code:         fmt.Sprint(count),
+	// 			Display:      meaning,
+	// 		}
+	// 	}
+
+	// 	gormDB.Create(&concepts)
+	// }
+
+	// for j := 0; j < 1; j++ {
+	// 	concepts := make([]models.Concept, 100)
+	// 	for i := 0; i < 100; i++ {
+	// 		//code := fmt.Sprintf("%d", rand.Intn(10000)) // generate a random code
+	// 		// select 3 random words from the list
+	// 		meaning := words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))]
+
+	// 		count = count + rand.Intn(10) + 1
+	// 		concepts[i] = models.Concept{
+	// 			ModelBigId:   models.ModelBigId{ID: uint64(count)},
+	// 			CodeSystemID: 2,
+	// 			Code:         fmt.Sprint(count),
+	// 			Display:      meaning,
+	// 		}
+	// 	}
+
+	// 	gormDB.Create(&concepts)
+	// }
 }

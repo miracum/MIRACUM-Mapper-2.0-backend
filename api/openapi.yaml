@@ -921,13 +921,13 @@ paths:
         - $ref: "#/components/parameters/sortOrder"
         - name: codeSearch
           in: query
-          description: search string for the code field
+          description: search for the code
           required: false
           schema:
             type: string
         - name: meaningSearch
           in: query
-          description: search string for the meaning field
+          description: search for meaning
           required: false
           schema:
             type: string
