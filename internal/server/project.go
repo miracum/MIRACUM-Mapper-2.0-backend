@@ -26,22 +26,26 @@ var (
 	}
 )
 
-func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
-	projectId := request.ProjectId
-	var project models.Project
+// GetAllProjects implements api.StrictServerInterface.
+func (s *Server) GetAllProjects(ctx context.Context, request api.GetAllProjectsRequestObject) (api.GetAllProjectsResponseObject, error) {
 
-	if err := s.Database.GetProjectQuery(&project, projectId); err != nil {
-		switch {
-		case errors.Is(err, database.ErrNotFound):
-			return api.GetProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
-		default:
-			return api.GetProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project"}, err
-		}
+	pageSize := *request.Params.PageSize
+	offset := utilities.GetOffset(*request.Params.Page, pageSize)
+	sortBy := projectSortColumns[*request.Params.SortBy]
+	sortOrder := projectSortOrders[*request.Params.SortOrder]
+
+	var projects []models.Project = []models.Project{}
+
+	if err := s.Database.GetAllProjectsQuery(&projects, pageSize, offset, sortBy, sortOrder); err != nil {
+		return api.GetAllProjects500JSONResponse{}, err
 	}
 
-	projectDetails := transform.GormProjectToApiProjectDetails(project)
+	var apiProjects []api.Project = []api.Project{}
+	for _, project := range projects {
+		apiProjects = append(apiProjects, transform.GormProjectToApiProject(project))
+	}
 
-	return api.GetProject200JSONResponse(projectDetails), nil
+	return api.GetAllProjects200JSONResponse(apiProjects), nil
 }
 
 // CreateProject implements api.StrictServerInterface.
@@ -82,45 +86,22 @@ func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectReq
 	return api.CreateProject200JSONResponse(*projectDetails), nil
 }
 
-// GetAllProjects implements api.StrictServerInterface.
-func (s *Server) GetAllProjects(ctx context.Context, request api.GetAllProjectsRequestObject) (api.GetAllProjectsResponseObject, error) {
-
-	pageSize := *request.Params.PageSize
-	offset := utilities.GetOffset(*request.Params.Page, pageSize)
-	sortBy := projectSortColumns[*request.Params.SortBy]
-	sortOrder := projectSortOrders[*request.Params.SortOrder]
-
-	var projects []models.Project = []models.Project{}
-
-	if err := s.Database.GetAllProjectsQuery(&projects, pageSize, offset, sortBy, sortOrder); err != nil {
-		return api.GetAllProjects500JSONResponse{}, err
-	}
-
-	var apiProjects []api.Project = []api.Project{}
-	for _, project := range projects {
-		apiProjects = append(apiProjects, transform.GormProjectToApiProject(project))
-	}
-
-	return api.GetAllProjects200JSONResponse(apiProjects), nil
-}
-
-// DeleteProject implements api.StrictServerInterface.
-func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectRequestObject) (api.DeleteProjectResponseObject, error) {
-
+func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
 	projectId := request.ProjectId
 	var project models.Project
 
-	if err := s.Database.DeleteProjectQuery(&project, projectId); err != nil {
+	if err := s.Database.GetProjectQuery(&project, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.DeleteProject404JSONResponse(err.Error()), nil
+			return api.GetProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
 		default:
-			return api.DeleteProject500JSONResponse{InternalServerErrorJSONResponse: api.InternalServerErrorJSONResponse(database.InternalServerErrorMessage)}, nil
+			return api.GetProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project"}, err
 		}
 	}
 
-	api_project := transform.GormProjectToApiProject(project)
-	return api.DeleteProject200JSONResponse(api_project), nil
+	projectDetails := transform.GormProjectToApiProjectDetails(project)
+
+	return api.GetProject200JSONResponse(projectDetails), nil
 }
 
 // UpdateProject implements api.StrictServerInterface.
@@ -159,4 +140,23 @@ func (s *Server) UpdateProject(ctx context.Context, request api.UpdateProjectReq
 
 	return api.UpdateProject200JSONResponse(*project), nil
 
+}
+
+// DeleteProject implements api.StrictServerInterface.
+func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectRequestObject) (api.DeleteProjectResponseObject, error) {
+
+	projectId := request.ProjectId
+	var project models.Project
+
+	if err := s.Database.DeleteProjectQuery(&project, projectId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeleteProject404JSONResponse(err.Error()), nil
+		default:
+			return api.DeleteProject500JSONResponse{InternalServerErrorJSONResponse: api.InternalServerErrorJSONResponse(database.InternalServerErrorMessage)}, nil
+		}
+	}
+
+	api_project := transform.GormProjectToApiProject(project)
+	return api.DeleteProject200JSONResponse(api_project), nil
 }

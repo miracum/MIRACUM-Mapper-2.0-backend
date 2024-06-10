@@ -10,7 +10,7 @@ import (
 )
 
 func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error {
-	// start transaction, get codesystemrole ids for project, call check function, if no error, create mapping
+	// start transaction, get CodeSystemRole ids for project, call check function, if no error, create mapping
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		project := models.Project{
@@ -66,39 +66,6 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 	return err
 }
 
-// CreateMappingQuery implements database.Datastore.
-func (gq *GormQuery) CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error {
-	return CreateOrUpdateMapping(gq, mapping, checkFunc, false)
-}
-
-// DeleteMappingQuery implements database.Datastore.
-func (gq *GormQuery) DeleteMappingQuery(mapping *models.Mapping) error {
-	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("project_id = ?", mapping.ProjectID).First(mapping, mapping.ID).Error; err != nil {
-			switch {
-			case errors.Is(err, gorm.ErrRecordNotFound):
-				// TODO This check to determine if the Project or the CodeSystemRole is not found is bad
-				var project models.Project
-				if err := tx.First(&project, mapping.ProjectID).Error; err != nil {
-					if errors.Is(err, gorm.ErrRecordNotFound) {
-						return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", mapping.ProjectID))
-					}
-					return err
-				} else {
-					return database.NewDBError(database.NotFound, fmt.Sprintf("The Mapping with id %d does not exist in the project with id %d.", mapping.ID, mapping.ProjectID))
-				}
-			default:
-				return err
-			}
-		}
-		if err := gq.Database.Delete(mapping).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	return err
-}
-
 // GetAllMappingsQuery implements database.Datastore.
 func (gq *GormQuery) GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
@@ -118,6 +85,11 @@ func (gq *GormQuery) GetAllMappingsQuery(mappings *[]models.Mapping, projectId i
 	})
 	return err
 
+}
+
+// CreateMappingQuery implements database.Datastore.
+func (gq *GormQuery) CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error {
+	return CreateOrUpdateMapping(gq, mapping, checkFunc, false)
 }
 
 // GetMappingQuery implements database.Datastore.
@@ -148,4 +120,32 @@ func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, map
 func (gq *GormQuery) UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error {
 	// TODO it has to be checked if the mapping exists in the project. If there is another project which has the same CodeSystem Roles and the projectId of the other project is set in the update mapping url, the mapping would get moved to the other project
 	return CreateOrUpdateMapping(gq, mapping, checkFunc, deleteMissingElements)
+}
+
+// DeleteMappingQuery implements database.Datastore.
+func (gq *GormQuery) DeleteMappingQuery(mapping *models.Mapping) error {
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("project_id = ?", mapping.ProjectID).First(mapping, mapping.ID).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				// TODO This check to determine if the Project or the CodeSystemRole is not found is bad
+				var project models.Project
+				if err := tx.First(&project, mapping.ProjectID).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", mapping.ProjectID))
+					}
+					return err
+				} else {
+					return database.NewDBError(database.NotFound, fmt.Sprintf("The Mapping with id %d does not exist in the project with id %d.", mapping.ID, mapping.ProjectID))
+				}
+			default:
+				return err
+			}
+		}
+		if err := gq.Database.Delete(mapping).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
 }

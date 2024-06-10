@@ -9,13 +9,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// CreateCodeSystemQuery implements database.Datastore.
 func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
 	db := gq.Database.Find(&codeSystems)
 	return db.Error
 }
 
-// GetCodeSystemQuery implements database.Datastore.
+func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error {
+	return gq.Database.Create(&codeSystem).Error
+}
+
 func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
 	db := gq.Database.First(&codeSystem, codeSystemId)
 	if db.Error != nil {
@@ -28,6 +30,26 @@ func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSyste
 	} else {
 		return nil
 	}
+}
+
+func (gq *GormQuery) UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error {
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		// TODO check fields that are not allowed to change
+		if err := tx.First(&models.CodeSystem{}, codeSystem.ID).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystem.ID))
+			default:
+				return err
+			}
+		}
+
+		if err := tx.Save(&codeSystem).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
 }
 
 func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {

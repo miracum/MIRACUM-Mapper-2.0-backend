@@ -34,7 +34,7 @@ func (s *Server) GetAllCodeSystemRoles(ctx context.Context, request api.GetAllCo
 func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSystemRoleRequestObject) (api.GetCodeSystemRoleResponseObject, error) {
 	var codeSystemRole models.CodeSystemRole = models.CodeSystemRole{}
 
-	if err := s.Database.GetCodeSystemRoleQuery(&codeSystemRole, request.ProjectId, request.CodeSystemRoleId); err != nil {
+	if err := s.Database.GetCodeSystemRoleQuery(&codeSystemRole, request.ProjectId, request.CodesystemRoleId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.GetCodeSystemRole404JSONResponse(err.Error()), nil
@@ -51,12 +51,12 @@ func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSyste
 // UpdateCodeSystemRole implements api.StrictServerInterface.
 func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCodeSystemRoleRequestObject) (api.UpdateCodeSystemRoleResponseObject, error) {
 	codeSystemRole := request.Body
-	codeSystemRoleId := request.CodeSystemRoleId
+	codeSystemRoleId := request.CodesystemRoleId
 	projectID := request.ProjectId
 
 	if codeSystemRole.Id == nil {
-		codeSystemRole.Id = &request.CodeSystemRoleId
-	} else if *codeSystemRole.Id != request.CodeSystemRoleId {
+		codeSystemRole.Id = &codeSystemRoleId
+	} else if *codeSystemRole.Id != codeSystemRoleId {
 		return api.UpdateCodeSystemRole400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("CodeSystemRole ID %d in URL does not match CodeSystemRole ID %d in body", codeSystemRoleId, *codeSystemRole.Id))}, nil
 	}
 

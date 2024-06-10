@@ -8,6 +8,6 @@ type CodeSystem struct {
 	Title           *string
 	Description     *string
 	Author          *string
-	Concepts        []Concept
+	Concepts        []Concept `gorm:"constraint:OnDelete:CASCADE"`
 	CodeSystemRoles []CodeSystemRole
 }

@@ -11,40 +11,13 @@ import (
 	"miracummapper/internal/utilities"
 )
 
-// GetPermission implements api.StrictServerInterface.
-func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionRequestObject) (api.GetPermissionResponseObject, error) {
-
-	projectId := request.ProjectId
-	userUuid, err := utilities.ParseUUID(request.UserId)
-	if err != nil {
-		// TODO return 422 instead of 400
-		return api.GetPermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
-	}
-
-	var permission models.ProjectPermission
-
-	if err := s.Database.GetProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
-		switch {
-		case errors.Is(err, database.ErrNotFound):
-			return api.GetPermission404JSONResponse(err.Error()), nil
-		default:
-			// TODO returns empty body?
-			return api.GetPermission500JSONResponse{}, nil
-		}
-	}
-
-	apiPermission := transform.GormProjectPermissionToApiProjectPermission(permission)
-
-	return api.GetPermission200JSONResponse(apiPermission), nil
-}
-
 // GetAllPermissions implements api.StrictServerInterface.
 func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermissionsRequestObject) (api.GetAllPermissionsResponseObject, error) {
 
 	projectId := request.ProjectId
 	var permissions []models.ProjectPermission = []models.ProjectPermission{}
 
-	if err := s.Database.GetProjectPermissionsQuery(&permissions, projectId); err != nil {
+	if err := s.Database.GetAllProjectPermissionsQuery(&permissions, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.GetAllPermissions404JSONResponse(err.Error()), nil
@@ -83,6 +56,33 @@ func (s *Server) CreatePermission(ctx context.Context, request api.CreatePermiss
 
 	return api.CreatePermission200JSONResponse(permission), nil
 	//TODO return api.CreatePermission201JSONResponse{}, nil
+}
+
+// GetPermission implements api.StrictServerInterface.
+func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionRequestObject) (api.GetPermissionResponseObject, error) {
+
+	projectId := request.ProjectId
+	userUuid, err := utilities.ParseUUID(request.UserId)
+	if err != nil {
+		// TODO return 422 instead of 400
+		return api.GetPermission400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Invalid User ID: %s", err.Error()))}, nil
+	}
+
+	var permission models.ProjectPermission
+
+	if err := s.Database.GetProjectPermissionQuery(&permission, projectId, userUuid); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetPermission404JSONResponse(err.Error()), nil
+		default:
+			// TODO returns empty body?
+			return api.GetPermission500JSONResponse{}, nil
+		}
+	}
+
+	apiPermission := transform.GormProjectPermissionToApiProjectPermission(permission)
+
+	return api.GetPermission200JSONResponse(apiPermission), nil
 }
 
 // UpdatePermission implements api.StrictServerInterface.

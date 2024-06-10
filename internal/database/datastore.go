@@ -8,35 +8,37 @@ import (
 
 type Datastore interface {
 	// Project
-	GetProjectQuery(project *models.Project, projectId int32) error
 	GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
 	CreateProjectQuery(project *models.Project) error
+	GetProjectQuery(project *models.Project, projectId int32) error
 	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
 	DeleteProjectQuery(project *models.Project, projectId int32) error
+
+	// ProjectPermission
+	GetAllProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
+	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
+	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
+	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
+	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 
 	// CodeSystemRole
 	GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error
 	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
 	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32, checkFunc func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error) error
 
-	// ProjectPermission
-	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
-	GetProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
-	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
-	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
-	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
-
 	// Mapping
 	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error
-	GetMappingQuery(mapping *models.Mapping, projectId int, mappingId int64) error
 	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error
+	GetMappingQuery(mapping *models.Mapping, projectId int, mappingId int64) error
 	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error
 	DeleteMappingQuery(mapping *models.Mapping) error
 
 	// CodeSystem
 	GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error
+	CreateCodeSystemQuery(codeSystem *models.CodeSystem) error
 	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
+	UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error
 }
 
 type ErrorType int

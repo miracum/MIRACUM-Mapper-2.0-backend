@@ -133,51 +133,6 @@ func (s *Server) CreateMapping(ctx context.Context, request api.CreateMappingReq
 	return api.CreateMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
 }
 
-// DeleteMapping implements api.StrictServerInterface.
-func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingRequestObject) (api.DeleteMappingResponseObject, error) {
-
-	projectId := int(request.ProjectId)
-	mappingId := request.MappingId
-
-	mapping := models.Mapping{
-		ModelBigId: models.ModelBigId{
-			ID: uint64(mappingId),
-		},
-		ProjectID: uint32(projectId),
-	}
-
-	if err := s.Database.DeleteMappingQuery(&mapping); err != nil {
-		switch {
-		case errors.Is(err, database.ErrNotFound):
-			return api.DeleteMapping404JSONResponse(err.Error()), nil
-		default:
-			return api.DeleteMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to delete the mapping"}, nil
-		}
-	}
-
-	return api.DeleteMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
-}
-
-// GetMapping implements api.StrictServerInterface.
-func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestObject) (api.GetMappingResponseObject, error) {
-
-	projectId := int(request.ProjectId)
-	mappingId := request.MappingId
-
-	mapping := models.Mapping{}
-
-	if err := s.Database.GetMappingQuery(&mapping, projectId, mappingId); err != nil {
-		switch {
-		case errors.Is(err, database.ErrNotFound):
-			return api.GetMapping404JSONResponse(err.Error()), nil
-		default:
-			return api.GetMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the mapping"}, nil
-		}
-	}
-
-	return api.GetMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
-}
-
 // UpdateMapping implements api.StrictServerInterface.
 func (s *Server) UpdateMapping(ctx context.Context, request api.UpdateMappingRequestObject) (api.UpdateMappingResponseObject, error) {
 	projectId := request.ProjectId
@@ -218,4 +173,49 @@ func (s *Server) PatchMapping(ctx context.Context, request api.PatchMappingReque
 	}
 
 	return api.PatchMapping200JSONResponse(transform.GormMappingToApiMapping(dbMapping)), nil
+}
+
+// GetMapping implements api.StrictServerInterface.
+func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestObject) (api.GetMappingResponseObject, error) {
+
+	projectId := int(request.ProjectId)
+	mappingId := request.MappingId
+
+	mapping := models.Mapping{}
+
+	if err := s.Database.GetMappingQuery(&mapping, projectId, mappingId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetMapping404JSONResponse(err.Error()), nil
+		default:
+			return api.GetMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the mapping"}, nil
+		}
+	}
+
+	return api.GetMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
+}
+
+// DeleteMapping implements api.StrictServerInterface.
+func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingRequestObject) (api.DeleteMappingResponseObject, error) {
+
+	projectId := int(request.ProjectId)
+	mappingId := request.MappingId
+
+	mapping := models.Mapping{
+		ModelBigId: models.ModelBigId{
+			ID: uint64(mappingId),
+		},
+		ProjectID: uint32(projectId),
+	}
+
+	if err := s.Database.DeleteMappingQuery(&mapping); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeleteMapping404JSONResponse(err.Error()), nil
+		default:
+			return api.DeleteMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to delete the mapping"}, nil
+		}
+	}
+
+	return api.DeleteMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
 }
