@@ -32,7 +32,7 @@ tags:
     description: Operations about projects
   - name: project-permission
     description: Operations about project permissions
-  - name: project-code-system-roles
+  - name: project-codesystem-roles
     description: Operations about the defined systems of a project
   - name: mapping
     description: Operations about mappings
@@ -380,10 +380,10 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /projects/{project_id}/code-system-roles:
+  /projects/{project_id}/codesystem-roles:
     get:
       tags:
-        - project-code-system-roles
+        - project-codesystem-roles
       summary: Get all code system roles for a project
       description: Get all code system roles (columns in the mapping table) for a project by project ID
       parameters:
@@ -410,7 +410,7 @@ paths:
           "$ref": "#/components/responses/InternalServerError"
     # post:
     #   tags:
-    #     - project-code-system-roles
+    #     - project-codesystem-roles
     #   summary: create a new code system role (column in the mapping table) for a project by project ID
     #   description: create a new element for each mapping with this code system role
     #   parameters:
@@ -447,15 +447,15 @@ paths:
     #             "$ref": "#/components/schemas/ErrorResponse"
     #     "500":
     #       "$ref": "#/components/responses/InternalServerError"
-  /projects/{project_id}/code-system-roles/{code-system-role_id}:
+  /projects/{project_id}/codesystem-roles/{codesystem-role_id}:
     get:
       tags:
-        - project-code-system-roles
+        - project-codesystem-roles
       summary: Get a code system role by ID
       description: Get a code system role (column in the mapping table) by ID
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/code-system-role_id"
+        - $ref: "#/components/parameters/codesystem-role_id"
       operationId: getCodeSystemRole
       responses:
         "200":
@@ -467,7 +467,7 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Code-System-Role not found
+          description: Project or codesystem-role not found
           content:
             application/json:
               schema:
@@ -476,12 +476,12 @@ paths:
           "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
-        - project-code-system-roles
+        - project-codesystem-roles
       summary: Update a code system role by ID
       description: Update name or type from a code system role (column in the mapping table) by ID
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/code-system-role_id"
+        - $ref: "#/components/parameters/codesystem-role_id"
       operationId: updateCodeSystemRole
       requestBody:
         required: true
@@ -499,15 +499,15 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Code-System-Role not found
+          description: Project or codesystem-role not found
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description:
-            Validation Error # if trying to change the system of the code-system-role. only name or type of the code-system-role can be changed
-            # if code-system-role id is provided in the request body and doesn't match the code-system-role id in the path
+            Validation Error # if trying to change the system of the codesystem-role. only name or type of the codesystem-role can be changed
+            # if codesystem-role id is provided in the request body and doesn't match the codesystem-role id in the path
           content:
             application/json:
               schema:
@@ -516,12 +516,12 @@ paths:
           "$ref": "#/components/responses/InternalServerError"
     # delete:
     #   tags:
-    #     - project-code-system-roles
+    #     - project-codesystem-roles
     #   summary: delete a code system role (column in the mapping table) by ID
     #   description: ""
     #   parameters:
     #     - $ref: "#/components/parameters/project_id"
-    #     - $ref: "#/components/parameters/code-system-role_id"
+    #     - $ref: "#/components/parameters/codesystem-role_id"
     #   operationId: deleteCodeSystemRole
     #   responses:
     #     "200":
@@ -533,7 +533,7 @@ paths:
     #     "400":
     #       "$ref": "#/components/responses/BadRequestError"
     #     "404":
-    #       description: Project or Code-System-Role not found
+    #       description: Project or codesystem-role not found
     #       content:
     #         application/json:
     #           schema:
@@ -743,7 +743,7 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /code-systems:
+  /codesystems:
     get:
       tags:
         - code-system
@@ -762,7 +762,7 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Code-System-Role not found
+          description: Project or codesystem-role not found
           content:
             application/json:
               schema:
@@ -845,14 +845,14 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /code-system/{code-system_id}:
+  /codesystems/{codesystem_id}:
     get:
       tags:
         - code-system
       summary: Get a code system by ID
       description: Get a code system by ID.
       parameters:
-        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/codesystem_id"
       operationId: getCodeSystem
       responses:
         "200":
@@ -877,7 +877,7 @@ paths:
       summary: Delete a code system by ID
       description: Delete a code system by ID. Only admins can delete code systems.
       parameters:
-        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/codesystem_id"
       operationId: deleteCodeSystem
       responses:
         "200":
@@ -899,7 +899,7 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /code-system/{code-system_id}/concepts:
+  /codesystems/{codesystem_id}/concepts:
     get:
       tags:
         - concept
@@ -907,7 +907,7 @@ paths:
       description: Get all concepts for a code system by ID. Paging and sorting can be specified by query parameters.
       operationId: getAllConcepts
       parameters:
-        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/codesystem_id"
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/pageSize"
         - name: sortBy
@@ -917,8 +917,20 @@ paths:
           schema:
             type: string
             default: code
-            enum: [code, display]
+            enum: [code, meaning]
         - $ref: "#/components/parameters/sortOrder"
+        - name: codeSearch
+          in: query
+          description: search string for the code field
+          required: false
+          schema:
+            type: string
+        - name: meaningSearch
+          in: query
+          description: search string for the meaning field
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -932,47 +944,6 @@ paths:
           "$ref": "#/components/responses/BadRequestError"
         "404":
           description: CodeSystem not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
-  /code-system/{code-system_id}/find-concept:
-    get:
-      tags:
-        - concept
-      summary: Find a concept by code or meaning
-      description: Find a concept by code or meaning. The code can be searched by a search string. A Limit can be specified by query parameters.
-      parameters:
-        - $ref: "#/components/parameters/code-system_id"
-        - $ref: "#/components/parameters/limit"
-        - name: codeSearch
-          in: query
-          description: search string for the code field
-          required: false
-          schema:
-            type: string
-        - name: meaningSearch
-          in: query
-          description: search string for the meaning field
-          required: false
-          schema:
-            type: string
-      operationId: findConceptByCode
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/Concept" # id required
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Concept not found
           content:
             application/json:
               schema:
@@ -997,8 +968,8 @@ components:
       description: The ID of the user
       schema:
         type: string # uuid
-    code-system-role_id:
-      name: code-system-role_id
+    codesystem-role_id:
+      name: codesystem-role_id
       in: path
       required: true
       description: The ID of the code system role
@@ -1015,8 +986,8 @@ components:
         type: integer
         format: int64
         minimum: 1
-    code-system_id:
-      name: code-system_id
+    codesystem_id:
+      name: codesystem_id
       in: path
       required: true
       description: The ID of the Codesystem
@@ -1052,16 +1023,6 @@ components:
         type: string
         enum: [asc, desc]
         default: asc
-    limit:
-      name: limit
-      in: query
-      description: maximum number of items to return
-      required: false
-      schema:
-        type: integer
-        default: 5
-        minimum: 1
-        maximum: 25
   schemas:
     Project:
       type: object

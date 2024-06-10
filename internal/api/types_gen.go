@@ -78,7 +78,7 @@ const (
 // Defines values for GetAllConceptsParamsSortBy.
 const (
 	Code    GetAllConceptsParamsSortBy = "code"
-	Display GetAllConceptsParamsSortBy = "display"
+	Meaning GetAllConceptsParamsSortBy = "meaning"
 )
 
 // Defines values for GetAllConceptsParamsSortOrder.
@@ -256,14 +256,11 @@ type UpdateMappingEquivalence string
 // UpdateMappingStatus defines model for UpdateMapping.Status.
 type UpdateMappingStatus string
 
-// CodeSystemRoleId defines model for code-system-role_id.
-type CodeSystemRoleId = int32
+// CodesystemRoleId defines model for codesystem-role_id.
+type CodesystemRoleId = int32
 
-// CodeSystemId defines model for code-system_id.
-type CodeSystemId = int32
-
-// Limit defines model for limit.
-type Limit = int
+// CodesystemId defines model for codesystem_id.
+type CodesystemId = int32
 
 // MappingId defines model for mapping_id.
 type MappingId = int64
@@ -302,18 +299,6 @@ type GetAllConceptsParams struct {
 
 	// SortOrder Order of sorting (asc or desc)
 	SortOrder *GetAllConceptsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-}
-
-// GetAllConceptsParamsSortBy defines parameters for GetAllConcepts.
-type GetAllConceptsParamsSortBy string
-
-// GetAllConceptsParamsSortOrder defines parameters for GetAllConcepts.
-type GetAllConceptsParamsSortOrder string
-
-// FindConceptByCodeParams defines parameters for FindConceptByCode.
-type FindConceptByCodeParams struct {
-	// Limit maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// CodeSearch search string for the code field
 	CodeSearch *string `form:"codeSearch,omitempty" json:"codeSearch,omitempty"`
@@ -321,6 +306,12 @@ type FindConceptByCodeParams struct {
 	// MeaningSearch search string for the meaning field
 	MeaningSearch *string `form:"meaningSearch,omitempty" json:"meaningSearch,omitempty"`
 }
+
+// GetAllConceptsParamsSortBy defines parameters for GetAllConcepts.
+type GetAllConceptsParamsSortBy string
+
+// GetAllConceptsParamsSortOrder defines parameters for GetAllConcepts.
+type GetAllConceptsParamsSortOrder string
 
 // GetAllProjectsParams defines parameters for GetAllProjects.
 type GetAllProjectsParams struct {

@@ -23,27 +23,24 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Delete a code system by ID
-	// (DELETE /code-system/{code-system_id})
-	DeleteCodeSystem(c *gin.Context, codeSystemId CodeSystemId)
-	// Get a code system by ID
-	// (GET /code-system/{code-system_id})
-	GetCodeSystem(c *gin.Context, codeSystemId CodeSystemId)
-	// Get all concepts for a code system by ID
-	// (GET /code-system/{code-system_id}/concepts)
-	GetAllConcepts(c *gin.Context, codeSystemId CodeSystemId, params GetAllConceptsParams)
-	// Find a concept by code or meaning
-	// (GET /code-system/{code-system_id}/find-concept)
-	FindConceptByCode(c *gin.Context, codeSystemId CodeSystemId, params FindConceptByCodeParams)
 	// Get all code systems
-	// (GET /code-systems)
+	// (GET /codesystems)
 	GetAllCodeSystems(c *gin.Context)
 	// Create a new code system
-	// (POST /code-systems)
+	// (POST /codesystems)
 	CreateCodeSystem(c *gin.Context)
 	// Update a code system by ID
-	// (PUT /code-systems)
+	// (PUT /codesystems)
 	UpdateCodeSystem(c *gin.Context)
+	// Delete a code system by ID
+	// (DELETE /codesystems/{codesystem_id})
+	DeleteCodeSystem(c *gin.Context, codesystemId CodesystemId)
+	// Get a code system by ID
+	// (GET /codesystems/{codesystem_id})
+	GetCodeSystem(c *gin.Context, codesystemId CodesystemId)
+	// Get all concepts for a code system by ID
+	// (GET /codesystems/{codesystem_id}/concepts)
+	GetAllConcepts(c *gin.Context, codesystemId CodesystemId, params GetAllConceptsParams)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(c *gin.Context)
@@ -63,14 +60,14 @@ type ServerInterface interface {
 	// (PUT /projects/{project_id})
 	UpdateProject(c *gin.Context, projectId ProjectId)
 	// Get all code system roles for a project
-	// (GET /projects/{project_id}/code-system-roles)
+	// (GET /projects/{project_id}/codesystem-roles)
 	GetAllCodeSystemRoles(c *gin.Context, projectId ProjectId)
 	// Get a code system role by ID
-	// (GET /projects/{project_id}/code-system-roles/{code-system-role_id})
-	GetCodeSystemRole(c *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId)
+	// (GET /projects/{project_id}/codesystem-roles/{codesystem-role_id})
+	GetCodeSystemRole(c *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId)
 	// Update a code system role by ID
-	// (PUT /projects/{project_id}/code-system-roles/{code-system-role_id})
-	UpdateCodeSystemRole(c *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId)
+	// (PUT /projects/{project_id}/codesystem-roles/{codesystem-role_id})
+	UpdateCodeSystemRole(c *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId)
 	// Get all mappings for a project by project ID
 	// (GET /projects/{project_id}/mappings)
 	GetAllMappings(c *gin.Context, projectId ProjectId, params GetAllMappingsParams)
@@ -114,180 +111,6 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
-
-// DeleteCodeSystem operation middleware
-func (siw *ServerInterfaceWrapper) DeleteCodeSystem(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "code-system_id" -------------
-	var codeSystemId CodeSystemId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system_id", c.Param("code-system_id"), &codeSystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"admin"})
-
-	c.Set(BearerAuthScopes, []string{"admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.DeleteCodeSystem(c, codeSystemId)
-}
-
-// GetCodeSystem operation middleware
-func (siw *ServerInterfaceWrapper) GetCodeSystem(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "code-system_id" -------------
-	var codeSystemId CodeSystemId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system_id", c.Param("code-system_id"), &codeSystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetCodeSystem(c, codeSystemId)
-}
-
-// GetAllConcepts operation middleware
-func (siw *ServerInterfaceWrapper) GetAllConcepts(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "code-system_id" -------------
-	var codeSystemId CodeSystemId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system_id", c.Param("code-system_id"), &codeSystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetAllConceptsParams
-
-	// ------------- Optional query parameter "page" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "page", c.Request.URL.Query(), &params.Page)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "pageSize" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sortBy" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sortBy", c.Request.URL.Query(), &params.SortBy)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortBy: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sortOrder" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sortOrder", c.Request.URL.Query(), &params.SortOrder)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortOrder: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetAllConcepts(c, codeSystemId, params)
-}
-
-// FindConceptByCode operation middleware
-func (siw *ServerInterfaceWrapper) FindConceptByCode(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "code-system_id" -------------
-	var codeSystemId CodeSystemId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system_id", c.Param("code-system_id"), &codeSystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params FindConceptByCodeParams
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "codeSearch" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "codeSearch", c.Request.URL.Query(), &params.CodeSearch)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codeSearch: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "meaningSearch" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "meaningSearch", c.Request.URL.Query(), &params.MeaningSearch)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter meaningSearch: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.FindConceptByCode(c, codeSystemId, params)
-}
 
 // GetAllCodeSystems operation middleware
 func (siw *ServerInterfaceWrapper) GetAllCodeSystems(c *gin.Context) {
@@ -338,6 +161,141 @@ func (siw *ServerInterfaceWrapper) UpdateCodeSystem(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateCodeSystem(c)
+}
+
+// DeleteCodeSystem operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCodeSystem(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "codesystem_id" -------------
+	var codesystemId CodesystemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem_id", c.Param("codesystem_id"), &codesystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"admin"})
+
+	c.Set(BearerAuthScopes, []string{"admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteCodeSystem(c, codesystemId)
+}
+
+// GetCodeSystem operation middleware
+func (siw *ServerInterfaceWrapper) GetCodeSystem(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "codesystem_id" -------------
+	var codesystemId CodesystemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem_id", c.Param("codesystem_id"), &codesystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetCodeSystem(c, codesystemId)
+}
+
+// GetAllConcepts operation middleware
+func (siw *ServerInterfaceWrapper) GetAllConcepts(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "codesystem_id" -------------
+	var codesystemId CodesystemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem_id", c.Param("codesystem_id"), &codesystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllConceptsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "page", c.Request.URL.Query(), &params.Page)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sortBy" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortBy", c.Request.URL.Query(), &params.SortBy)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortBy: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sortOrder" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sortOrder", c.Request.URL.Query(), &params.SortOrder)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sortOrder: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "codeSearch" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "codeSearch", c.Request.URL.Query(), &params.CodeSearch)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codeSearch: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "meaningSearch" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "meaningSearch", c.Request.URL.Query(), &params.MeaningSearch)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter meaningSearch: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAllConcepts(c, codesystemId, params)
 }
 
 // Ping operation middleware
@@ -550,12 +508,12 @@ func (siw *ServerInterfaceWrapper) GetCodeSystemRole(c *gin.Context) {
 		return
 	}
 
-	// ------------- Path parameter "code-system-role_id" -------------
-	var codeSystemRoleId CodeSystemRoleId
+	// ------------- Path parameter "codesystem-role_id" -------------
+	var codesystemRoleId CodesystemRoleId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system-role_id", c.Param("code-system-role_id"), &codeSystemRoleId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem-role_id", c.Param("codesystem-role_id"), &codesystemRoleId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system-role_id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem-role_id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -570,7 +528,7 @@ func (siw *ServerInterfaceWrapper) GetCodeSystemRole(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetCodeSystemRole(c, projectId, codeSystemRoleId)
+	siw.Handler.GetCodeSystemRole(c, projectId, codesystemRoleId)
 }
 
 // UpdateCodeSystemRole operation middleware
@@ -587,12 +545,12 @@ func (siw *ServerInterfaceWrapper) UpdateCodeSystemRole(c *gin.Context) {
 		return
 	}
 
-	// ------------- Path parameter "code-system-role_id" -------------
-	var codeSystemRoleId CodeSystemRoleId
+	// ------------- Path parameter "codesystem-role_id" -------------
+	var codesystemRoleId CodesystemRoleId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "code-system-role_id", c.Param("code-system-role_id"), &codeSystemRoleId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem-role_id", c.Param("codesystem-role_id"), &codesystemRoleId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code-system-role_id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem-role_id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -607,7 +565,7 @@ func (siw *ServerInterfaceWrapper) UpdateCodeSystemRole(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.UpdateCodeSystemRole(c, projectId, codeSystemRoleId)
+	siw.Handler.UpdateCodeSystemRole(c, projectId, codesystemRoleId)
 }
 
 // GetAllMappings operation middleware
@@ -1034,22 +992,21 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.DELETE(options.BaseURL+"/code-system/:code-system_id", wrapper.DeleteCodeSystem)
-	router.GET(options.BaseURL+"/code-system/:code-system_id", wrapper.GetCodeSystem)
-	router.GET(options.BaseURL+"/code-system/:code-system_id/concepts", wrapper.GetAllConcepts)
-	router.GET(options.BaseURL+"/code-system/:code-system_id/find-concept", wrapper.FindConceptByCode)
-	router.GET(options.BaseURL+"/code-systems", wrapper.GetAllCodeSystems)
-	router.POST(options.BaseURL+"/code-systems", wrapper.CreateCodeSystem)
-	router.PUT(options.BaseURL+"/code-systems", wrapper.UpdateCodeSystem)
+	router.GET(options.BaseURL+"/codesystems", wrapper.GetAllCodeSystems)
+	router.POST(options.BaseURL+"/codesystems", wrapper.CreateCodeSystem)
+	router.PUT(options.BaseURL+"/codesystems", wrapper.UpdateCodeSystem)
+	router.DELETE(options.BaseURL+"/codesystems/:codesystem_id", wrapper.DeleteCodeSystem)
+	router.GET(options.BaseURL+"/codesystems/:codesystem_id", wrapper.GetCodeSystem)
+	router.GET(options.BaseURL+"/codesystems/:codesystem_id/concepts", wrapper.GetAllConcepts)
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
 	router.POST(options.BaseURL+"/projects", wrapper.CreateProject)
 	router.DELETE(options.BaseURL+"/projects/:project_id", wrapper.DeleteProject)
 	router.GET(options.BaseURL+"/projects/:project_id", wrapper.GetProject)
 	router.PUT(options.BaseURL+"/projects/:project_id", wrapper.UpdateProject)
-	router.GET(options.BaseURL+"/projects/:project_id/code-system-roles", wrapper.GetAllCodeSystemRoles)
-	router.GET(options.BaseURL+"/projects/:project_id/code-system-roles/:code-system-role_id", wrapper.GetCodeSystemRole)
-	router.PUT(options.BaseURL+"/projects/:project_id/code-system-roles/:code-system-role_id", wrapper.UpdateCodeSystemRole)
+	router.GET(options.BaseURL+"/projects/:project_id/codesystem-roles", wrapper.GetAllCodeSystemRoles)
+	router.GET(options.BaseURL+"/projects/:project_id/codesystem-roles/:codesystem-role_id", wrapper.GetCodeSystemRole)
+	router.PUT(options.BaseURL+"/projects/:project_id/codesystem-roles/:codesystem-role_id", wrapper.UpdateCodeSystemRole)
 	router.GET(options.BaseURL+"/projects/:project_id/mappings", wrapper.GetAllMappings)
 	router.PATCH(options.BaseURL+"/projects/:project_id/mappings", wrapper.PatchMapping)
 	router.POST(options.BaseURL+"/projects/:project_id/mappings", wrapper.CreateMapping)
@@ -1066,192 +1023,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 type BadRequestErrorJSONResponse string
 
 type InternalServerErrorJSONResponse string
-
-type DeleteCodeSystemRequestObject struct {
-	CodeSystemId CodeSystemId `json:"code-system_id"`
-}
-
-type DeleteCodeSystemResponseObject interface {
-	VisitDeleteCodeSystemResponse(w http.ResponseWriter) error
-}
-
-type DeleteCodeSystem200JSONResponse CodeSystem
-
-func (response DeleteCodeSystem200JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response DeleteCodeSystem400JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteCodeSystem404JSONResponse ErrorResponse
-
-func (response DeleteCodeSystem404JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type DeleteCodeSystem500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response DeleteCodeSystem500JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystemRequestObject struct {
-	CodeSystemId CodeSystemId `json:"code-system_id"`
-}
-
-type GetCodeSystemResponseObject interface {
-	VisitGetCodeSystemResponse(w http.ResponseWriter) error
-}
-
-type GetCodeSystem200JSONResponse CodeSystem
-
-func (response GetCodeSystem200JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response GetCodeSystem400JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystem404JSONResponse ErrorResponse
-
-func (response GetCodeSystem404JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystem500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response GetCodeSystem500JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllConceptsRequestObject struct {
-	CodeSystemId CodeSystemId `json:"code-system_id"`
-	Params       GetAllConceptsParams
-}
-
-type GetAllConceptsResponseObject interface {
-	VisitGetAllConceptsResponse(w http.ResponseWriter) error
-}
-
-type GetAllConcepts200JSONResponse []Concept
-
-func (response GetAllConcepts200JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllConcepts400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response GetAllConcepts400JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllConcepts404JSONResponse ErrorResponse
-
-func (response GetAllConcepts404JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllConcepts500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response GetAllConcepts500JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type FindConceptByCodeRequestObject struct {
-	CodeSystemId CodeSystemId `json:"code-system_id"`
-	Params       FindConceptByCodeParams
-}
-
-type FindConceptByCodeResponseObject interface {
-	VisitFindConceptByCodeResponse(w http.ResponseWriter) error
-}
-
-type FindConceptByCode200JSONResponse []Concept
-
-func (response FindConceptByCode200JSONResponse) VisitFindConceptByCodeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type FindConceptByCode400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response FindConceptByCode400JSONResponse) VisitFindConceptByCodeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type FindConceptByCode404JSONResponse ErrorResponse
-
-func (response FindConceptByCode404JSONResponse) VisitFindConceptByCodeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type FindConceptByCode500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response FindConceptByCode500JSONResponse) VisitFindConceptByCodeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
 
 type GetAllCodeSystemsRequestObject struct {
 }
@@ -1402,6 +1173,145 @@ type UpdateCodeSystem500JSONResponse struct {
 }
 
 func (response UpdateCodeSystem500JSONResponse) VisitUpdateCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteCodeSystemRequestObject struct {
+	CodesystemId CodesystemId `json:"codesystem_id"`
+}
+
+type DeleteCodeSystemResponseObject interface {
+	VisitDeleteCodeSystemResponse(w http.ResponseWriter) error
+}
+
+type DeleteCodeSystem200JSONResponse CodeSystem
+
+func (response DeleteCodeSystem200JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response DeleteCodeSystem400JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteCodeSystem404JSONResponse ErrorResponse
+
+func (response DeleteCodeSystem404JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteCodeSystem500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteCodeSystem500JSONResponse) VisitDeleteCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystemRequestObject struct {
+	CodesystemId CodesystemId `json:"codesystem_id"`
+}
+
+type GetCodeSystemResponseObject interface {
+	VisitGetCodeSystemResponse(w http.ResponseWriter) error
+}
+
+type GetCodeSystem200JSONResponse CodeSystem
+
+func (response GetCodeSystem200JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetCodeSystem400JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystem404JSONResponse ErrorResponse
+
+func (response GetCodeSystem404JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystem500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetCodeSystem500JSONResponse) VisitGetCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllConceptsRequestObject struct {
+	CodesystemId CodesystemId `json:"codesystem_id"`
+	Params       GetAllConceptsParams
+}
+
+type GetAllConceptsResponseObject interface {
+	VisitGetAllConceptsResponse(w http.ResponseWriter) error
+}
+
+type GetAllConcepts200JSONResponse []Concept
+
+func (response GetAllConcepts200JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllConcepts400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetAllConcepts400JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllConcepts404JSONResponse ErrorResponse
+
+func (response GetAllConcepts404JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllConcepts500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetAllConcepts500JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -1714,7 +1624,7 @@ func (response GetAllCodeSystemRoles500JSONResponse) VisitGetAllCodeSystemRolesR
 
 type GetCodeSystemRoleRequestObject struct {
 	ProjectId        ProjectId        `json:"project_id"`
-	CodeSystemRoleId CodeSystemRoleId `json:"code-system-role_id"`
+	CodesystemRoleId CodesystemRoleId `json:"codesystem-role_id"`
 }
 
 type GetCodeSystemRoleResponseObject interface {
@@ -1761,7 +1671,7 @@ func (response GetCodeSystemRole500JSONResponse) VisitGetCodeSystemRoleResponse(
 
 type UpdateCodeSystemRoleRequestObject struct {
 	ProjectId        ProjectId        `json:"project_id"`
-	CodeSystemRoleId CodeSystemRoleId `json:"code-system-role_id"`
+	CodesystemRoleId CodesystemRoleId `json:"codesystem-role_id"`
 	Body             *UpdateCodeSystemRoleJSONRequestBody
 }
 
@@ -2381,27 +2291,24 @@ func (response UpdatePermission500JSONResponse) VisitUpdatePermissionResponse(w 
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// Delete a code system by ID
-	// (DELETE /code-system/{code-system_id})
-	DeleteCodeSystem(ctx context.Context, request DeleteCodeSystemRequestObject) (DeleteCodeSystemResponseObject, error)
-	// Get a code system by ID
-	// (GET /code-system/{code-system_id})
-	GetCodeSystem(ctx context.Context, request GetCodeSystemRequestObject) (GetCodeSystemResponseObject, error)
-	// Get all concepts for a code system by ID
-	// (GET /code-system/{code-system_id}/concepts)
-	GetAllConcepts(ctx context.Context, request GetAllConceptsRequestObject) (GetAllConceptsResponseObject, error)
-	// Find a concept by code or meaning
-	// (GET /code-system/{code-system_id}/find-concept)
-	FindConceptByCode(ctx context.Context, request FindConceptByCodeRequestObject) (FindConceptByCodeResponseObject, error)
 	// Get all code systems
-	// (GET /code-systems)
+	// (GET /codesystems)
 	GetAllCodeSystems(ctx context.Context, request GetAllCodeSystemsRequestObject) (GetAllCodeSystemsResponseObject, error)
 	// Create a new code system
-	// (POST /code-systems)
+	// (POST /codesystems)
 	CreateCodeSystem(ctx context.Context, request CreateCodeSystemRequestObject) (CreateCodeSystemResponseObject, error)
 	// Update a code system by ID
-	// (PUT /code-systems)
+	// (PUT /codesystems)
 	UpdateCodeSystem(ctx context.Context, request UpdateCodeSystemRequestObject) (UpdateCodeSystemResponseObject, error)
+	// Delete a code system by ID
+	// (DELETE /codesystems/{codesystem_id})
+	DeleteCodeSystem(ctx context.Context, request DeleteCodeSystemRequestObject) (DeleteCodeSystemResponseObject, error)
+	// Get a code system by ID
+	// (GET /codesystems/{codesystem_id})
+	GetCodeSystem(ctx context.Context, request GetCodeSystemRequestObject) (GetCodeSystemResponseObject, error)
+	// Get all concepts for a code system by ID
+	// (GET /codesystems/{codesystem_id}/concepts)
+	GetAllConcepts(ctx context.Context, request GetAllConceptsRequestObject) (GetAllConceptsResponseObject, error)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(ctx context.Context, request PingRequestObject) (PingResponseObject, error)
@@ -2421,13 +2328,13 @@ type StrictServerInterface interface {
 	// (PUT /projects/{project_id})
 	UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error)
 	// Get all code system roles for a project
-	// (GET /projects/{project_id}/code-system-roles)
+	// (GET /projects/{project_id}/codesystem-roles)
 	GetAllCodeSystemRoles(ctx context.Context, request GetAllCodeSystemRolesRequestObject) (GetAllCodeSystemRolesResponseObject, error)
 	// Get a code system role by ID
-	// (GET /projects/{project_id}/code-system-roles/{code-system-role_id})
+	// (GET /projects/{project_id}/codesystem-roles/{codesystem-role_id})
 	GetCodeSystemRole(ctx context.Context, request GetCodeSystemRoleRequestObject) (GetCodeSystemRoleResponseObject, error)
 	// Update a code system role by ID
-	// (PUT /projects/{project_id}/code-system-roles/{code-system-role_id})
+	// (PUT /projects/{project_id}/codesystem-roles/{codesystem-role_id})
 	UpdateCodeSystemRole(ctx context.Context, request UpdateCodeSystemRoleRequestObject) (UpdateCodeSystemRoleResponseObject, error)
 	// Get all mappings for a project by project ID
 	// (GET /projects/{project_id}/mappings)
@@ -2474,116 +2381,6 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
-}
-
-// DeleteCodeSystem operation middleware
-func (sh *strictHandler) DeleteCodeSystem(ctx *gin.Context, codeSystemId CodeSystemId) {
-	var request DeleteCodeSystemRequestObject
-
-	request.CodeSystemId = codeSystemId
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.DeleteCodeSystem(ctx, request.(DeleteCodeSystemRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "DeleteCodeSystem")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(DeleteCodeSystemResponseObject); ok {
-		if err := validResponse.VisitDeleteCodeSystemResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// GetCodeSystem operation middleware
-func (sh *strictHandler) GetCodeSystem(ctx *gin.Context, codeSystemId CodeSystemId) {
-	var request GetCodeSystemRequestObject
-
-	request.CodeSystemId = codeSystemId
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetCodeSystem(ctx, request.(GetCodeSystemRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetCodeSystem")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetCodeSystemResponseObject); ok {
-		if err := validResponse.VisitGetCodeSystemResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// GetAllConcepts operation middleware
-func (sh *strictHandler) GetAllConcepts(ctx *gin.Context, codeSystemId CodeSystemId, params GetAllConceptsParams) {
-	var request GetAllConceptsRequestObject
-
-	request.CodeSystemId = codeSystemId
-	request.Params = params
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetAllConcepts(ctx, request.(GetAllConceptsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetAllConcepts")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetAllConceptsResponseObject); ok {
-		if err := validResponse.VisitGetAllConceptsResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// FindConceptByCode operation middleware
-func (sh *strictHandler) FindConceptByCode(ctx *gin.Context, codeSystemId CodeSystemId, params FindConceptByCodeParams) {
-	var request FindConceptByCodeRequestObject
-
-	request.CodeSystemId = codeSystemId
-	request.Params = params
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.FindConceptByCode(ctx, request.(FindConceptByCodeRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "FindConceptByCode")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(FindConceptByCodeResponseObject); ok {
-		if err := validResponse.VisitFindConceptByCodeResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
 }
 
 // GetAllCodeSystems operation middleware
@@ -2670,6 +2467,88 @@ func (sh *strictHandler) UpdateCodeSystem(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UpdateCodeSystemResponseObject); ok {
 		if err := validResponse.VisitUpdateCodeSystemResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteCodeSystem operation middleware
+func (sh *strictHandler) DeleteCodeSystem(ctx *gin.Context, codesystemId CodesystemId) {
+	var request DeleteCodeSystemRequestObject
+
+	request.CodesystemId = codesystemId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteCodeSystem(ctx, request.(DeleteCodeSystemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteCodeSystem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteCodeSystemResponseObject); ok {
+		if err := validResponse.VisitDeleteCodeSystemResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCodeSystem operation middleware
+func (sh *strictHandler) GetCodeSystem(ctx *gin.Context, codesystemId CodesystemId) {
+	var request GetCodeSystemRequestObject
+
+	request.CodesystemId = codesystemId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCodeSystem(ctx, request.(GetCodeSystemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCodeSystem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetCodeSystemResponseObject); ok {
+		if err := validResponse.VisitGetCodeSystemResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAllConcepts operation middleware
+func (sh *strictHandler) GetAllConcepts(ctx *gin.Context, codesystemId CodesystemId, params GetAllConceptsParams) {
+	var request GetAllConceptsRequestObject
+
+	request.CodesystemId = codesystemId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAllConcepts(ctx, request.(GetAllConceptsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAllConcepts")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetAllConceptsResponseObject); ok {
+		if err := validResponse.VisitGetAllConceptsResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -2879,11 +2758,11 @@ func (sh *strictHandler) GetAllCodeSystemRoles(ctx *gin.Context, projectId Proje
 }
 
 // GetCodeSystemRole operation middleware
-func (sh *strictHandler) GetCodeSystemRole(ctx *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId) {
+func (sh *strictHandler) GetCodeSystemRole(ctx *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId) {
 	var request GetCodeSystemRoleRequestObject
 
 	request.ProjectId = projectId
-	request.CodeSystemRoleId = codeSystemRoleId
+	request.CodesystemRoleId = codesystemRoleId
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetCodeSystemRole(ctx, request.(GetCodeSystemRoleRequestObject))
@@ -2907,11 +2786,11 @@ func (sh *strictHandler) GetCodeSystemRole(ctx *gin.Context, projectId ProjectId
 }
 
 // UpdateCodeSystemRole operation middleware
-func (sh *strictHandler) UpdateCodeSystemRole(ctx *gin.Context, projectId ProjectId, codeSystemRoleId CodeSystemRoleId) {
+func (sh *strictHandler) UpdateCodeSystemRole(ctx *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId) {
 	var request UpdateCodeSystemRoleRequestObject
 
 	request.ProjectId = projectId
-	request.CodeSystemRoleId = codeSystemRoleId
+	request.CodesystemRoleId = codesystemRoleId
 
 	var body UpdateCodeSystemRoleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
@@ -3289,64 +3168,62 @@ func (sh *strictHandler) UpdatePermission(ctx *gin.Context, projectId ProjectId,
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"9/8AAAD//w2qgWF0bwAA",
+	"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",
+	"F49cbv8XAAD//1VeCdqkawAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
