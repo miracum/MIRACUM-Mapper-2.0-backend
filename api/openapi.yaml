@@ -1078,36 +1078,54 @@ components:
         role:
           type: string
           enum: [reviewer, project_owner, editor]
-    CodeSystemRole:
+    CreateCodeSystemRole:
       type: object
-      required: # todo, was alles außer id?
-        - name
-        - system
-        - type
+      required:
+       - name
+       - system
+       - type
       properties:
-        id:
-          type: integer
-          format: int32
         name:
           type: string
         system:
-          type: object
-          required:
-            - id
-          properties:
-            # id? über drop down version und name anzeigen von allen codesystemen und bei auswahl id, system, name, uri zurückgeben?
-            id:
-              type: integer
-              format: int32
-            name:
-              type: string
-            version:
-              type: string
+          type: integer
+          format: int32
         type:
           type: string
           enum: [source, target]
+    UpdateCodeSystemRole:
+      allOf:
+        - $ref: "#/components/schemas/CreateCodeSystemRole"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int32
+    CodeSystemRole:
+      allOf:
+        - $ref: "#/components/schemas/UpdateCodeSystemRole"
+        - type: object
+          required:
+            - system
+          properties:
+            system:
+              type: object
+              required:
+                - id
+                - name
+              properties:
+                # id? über drop down version und name anzeigen von allen codesystemen und bei auswahl id, system, name, uri zurückgeben?
+                id:
+                  type: integer
+                  format: int32
+                name:
+                  type: string
+                #version:
+                #  type: string # braucht man nicht für die Anzeige der Mappings
 
-    #############################      
+#############################      
     CreateMapping:
       type: object
       # required:
