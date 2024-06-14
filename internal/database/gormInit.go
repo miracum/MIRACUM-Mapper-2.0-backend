@@ -31,43 +31,166 @@ func getGormConnection(config *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	initEnums(db)
+	if err = initEnums(db); err != nil {
+		return nil, err
+	}
 
-	db.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{})
+	if err := db.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{}); err != nil {
+		return nil, fmt.Errorf("failed to auto migrate models: %v", err)
+	}
+
+	if err := setupFullTextSearch(db); err != nil {
+		return nil, err
+	}
 
 	createTestData(db)
 
 	return db, nil
 }
 
-func initEnums(db *gorm.DB) {
-	db.Exec(`
-	DO $$ BEGIN
-		CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');
-	EXCEPTION
-		WHEN duplicate_object THEN null;
-	END $$;`)
+// executeSQLWithExceptionHandling wraps each SQL statement with exception handling and executes them
+func executeSQLWithExceptionHandling(db *gorm.DB, sqlStatements []string) error {
+	for _, sqlStatement := range sqlStatements {
+		wrappedSQL := `
+        DO $$ BEGIN
+            ` + sqlStatement + `
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+        `
+		if err := db.Exec(wrappedSQL).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	db.Exec(`
-	DO $$ BEGIN
-		CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');
-	EXCEPTION
-		WHEN duplicate_object THEN null;
-	END $$;`)
+func executeSQL(db *gorm.DB, sqlStatements []string) error {
+	for _, sqlStatement := range sqlStatements {
+		if err := db.Exec(sqlStatement).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	db.Exec(`
-	DO $$ BEGIN
-		CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');
-	EXCEPTION
-		WHEN duplicate_object THEN null;
-	END $$;`)
+func initEnums(db *gorm.DB) error {
+	// Define SQL statements for creating enums
+	enumStatements := []string{
+		"CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');",
+		"CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');",
+		"CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');",
+		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'projectOwner', 'editor');",
+	}
 
-	db.Exec(`
-	DO $$ BEGIN
-		CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'projectOwner', 'editor');
-	EXCEPTION
-		WHEN duplicate_object THEN null;
-	END $$;`)
+	// Execute SQL statements with exception handling
+	if err := executeSQLWithExceptionHandling(db, enumStatements); err != nil {
+		return err
+	}
+	return nil
+}
+
+func setupFullTextSearch(db *gorm.DB) error {
+	sqlStatements := []string{
+		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
+		// Update display_search_vector column
+		"UPDATE concepts SET display_search_vector = to_tsvector('english', display);",
+
+		// Check if the index exists before creating it
+		`DO $$
+		BEGIN
+		    IF NOT EXISTS (
+		        SELECT 1
+		        FROM   pg_class c
+		        JOIN   pg_namespace n ON n.oid = c.relnamespace
+		        WHERE  c.relname = 'display_search_vector_idx'
+		        AND    n.nspname = 'public'  -- Adjust the schema name if necessary
+		    ) THEN
+		        EXECUTE 'CREATE INDEX display_search_vector_idx ON concepts USING gin(display_search_vector);';
+		    END IF;
+		END
+		$$;`,
+
+		// Create or replace function
+		`CREATE OR REPLACE FUNCTION concepts_display_trigger() RETURNS trigger AS $$
+		    begin
+		      new.display_search_vector := to_tsvector('english', new.display);
+		      return new;
+		    end
+		$$ LANGUAGE plpgsql;`,
+
+		// Create trigger
+		`DO $$
+		BEGIN
+		    IF NOT EXISTS (
+		        SELECT 1 FROM pg_trigger WHERE tgname = 'update_display_search_vector'
+		    ) THEN
+		        EXECUTE 'CREATE TRIGGER update_display_search_vector BEFORE INSERT OR UPDATE ON concepts FOR EACH ROW EXECUTE FUNCTION concepts_display_trigger();';
+		    END IF;
+		END
+		$$;`,
+		`DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT 1
+			FROM   pg_class c
+			JOIN   pg_namespace n ON n.oid = c.relnamespace
+			WHERE  c.relname = 'idx_display_trgm'
+			AND    n.nspname = 'public'  -- or your schema name here
+		) THEN
+			EXECUTE 'CREATE INDEX idx_display_trgm ON public.concepts USING gin (display gin_trgm_ops);';
+		END IF;
+	END
+	$$;`,
+		// Check if the index exists before creating it (for code_system_id)
+		`DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM   pg_class c
+            JOIN   pg_namespace n ON n.oid = c.relnamespace
+            WHERE  c.relname = 'idx_code_system_id'
+            AND    n.nspname = 'public'
+        ) THEN
+            EXECUTE 'CREATE INDEX idx_code_system_id ON concepts (code_system_id);';
+        END IF;
+    END
+    $$;`,
+
+		// Check if the index exists before creating it (for LOWER(code))
+		`DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM   pg_class c
+            JOIN   pg_namespace n ON n.oid = c.relnamespace
+            WHERE  c.relname = 'idx_code_lower'
+            AND    n.nspname = 'public'
+        ) THEN
+            EXECUTE 'CREATE INDEX idx_code_lower ON concepts (LOWER(code));';
+        END IF;
+    END
+    $$;`,
+		// 	`DO $$
+		// BEGIN
+		// 	IF NOT EXISTS (
+		//     	SELECT 1
+		//     	FROM   pg_class c
+		//     	JOIN   pg_namespace n ON n.oid = c.relnamespace
+		//     	WHERE  c.relname = 'display_trgm_idx'
+		//     	AND    n.nspname = 'public'
+		// 	) THEN
+		//     	EXECUTE 'CREATE INDEX display_trgm_idx ON concepts USING gin (display gin_trgm_ops);';
+		// 	END IF;
+		// END
+		// $$;`,
+	}
+
+	// Execute SQL statements with exception handling
+	if err := executeSQL(db, sqlStatements); err != nil {
+		return err
+	}
+	return nil
 }
 
 func createGormConnection(config *config.Config) (*gorm.DB, error) {
@@ -205,7 +328,7 @@ func createTestData(gormDB *gorm.DB) {
 	// create concept for code system 2
 
 	concept2 := models.Concept{
-		ModelBigId:   models.ModelBigId{ID: 2},
+		ID:           2,
 		CodeSystemID: codeSystem2.ID,
 		Code:         "2",
 		Display:      "Concept 2",
@@ -213,21 +336,95 @@ func createTestData(gormDB *gorm.DB) {
 
 	gormDB.FirstOrCreate(&concept2)
 
+	var sampleLoincCodes = []struct {
+		Code    string
+		Meaning string
+	}{
+		{"1000-9", "Hemoglobin A1c/Hemoglobin.total in Blood"},
+		{"1001-7", "Hemoglobin A1c in Blood by HPLC"},
+		{"1002-5", "Glucose level in Blood"},
+		{"1003-3", "Potassium level in Serum or Plasma"},
+		{"1004-1", "Sodium level in Serum or Plasma"},
+		{"1005-8", "Cholesterol in Serum or Plasma"},
+		{"1006-6", "Triglycerides in Serum or Plasma"},
+		{"1007-4", "HDL Cholesterol in Serum or Plasma"},
+		{"1008-2", "LDL Cholesterol in Serum or Plasma"},
+		{"1009-0", "Creatinine level in Serum or Plasma"},
+		{"1010-8", "Urea Nitrogen level in Blood"},
+		{"1011-6", "Protein total in Serum or Plasma"},
+		{"1012-4", "Albumin level in Serum or Plasma"},
+		{"1013-2", "Calcium level in Serum or Plasma"},
+		{"1014-0", "Phosphorus level in Serum or Plasma"},
+		{"1015-7", "Iron level in Serum or Plasma"},
+		{"1016-5", "Bilirubin total in Serum or Plasma"},
+		{"1017-3", "Alkaline Phosphatase level in Serum or Plasma"},
+		{"1018-1", "Alanine Aminotransferase level in Serum or Plasma"},
+		{"1019-9", "Aspartate Aminotransferase level in Serum or Plasma"},
+		{"1020-7", "Gamma Glutamyl Transferase level in Serum or Plasma"},
+		{"1021-5", "Blood Uric acid level"},
+		{"1022-3", "C-Reactive Protein level in Serum or Plasma"},
+		{"1023-1", "Thyroid Stimulating Hormone level in Serum or Plasma"},
+		{"1024-9", "Free T4 level in Serum or Plasma"},
+		{"1025-6", "Total T3 level in Serum or Plasma"},
+		{"1026-4", "Prostate Specific Antigen in Serum or Plasma"},
+		{"1027-2", "Rheumatoid Factor in Serum or Plasma"},
+		{"1028-0", "Hepatitis C Virus Antibody in Serum or Plasma"},
+		{"1029-8", "HIV 1+2 Antibodies in Serum or Plasma"},
+		{"1030-6", "Hemoglobin level in Blood"},
+		{"1031-4", "Erythrocyte Sedimentation Rate"},
+		{"1032-2", "White Blood Cell count in Blood"},
+		{"1033-0", "Platelet count in Blood"},
+		{"1034-8", "Red Blood Cell count in Blood"},
+		{"1035-5", "Mean Corpuscular Volume"},
+		{"1036-3", "Mean Corpuscular Hemoglobin"},
+		{"1037-1", "Mean Corpuscular Hemoglobin Concentration"},
+		{"1038-9", "Red Cell Distribution Width"},
+		{"1039-7", "Neutrophils.auto count in Blood"},
+		{"1040-5", "Lymphocytes.auto count in Blood"},
+		{"1041-3", "Monocytes.auto count in Blood"},
+		{"1042-1", "Eosinophils.auto count in Blood"},
+		{"1043-9", "Basophils.auto count in Blood"},
+		{"1044-7", "Blood Type in Blood"},
+		{"1045-4", "Rh(D) Typing in Blood"},
+		{"1046-2", "Antibody Screen in Blood"},
+		{"1047-0", "Direct Antiglobulin Test in Blood"},
+		{"1048-8", "Indirect Antiglobulin Test in Blood"},
+		{"1049-6", "Blood Culture for Bacteria"},
+	}
+
+	for i, sampleLoincCode := range sampleLoincCodes {
+		concept := models.Concept{
+			ID:           uint64(i + 3),
+			CodeSystemID: 2,
+			Code:         sampleLoincCode.Code,
+			Display:      sampleLoincCode.Meaning,
+		}
+
+		gormDB.FirstOrCreate(&concept)
+	}
+
 	// words := []string{"nein", "awesome", "42", "Pills", "Nina", "Loinc", "word7", "word8", "word9", "Very", "and", "for", "some", "Boomer", "Go", "hallo", "blub", "egal", "buch", "katze", "hund", "henrik", "computer", "geben", "halten", "tastatur", "applaudieren", "kontrolle", "schlüssel", "schlange", "schlafen", "schlüsselbund"}
 
 	// rand.Seed(1)
 
 	// count := 2
 	// for j := 0; j < 1000; j++ {
-	// 	concepts := make([]models.Concept, 1000)
-	// 	for i := 0; i < 1000; i++ {
+	// 	concepts := make([]models.Concept, 100)
+	// 	for i := 0; i < 100; i++ {
 	// 		//code := fmt.Sprintf("%d", rand.Intn(10000)) // generate a random code
 	// 		// select 3 random words from the list
-	// 		meaning := words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))]
+	// 		// meaning := words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))] + " " + words[rand.Intn(len(words))]
+	// 		var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+	// 		s := make([]rune, 20)
+	// 		for i := range s {
+	// 			s[i] = letters[rand.Intn(len(letters))]
+	// 		}
+	// 		meaning := string(s)
 
 	// 		count = count + rand.Intn(10) + 1
 	// 		concepts[i] = models.Concept{
-	// 			ModelBigId:   models.ModelBigId{ID: uint64(count)},
+	// 			ID:           uint64(count),
 	// 			CodeSystemID: 1,
 	// 			Code:         fmt.Sprint(count),
 	// 			Display:      meaning,
@@ -246,7 +443,7 @@ func createTestData(gormDB *gorm.DB) {
 
 	// 		count = count + rand.Intn(10) + 1
 	// 		concepts[i] = models.Concept{
-	// 			ModelBigId:   models.ModelBigId{ID: uint64(count)},
+	// 			ID:           uint64(count),
 	// 			CodeSystemID: 2,
 	// 			Code:         fmt.Sprint(count),
 	// 			Display:      meaning,

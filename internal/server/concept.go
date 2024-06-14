@@ -37,9 +37,10 @@ func (s *Server) GetAllConcepts(ctx context.Context, request api.GetAllConceptsR
 		code = *request.Params.CodeSearch
 	}
 
+	var codeSystemId int32 = request.CodesystemId
 	var concepts []models.Concept = []models.Concept{}
 
-	if err := s.Database.GetAllConceptsQuery(&concepts, pageSize, offset, sortBy, sortOrder, meaning, code); err != nil {
+	if err := s.Database.GetAllConceptsQuery(&concepts, codeSystemId, pageSize, offset, sortBy, sortOrder, meaning, code); err != nil {
 		return api.GetAllConcepts500JSONResponse{}, err
 	}
 
