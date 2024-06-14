@@ -18,13 +18,13 @@ type Datastore interface {
 	GetAllProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
 	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
 	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
-	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error
+	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
 	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
 
 	// CodeSystemRole
 	GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error
 	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
-	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32, checkFunc func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error) error
+	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32) error
 
 	// Mapping
 	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error

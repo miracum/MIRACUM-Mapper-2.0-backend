@@ -10,8 +10,14 @@ const (
 
 // Defines values for CodeSystemRoleType.
 const (
-	Source CodeSystemRoleType = "source"
-	Target CodeSystemRoleType = "target"
+	CodeSystemRoleTypeSource CodeSystemRoleType = "source"
+	CodeSystemRoleTypeTarget CodeSystemRoleType = "target"
+)
+
+// Defines values for CreateCodeSystemRoleType.
+const (
+	CreateCodeSystemRoleTypeSource CreateCodeSystemRoleType = "source"
+	CreateCodeSystemRoleTypeTarget CreateCodeSystemRoleType = "target"
 )
 
 // Defines values for CreateMappingEquivalence.
@@ -48,9 +54,22 @@ const (
 
 // Defines values for ProjectPermissionRole.
 const (
-	Editor       ProjectPermissionRole = "editor"
-	ProjectOwner ProjectPermissionRole = "project_owner"
-	Reviewer     ProjectPermissionRole = "reviewer"
+	ProjectPermissionRoleEditor       ProjectPermissionRole = "editor"
+	ProjectPermissionRoleProjectOwner ProjectPermissionRole = "project_owner"
+	ProjectPermissionRoleReviewer     ProjectPermissionRole = "reviewer"
+)
+
+// Defines values for SendProjectPermissionRole.
+const (
+	SendProjectPermissionRoleEditor       SendProjectPermissionRole = "editor"
+	SendProjectPermissionRoleProjectOwner SendProjectPermissionRole = "project_owner"
+	SendProjectPermissionRoleReviewer     SendProjectPermissionRole = "reviewer"
+)
+
+// Defines values for UpdateCodeSystemRoleType.
+const (
+	Source UpdateCodeSystemRoleType = "source"
+	Target UpdateCodeSystemRoleType = "target"
 )
 
 // Defines values for UpdateMappingEquivalence.
@@ -116,6 +135,15 @@ const (
 	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
 )
 
+// BaseProject defines model for BaseProject.
+type BaseProject struct {
+	Description         string `json:"description"`
+	EquivalenceRequired bool   `json:"equivalence_required"`
+	Name                string `json:"name"`
+	StatusRequired      bool   `json:"status_required"`
+	Version             string `json:"version"`
+}
+
 // CodeSystem defines model for CodeSystem.
 type CodeSystem struct {
 	Author      *string `json:"author,omitempty"`
@@ -129,12 +157,12 @@ type CodeSystem struct {
 
 // CodeSystemRole defines model for CodeSystemRole.
 type CodeSystemRole struct {
-	Id     *int32 `json:"id,omitempty"`
+	Id     int32  `json:"id"`
 	Name   string `json:"name"`
 	System struct {
-		Id      int32   `json:"id"`
-		Name    *string `json:"name,omitempty"`
-		Version *string `json:"version,omitempty"`
+		Id      int32  `json:"id"`
+		Name    string `json:"name"`
+		Version string `json:"version"`
 	} `json:"system"`
 	Type CodeSystemRoleType `json:"type"`
 }
@@ -159,6 +187,16 @@ type CreateCodeSystem struct {
 	Version     string  `json:"version"`
 }
 
+// CreateCodeSystemRole defines model for CreateCodeSystemRole.
+type CreateCodeSystemRole struct {
+	Name   string                   `json:"name"`
+	System int32                    `json:"system"`
+	Type   CreateCodeSystemRoleType `json:"type"`
+}
+
+// CreateCodeSystemRoleType defines model for CreateCodeSystemRole.Type.
+type CreateCodeSystemRoleType string
+
 // CreateMapping defines model for CreateMapping.
 type CreateMapping struct {
 	Comment     *string                   `json:"comment,omitempty"`
@@ -172,6 +210,17 @@ type CreateMappingEquivalence string
 
 // CreateMappingStatus defines model for CreateMapping.Status.
 type CreateMappingStatus string
+
+// CreateProjectDetails defines model for CreateProjectDetails.
+type CreateProjectDetails struct {
+	CodeSystemRoles     []CreateCodeSystemRole   `json:"code_system_roles"`
+	Description         string                   `json:"description"`
+	EquivalenceRequired bool                     `json:"equivalence_required"`
+	Name                string                   `json:"name"`
+	ProjectPermissions  *[]SendProjectPermission `json:"project_permissions,omitempty"`
+	StatusRequired      bool                     `json:"status_required"`
+	Version             string                   `json:"version"`
+}
 
 // Element defines model for Element.
 type Element struct {
@@ -207,24 +256,24 @@ type MappingStatus string
 
 // Project defines model for Project.
 type Project struct {
-	Created             *string `json:"created,omitempty"`
-	Description         string  `json:"description"`
-	EquivalenceRequired bool    `json:"equivalence_required"`
-	Id                  *int32  `json:"id,omitempty"`
-	Modified            *string `json:"modified,omitempty"`
-	Name                string  `json:"name"`
-	StatusRequired      bool    `json:"status_required"`
-	Version             string  `json:"version"`
+	Created             string `json:"created"`
+	Description         string `json:"description"`
+	EquivalenceRequired bool   `json:"equivalence_required"`
+	Id                  int32  `json:"id"`
+	Modified            string `json:"modified"`
+	Name                string `json:"name"`
+	StatusRequired      bool   `json:"status_required"`
+	Version             string `json:"version"`
 }
 
 // ProjectDetails defines model for ProjectDetails.
 type ProjectDetails struct {
 	CodeSystemRoles     []CodeSystemRole     `json:"code_system_roles"`
-	Created             *string              `json:"created,omitempty"`
+	Created             string               `json:"created"`
 	Description         string               `json:"description"`
 	EquivalenceRequired bool                 `json:"equivalence_required"`
-	Id                  *int32               `json:"id,omitempty"`
-	Modified            *string              `json:"modified,omitempty"`
+	Id                  int32                `json:"id"`
+	Modified            string               `json:"modified"`
 	Name                string               `json:"name"`
 	ProjectPermissions  *[]ProjectPermission `json:"project_permissions,omitempty"`
 	StatusRequired      bool                 `json:"status_required"`
@@ -235,11 +284,30 @@ type ProjectDetails struct {
 type ProjectPermission struct {
 	Role     ProjectPermissionRole `json:"role"`
 	UserId   string                `json:"user_id"`
-	UserName *string               `json:"user_name,omitempty"`
+	UserName string                `json:"user_name"`
 }
 
 // ProjectPermissionRole defines model for ProjectPermission.Role.
 type ProjectPermissionRole string
+
+// SendProjectPermission defines model for SendProjectPermission.
+type SendProjectPermission struct {
+	Role   SendProjectPermissionRole `json:"role"`
+	UserId string                    `json:"user_id"`
+}
+
+// SendProjectPermissionRole defines model for SendProjectPermission.Role.
+type SendProjectPermissionRole string
+
+// UpdateCodeSystemRole defines model for UpdateCodeSystemRole.
+type UpdateCodeSystemRole struct {
+	Id   int32                    `json:"id"`
+	Name string                   `json:"name"`
+	Type UpdateCodeSystemRoleType `json:"type"`
+}
+
+// UpdateCodeSystemRoleType defines model for UpdateCodeSystemRole.Type.
+type UpdateCodeSystemRoleType string
 
 // UpdateMapping defines model for UpdateMapping.
 type UpdateMapping struct {
@@ -255,6 +323,16 @@ type UpdateMappingEquivalence string
 
 // UpdateMappingStatus defines model for UpdateMapping.Status.
 type UpdateMappingStatus string
+
+// UpdateProject defines model for UpdateProject.
+type UpdateProject struct {
+	Description         string `json:"description"`
+	EquivalenceRequired bool   `json:"equivalence_required"`
+	Id                  int32  `json:"id"`
+	Name                string `json:"name"`
+	StatusRequired      bool   `json:"status_required"`
+	Version             string `json:"version"`
+}
 
 // CodesystemRoleId defines model for codesystem-role_id.
 type CodesystemRoleId = int32
@@ -362,13 +440,13 @@ type CreateCodeSystemJSONRequestBody = CreateCodeSystem
 type UpdateCodeSystemJSONRequestBody = CodeSystem
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
-type CreateProjectJSONRequestBody = ProjectDetails
+type CreateProjectJSONRequestBody = CreateProjectDetails
 
 // UpdateProjectJSONRequestBody defines body for UpdateProject for application/json ContentType.
-type UpdateProjectJSONRequestBody = Project
+type UpdateProjectJSONRequestBody = UpdateProject
 
 // UpdateCodeSystemRoleJSONRequestBody defines body for UpdateCodeSystemRole for application/json ContentType.
-type UpdateCodeSystemRoleJSONRequestBody = CodeSystemRole
+type UpdateCodeSystemRoleJSONRequestBody = UpdateCodeSystemRole
 
 // PatchMappingJSONRequestBody defines body for PatchMapping for application/json ContentType.
 type PatchMappingJSONRequestBody = UpdateMapping
@@ -380,7 +458,7 @@ type CreateMappingJSONRequestBody = CreateMapping
 type UpdateMappingJSONRequestBody = UpdateMapping
 
 // CreatePermissionJSONRequestBody defines body for CreatePermission for application/json ContentType.
-type CreatePermissionJSONRequestBody = ProjectPermission
+type CreatePermissionJSONRequestBody = SendProjectPermission
 
 // UpdatePermissionJSONRequestBody defines body for UpdatePermission for application/json ContentType.
-type UpdatePermissionJSONRequestBody = ProjectPermission
+type UpdatePermissionJSONRequestBody = SendProjectPermission

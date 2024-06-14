@@ -5,45 +5,53 @@ import (
 	"miracummapper/internal/database/models"
 )
 
-func GormCodeSystemRolesToApiCodeSystemRoles(codeSystemRoles []models.CodeSystemRole) []api.CodeSystemRole {
+func GormCodeSystemRolesToApiCodeSystemRoles(codeSystemRoles *[]models.CodeSystemRole) *[]api.CodeSystemRole {
 	apiCodeSystemRoles := []api.CodeSystemRole{}
-	for _, role := range codeSystemRoles {
-		apiCodeSystemRoles = append(apiCodeSystemRoles, GormCodeSystemRoleToApiCodeSystemRole(role))
+	for _, role := range *codeSystemRoles {
+		apiCodeSystemRoles = append(apiCodeSystemRoles, *GormCodeSystemRoleToApiCodeSystemRole(&role))
 	}
-	return apiCodeSystemRoles
+	return &apiCodeSystemRoles
 }
 
-func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole models.CodeSystemRole) api.CodeSystemRole {
-	id := int32(codeSystemRole.ID)
-	return api.CodeSystemRole{
-		Id:   &id,
+func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole) *api.CodeSystemRole {
+	return &api.CodeSystemRole{
+		Id:   int32(codeSystemRole.ID),
 		Name: codeSystemRole.Name,
 		System: struct {
-			Id      int32   `json:"id"`
-			Name    *string `json:"name,omitempty"`
-			Version *string `json:"version,omitempty"`
+			Id      int32  `json:"id"`
+			Name    string `json:"name"`
+			Version string `json:"version"`
 		}{
 			Id:      int32(codeSystemRole.CodeSystemID),
-			Name:    &codeSystemRole.CodeSystem.Name,
-			Version: &codeSystemRole.CodeSystem.Version,
+			Name:    codeSystemRole.CodeSystem.Name,
+			Version: codeSystemRole.CodeSystem.Version,
 		},
 		Type: api.CodeSystemRoleType(codeSystemRole.Type),
 	}
 }
 
-func ApiCodeSystemRoleToGormCodeSystemRole(codeSystemRole api.CodeSystemRole) models.CodeSystemRole {
-	return models.CodeSystemRole{
-		ID:           uint32(*codeSystemRole.Id),
-		Name:         codeSystemRole.Name,
-		CodeSystemID: uint32(codeSystemRole.System.Id),
-		Type:         models.CodeSystemRoleType(codeSystemRole.Type),
-		ProjectID:    uint32(codeSystemRole.System.Id),
-		CodeSystem: models.CodeSystem{
-			Model: models.Model{
-				ID: uint32(codeSystemRole.System.Id),
-			},
-			Name:    *codeSystemRole.System.Name,
-			Version: *codeSystemRole.System.Version,
-		},
+func ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.UpdateCodeSystemRole) *models.CodeSystemRole {
+	return &models.CodeSystemRole{
+		ID:   uint32(codeSystemRole.Id),
+		Type: models.CodeSystemRoleType(codeSystemRole.Type),
+		Name: codeSystemRole.Name,
 	}
+}
+
+func ApiCreateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.CreateCodeSystemRole) *models.CodeSystemRole {
+	return &models.CodeSystemRole{
+		Type:         models.CodeSystemRoleType(codeSystemRole.Type),
+		Name:         codeSystemRole.Name,
+		CodeSystemID: uint32(codeSystemRole.System),
+	}
+}
+
+func ApiCreateCodeSystemRolesToGormCodeSystemRoles(codeSystemRoles *[]api.CreateCodeSystemRole) *[]models.CodeSystemRole {
+	gormCodeSystemRoles := []models.CodeSystemRole{}
+	for i, role := range *codeSystemRoles {
+		gormRole := ApiCreateCodeSystemRoleToGormCodeSystemRole(&role)
+		gormRole.Position = uint32(i)
+		gormCodeSystemRoles = append(gormCodeSystemRoles, *gormRole)
+	}
+	return &gormCodeSystemRoles
 }

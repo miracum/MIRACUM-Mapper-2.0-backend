@@ -52,20 +52,17 @@ func (gq *GormQuery) GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRol
 	return nil
 }
 
-func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32, checkFunc func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error) error {
+func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		oldCodeSystemRole := models.CodeSystemRole{}
 
-		if err := tx.Preload("CodeSystem").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRoleId).Error; err != nil {
+		if err := tx.Preload("CodeSystem").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRole.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemRole with ID %d couldn't be found.", codeSystemRole.ID))
 			default:
 				return err
 			}
-		}
-		if err := checkFunc(&oldCodeSystemRole, codeSystemRole); err != nil {
-			return err
 		}
 
 		if err := tx.Save(codeSystemRole).Error; err != nil {

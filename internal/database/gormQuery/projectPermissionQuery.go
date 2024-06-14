@@ -91,11 +91,13 @@ func (gq *GormQuery) GetProjectPermissionQuery(projectPermission *models.Project
 	return err
 }
 
-func (gq *GormQuery) UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32) error {
+func (gq *GormQuery) UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		oldProjectPermission := models.ProjectPermission{}
+		projectId := projectPermission.ProjectID
+		userId := projectPermission.UserID
 
-		if err := tx.Where("project_id = ? AND user_id = ?", projectId, projectPermission.UserID).First(&oldProjectPermission).Error; err != nil {
+		if err := tx.Where("project_id = ? AND user_id = ?", projectId, userId).First(&oldProjectPermission).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				// TODO This check to determine if the Project or the CodeSystemRole is not found is bad
@@ -106,7 +108,7 @@ func (gq *GormQuery) UpdateProjectPermissionQuery(projectPermission *models.Proj
 					}
 					return err
 				}
-				return database.NewDBError(database.NotFound, fmt.Sprintf("The user with id %s does not have a permission for the project with id %d", projectPermission.UserID, projectId))
+				return database.NewDBError(database.NotFound, fmt.Sprintf("The user with id %s does not have a permission for the project with id %d", userId, projectId))
 			default:
 				return err
 			}

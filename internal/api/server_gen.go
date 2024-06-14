@@ -50,24 +50,24 @@ type ServerInterface interface {
 	// Create a new project
 	// (POST /projects)
 	CreateProject(c *gin.Context)
+	// Update the project information
+	// (PUT /projects)
+	UpdateProject(c *gin.Context)
 	// Delete a project
 	// (DELETE /projects/{project_id})
 	DeleteProject(c *gin.Context, projectId ProjectId)
 	// Get project details
 	// (GET /projects/{project_id})
 	GetProject(c *gin.Context, projectId ProjectId)
-	// Update the project information
-	// (PUT /projects/{project_id})
-	UpdateProject(c *gin.Context, projectId ProjectId)
 	// Get all code system roles for a project
 	// (GET /projects/{project_id}/codesystem-roles)
 	GetAllCodeSystemRoles(c *gin.Context, projectId ProjectId)
+	// Update a code system role by ID
+	// (PUT /projects/{project_id}/codesystem-roles)
+	UpdateCodeSystemRole(c *gin.Context, projectId ProjectId)
 	// Get a code system role by ID
 	// (GET /projects/{project_id}/codesystem-roles/{codesystem-role_id})
 	GetCodeSystemRole(c *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId)
-	// Update a code system role by ID
-	// (PUT /projects/{project_id}/codesystem-roles/{codesystem-role_id})
-	UpdateCodeSystemRole(c *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId)
 	// Get all mappings for a project by project ID
 	// (GET /projects/{project_id}/mappings)
 	GetAllMappings(c *gin.Context, projectId ProjectId, params GetAllMappingsParams)
@@ -89,18 +89,18 @@ type ServerInterface interface {
 	// Get permissions for a project
 	// (GET /projects/{project_id}/permissions)
 	GetAllPermissions(c *gin.Context, projectId ProjectId)
+	// Create a new project permission for user
+	// (POST /projects/{project_id}/permissions)
+	CreatePermission(c *gin.Context, projectId ProjectId)
+	// Update a project permission for a user
+	// (PUT /projects/{project_id}/permissions)
+	UpdatePermission(c *gin.Context, projectId ProjectId)
 	// Delete a project permission for a user
 	// (DELETE /projects/{project_id}/permissions/{user_id})
 	DeletePermission(c *gin.Context, projectId ProjectId, userId UserId)
 	// Get project permission for a specific user
 	// (GET /projects/{project_id}/permissions/{user_id})
 	GetPermission(c *gin.Context, projectId ProjectId, userId UserId)
-	// Create a new project permission for user
-	// (POST /projects/{project_id}/permissions/{user_id})
-	CreatePermission(c *gin.Context, projectId ProjectId, userId UserId)
-	// Update a project permission for a user
-	// (PUT /projects/{project_id}/permissions/{user_id})
-	UpdatePermission(c *gin.Context, projectId ProjectId, userId UserId)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -382,6 +382,23 @@ func (siw *ServerInterfaceWrapper) CreateProject(c *gin.Context) {
 	siw.Handler.CreateProject(c)
 }
 
+// UpdateProject operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProject(c *gin.Context) {
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateProject(c)
+}
+
 // DeleteProject operation middleware
 func (siw *ServerInterfaceWrapper) DeleteProject(c *gin.Context) {
 
@@ -438,34 +455,6 @@ func (siw *ServerInterfaceWrapper) GetProject(c *gin.Context) {
 	siw.Handler.GetProject(c, projectId)
 }
 
-// UpdateProject operation middleware
-func (siw *ServerInterfaceWrapper) UpdateProject(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UpdateProject(c, projectId)
-}
-
 // GetAllCodeSystemRoles operation middleware
 func (siw *ServerInterfaceWrapper) GetAllCodeSystemRoles(c *gin.Context) {
 
@@ -492,6 +481,34 @@ func (siw *ServerInterfaceWrapper) GetAllCodeSystemRoles(c *gin.Context) {
 	}
 
 	siw.Handler.GetAllCodeSystemRoles(c, projectId)
+}
+
+// UpdateCodeSystemRole operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCodeSystemRole(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateCodeSystemRole(c, projectId)
 }
 
 // GetCodeSystemRole operation middleware
@@ -529,43 +546,6 @@ func (siw *ServerInterfaceWrapper) GetCodeSystemRole(c *gin.Context) {
 	}
 
 	siw.Handler.GetCodeSystemRole(c, projectId, codesystemRoleId)
-}
-
-// UpdateCodeSystemRole operation middleware
-func (siw *ServerInterfaceWrapper) UpdateCodeSystemRole(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Path parameter "codesystem-role_id" -------------
-	var codesystemRoleId CodesystemRoleId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "codesystem-role_id", c.Param("codesystem-role_id"), &codesystemRoleId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem-role_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UpdateCodeSystemRole(c, projectId, codesystemRoleId)
 }
 
 // GetAllMappings operation middleware
@@ -817,6 +797,62 @@ func (siw *ServerInterfaceWrapper) GetAllPermissions(c *gin.Context) {
 	siw.Handler.GetAllPermissions(c, projectId)
 }
 
+// CreatePermission operation middleware
+func (siw *ServerInterfaceWrapper) CreatePermission(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreatePermission(c, projectId)
+}
+
+// UpdatePermission operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePermission(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdatePermission(c, projectId)
+}
+
 // DeletePermission operation middleware
 func (siw *ServerInterfaceWrapper) DeletePermission(c *gin.Context) {
 
@@ -891,80 +927,6 @@ func (siw *ServerInterfaceWrapper) GetPermission(c *gin.Context) {
 	siw.Handler.GetPermission(c, projectId, userId)
 }
 
-// CreatePermission operation middleware
-func (siw *ServerInterfaceWrapper) CreatePermission(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Path parameter "user_id" -------------
-	var userId UserId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", c.Param("user_id"), &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter user_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.CreatePermission(c, projectId, userId)
-}
-
-// UpdatePermission operation middleware
-func (siw *ServerInterfaceWrapper) UpdatePermission(c *gin.Context) {
-
-	var err error
-
-	// ------------- Path parameter "project_id" -------------
-	var projectId ProjectId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Path parameter "user_id" -------------
-	var userId UserId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", c.Param("user_id"), &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter user_id: %w", err), http.StatusBadRequest)
-		return
-	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
-	c.Set(BearerAuthScopes, []string{"normal", "admin"})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UpdatePermission(c, projectId, userId)
-}
-
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -1001,12 +963,12 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
 	router.POST(options.BaseURL+"/projects", wrapper.CreateProject)
+	router.PUT(options.BaseURL+"/projects", wrapper.UpdateProject)
 	router.DELETE(options.BaseURL+"/projects/:project_id", wrapper.DeleteProject)
 	router.GET(options.BaseURL+"/projects/:project_id", wrapper.GetProject)
-	router.PUT(options.BaseURL+"/projects/:project_id", wrapper.UpdateProject)
 	router.GET(options.BaseURL+"/projects/:project_id/codesystem-roles", wrapper.GetAllCodeSystemRoles)
+	router.PUT(options.BaseURL+"/projects/:project_id/codesystem-roles", wrapper.UpdateCodeSystemRole)
 	router.GET(options.BaseURL+"/projects/:project_id/codesystem-roles/:codesystem-role_id", wrapper.GetCodeSystemRole)
-	router.PUT(options.BaseURL+"/projects/:project_id/codesystem-roles/:codesystem-role_id", wrapper.UpdateCodeSystemRole)
 	router.GET(options.BaseURL+"/projects/:project_id/mappings", wrapper.GetAllMappings)
 	router.PATCH(options.BaseURL+"/projects/:project_id/mappings", wrapper.PatchMapping)
 	router.POST(options.BaseURL+"/projects/:project_id/mappings", wrapper.CreateMapping)
@@ -1014,10 +976,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/projects/:project_id/mappings/:mapping_id", wrapper.DeleteMapping)
 	router.GET(options.BaseURL+"/projects/:project_id/mappings/:mapping_id", wrapper.GetMapping)
 	router.GET(options.BaseURL+"/projects/:project_id/permissions", wrapper.GetAllPermissions)
+	router.POST(options.BaseURL+"/projects/:project_id/permissions", wrapper.CreatePermission)
+	router.PUT(options.BaseURL+"/projects/:project_id/permissions", wrapper.UpdatePermission)
 	router.DELETE(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.DeletePermission)
 	router.GET(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.GetPermission)
-	router.POST(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.CreatePermission)
-	router.PUT(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.UpdatePermission)
 }
 
 type BadRequestErrorJSONResponse string
@@ -1428,6 +1390,61 @@ func (response CreateProject500JSONResponse) VisitCreateProjectResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateProjectRequestObject struct {
+	Body *UpdateProjectJSONRequestBody
+}
+
+type UpdateProjectResponseObject interface {
+	VisitUpdateProjectResponse(w http.ResponseWriter) error
+}
+
+type UpdateProject200JSONResponse Project
+
+func (response UpdateProject200JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProject400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response UpdateProject400JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProject404JSONResponse ErrorResponse
+
+func (response UpdateProject404JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProject422JSONResponse ErrorResponse
+
+func (response UpdateProject422JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateProject500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdateProject500JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type DeleteProjectRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 }
@@ -1520,62 +1537,6 @@ func (response GetProject500JSONResponse) VisitGetProjectResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type UpdateProjectRequestObject struct {
-	ProjectId ProjectId `json:"project_id"`
-	Body      *UpdateProjectJSONRequestBody
-}
-
-type UpdateProjectResponseObject interface {
-	VisitUpdateProjectResponse(w http.ResponseWriter) error
-}
-
-type UpdateProject200JSONResponse Project
-
-func (response UpdateProject200JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProject400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response UpdateProject400JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProject404JSONResponse ErrorResponse
-
-func (response UpdateProject404JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProject422JSONResponse ErrorResponse
-
-func (response UpdateProject422JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateProject500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response UpdateProject500JSONResponse) VisitUpdateProjectResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type GetAllCodeSystemRolesRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 }
@@ -1622,57 +1583,9 @@ func (response GetAllCodeSystemRoles500JSONResponse) VisitGetAllCodeSystemRolesR
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetCodeSystemRoleRequestObject struct {
-	ProjectId        ProjectId        `json:"project_id"`
-	CodesystemRoleId CodesystemRoleId `json:"codesystem-role_id"`
-}
-
-type GetCodeSystemRoleResponseObject interface {
-	VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error
-}
-
-type GetCodeSystemRole200JSONResponse CodeSystemRole
-
-func (response GetCodeSystemRole200JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystemRole400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response GetCodeSystemRole400JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystemRole404JSONResponse ErrorResponse
-
-func (response GetCodeSystemRole404JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetCodeSystemRole500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response GetCodeSystemRole500JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 type UpdateCodeSystemRoleRequestObject struct {
-	ProjectId        ProjectId        `json:"project_id"`
-	CodesystemRoleId CodesystemRoleId `json:"codesystem-role_id"`
-	Body             *UpdateCodeSystemRoleJSONRequestBody
+	ProjectId ProjectId `json:"project_id"`
+	Body      *UpdateCodeSystemRoleJSONRequestBody
 }
 
 type UpdateCodeSystemRoleResponseObject interface {
@@ -1720,6 +1633,53 @@ type UpdateCodeSystemRole500JSONResponse struct {
 }
 
 func (response UpdateCodeSystemRole500JSONResponse) VisitUpdateCodeSystemRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystemRoleRequestObject struct {
+	ProjectId        ProjectId        `json:"project_id"`
+	CodesystemRoleId CodesystemRoleId `json:"codesystem-role_id"`
+}
+
+type GetCodeSystemRoleResponseObject interface {
+	VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error
+}
+
+type GetCodeSystemRole200JSONResponse CodeSystemRole
+
+func (response GetCodeSystemRole200JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystemRole400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetCodeSystemRole400JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystemRole404JSONResponse ErrorResponse
+
+func (response GetCodeSystemRole404JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetCodeSystemRole500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetCodeSystemRole500JSONResponse) VisitGetCodeSystemRoleResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2081,6 +2041,118 @@ func (response GetAllPermissions500JSONResponse) VisitGetAllPermissionsResponse(
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreatePermissionRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	Body      *CreatePermissionJSONRequestBody
+}
+
+type CreatePermissionResponseObject interface {
+	VisitCreatePermissionResponse(w http.ResponseWriter) error
+}
+
+type CreatePermission200JSONResponse ProjectPermission
+
+func (response CreatePermission200JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreatePermission400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response CreatePermission400JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreatePermission404JSONResponse ErrorResponse
+
+func (response CreatePermission404JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreatePermission422JSONResponse ErrorResponse
+
+func (response CreatePermission422JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreatePermission500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response CreatePermission500JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePermissionRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	Body      *UpdatePermissionJSONRequestBody
+}
+
+type UpdatePermissionResponseObject interface {
+	VisitUpdatePermissionResponse(w http.ResponseWriter) error
+}
+
+type UpdatePermission200JSONResponse ProjectPermission
+
+func (response UpdatePermission200JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePermission400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response UpdatePermission400JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePermission404JSONResponse ErrorResponse
+
+func (response UpdatePermission404JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePermission422JSONResponse ErrorResponse
+
+func (response UpdatePermission422JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(422)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePermission500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response UpdatePermission500JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type DeletePermissionRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 	UserId    UserId    `json:"user_id"`
@@ -2175,120 +2247,6 @@ func (response GetPermission500JSONResponse) VisitGetPermissionResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type CreatePermissionRequestObject struct {
-	ProjectId ProjectId `json:"project_id"`
-	UserId    UserId    `json:"user_id"`
-	Body      *CreatePermissionJSONRequestBody
-}
-
-type CreatePermissionResponseObject interface {
-	VisitCreatePermissionResponse(w http.ResponseWriter) error
-}
-
-type CreatePermission200JSONResponse ProjectPermission
-
-func (response CreatePermission200JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreatePermission400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response CreatePermission400JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreatePermission404JSONResponse ErrorResponse
-
-func (response CreatePermission404JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreatePermission422JSONResponse ErrorResponse
-
-func (response CreatePermission422JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type CreatePermission500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response CreatePermission500JSONResponse) VisitCreatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdatePermissionRequestObject struct {
-	ProjectId ProjectId `json:"project_id"`
-	UserId    UserId    `json:"user_id"`
-	Body      *UpdatePermissionJSONRequestBody
-}
-
-type UpdatePermissionResponseObject interface {
-	VisitUpdatePermissionResponse(w http.ResponseWriter) error
-}
-
-type UpdatePermission200JSONResponse ProjectPermission
-
-func (response UpdatePermission200JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdatePermission400JSONResponse struct{ BadRequestErrorJSONResponse }
-
-func (response UpdatePermission400JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdatePermission404JSONResponse ErrorResponse
-
-func (response UpdatePermission404JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdatePermission422JSONResponse ErrorResponse
-
-func (response UpdatePermission422JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(422)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdatePermission500JSONResponse struct {
-	InternalServerErrorJSONResponse
-}
-
-func (response UpdatePermission500JSONResponse) VisitUpdatePermissionResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Get all code systems
@@ -2318,24 +2276,24 @@ type StrictServerInterface interface {
 	// Create a new project
 	// (POST /projects)
 	CreateProject(ctx context.Context, request CreateProjectRequestObject) (CreateProjectResponseObject, error)
+	// Update the project information
+	// (PUT /projects)
+	UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error)
 	// Delete a project
 	// (DELETE /projects/{project_id})
 	DeleteProject(ctx context.Context, request DeleteProjectRequestObject) (DeleteProjectResponseObject, error)
 	// Get project details
 	// (GET /projects/{project_id})
 	GetProject(ctx context.Context, request GetProjectRequestObject) (GetProjectResponseObject, error)
-	// Update the project information
-	// (PUT /projects/{project_id})
-	UpdateProject(ctx context.Context, request UpdateProjectRequestObject) (UpdateProjectResponseObject, error)
 	// Get all code system roles for a project
 	// (GET /projects/{project_id}/codesystem-roles)
 	GetAllCodeSystemRoles(ctx context.Context, request GetAllCodeSystemRolesRequestObject) (GetAllCodeSystemRolesResponseObject, error)
+	// Update a code system role by ID
+	// (PUT /projects/{project_id}/codesystem-roles)
+	UpdateCodeSystemRole(ctx context.Context, request UpdateCodeSystemRoleRequestObject) (UpdateCodeSystemRoleResponseObject, error)
 	// Get a code system role by ID
 	// (GET /projects/{project_id}/codesystem-roles/{codesystem-role_id})
 	GetCodeSystemRole(ctx context.Context, request GetCodeSystemRoleRequestObject) (GetCodeSystemRoleResponseObject, error)
-	// Update a code system role by ID
-	// (PUT /projects/{project_id}/codesystem-roles/{codesystem-role_id})
-	UpdateCodeSystemRole(ctx context.Context, request UpdateCodeSystemRoleRequestObject) (UpdateCodeSystemRoleResponseObject, error)
 	// Get all mappings for a project by project ID
 	// (GET /projects/{project_id}/mappings)
 	GetAllMappings(ctx context.Context, request GetAllMappingsRequestObject) (GetAllMappingsResponseObject, error)
@@ -2357,18 +2315,18 @@ type StrictServerInterface interface {
 	// Get permissions for a project
 	// (GET /projects/{project_id}/permissions)
 	GetAllPermissions(ctx context.Context, request GetAllPermissionsRequestObject) (GetAllPermissionsResponseObject, error)
+	// Create a new project permission for user
+	// (POST /projects/{project_id}/permissions)
+	CreatePermission(ctx context.Context, request CreatePermissionRequestObject) (CreatePermissionResponseObject, error)
+	// Update a project permission for a user
+	// (PUT /projects/{project_id}/permissions)
+	UpdatePermission(ctx context.Context, request UpdatePermissionRequestObject) (UpdatePermissionResponseObject, error)
 	// Delete a project permission for a user
 	// (DELETE /projects/{project_id}/permissions/{user_id})
 	DeletePermission(ctx context.Context, request DeletePermissionRequestObject) (DeletePermissionResponseObject, error)
 	// Get project permission for a specific user
 	// (GET /projects/{project_id}/permissions/{user_id})
 	GetPermission(ctx context.Context, request GetPermissionRequestObject) (GetPermissionResponseObject, error)
-	// Create a new project permission for user
-	// (POST /projects/{project_id}/permissions/{user_id})
-	CreatePermission(ctx context.Context, request CreatePermissionRequestObject) (CreatePermissionResponseObject, error)
-	// Update a project permission for a user
-	// (PUT /projects/{project_id}/permissions/{user_id})
-	UpdatePermission(ctx context.Context, request UpdatePermissionRequestObject) (UpdatePermissionResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -2641,6 +2599,39 @@ func (sh *strictHandler) CreateProject(ctx *gin.Context) {
 	}
 }
 
+// UpdateProject operation middleware
+func (sh *strictHandler) UpdateProject(ctx *gin.Context) {
+	var request UpdateProjectRequestObject
+
+	var body UpdateProjectJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateProject(ctx, request.(UpdateProjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateProject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UpdateProjectResponseObject); ok {
+		if err := validResponse.VisitUpdateProjectResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteProject operation middleware
 func (sh *strictHandler) DeleteProject(ctx *gin.Context, projectId ProjectId) {
 	var request DeleteProjectRequestObject
@@ -2695,41 +2686,6 @@ func (sh *strictHandler) GetProject(ctx *gin.Context, projectId ProjectId) {
 	}
 }
 
-// UpdateProject operation middleware
-func (sh *strictHandler) UpdateProject(ctx *gin.Context, projectId ProjectId) {
-	var request UpdateProjectRequestObject
-
-	request.ProjectId = projectId
-
-	var body UpdateProjectJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateProject(ctx, request.(UpdateProjectRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateProject")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(UpdateProjectResponseObject); ok {
-		if err := validResponse.VisitUpdateProjectResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // GetAllCodeSystemRoles operation middleware
 func (sh *strictHandler) GetAllCodeSystemRoles(ctx *gin.Context, projectId ProjectId) {
 	var request GetAllCodeSystemRolesRequestObject
@@ -2750,6 +2706,41 @@ func (sh *strictHandler) GetAllCodeSystemRoles(ctx *gin.Context, projectId Proje
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetAllCodeSystemRolesResponseObject); ok {
 		if err := validResponse.VisitGetAllCodeSystemRolesResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateCodeSystemRole operation middleware
+func (sh *strictHandler) UpdateCodeSystemRole(ctx *gin.Context, projectId ProjectId) {
+	var request UpdateCodeSystemRoleRequestObject
+
+	request.ProjectId = projectId
+
+	var body UpdateCodeSystemRoleJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateCodeSystemRole(ctx, request.(UpdateCodeSystemRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateCodeSystemRole")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UpdateCodeSystemRoleResponseObject); ok {
+		if err := validResponse.VisitUpdateCodeSystemRoleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -2778,42 +2769,6 @@ func (sh *strictHandler) GetCodeSystemRole(ctx *gin.Context, projectId ProjectId
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetCodeSystemRoleResponseObject); ok {
 		if err := validResponse.VisitGetCodeSystemRoleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// UpdateCodeSystemRole operation middleware
-func (sh *strictHandler) UpdateCodeSystemRole(ctx *gin.Context, projectId ProjectId, codesystemRoleId CodesystemRoleId) {
-	var request UpdateCodeSystemRoleRequestObject
-
-	request.ProjectId = projectId
-	request.CodesystemRoleId = codesystemRoleId
-
-	var body UpdateCodeSystemRoleJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateCodeSystemRole(ctx, request.(UpdateCodeSystemRoleRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateCodeSystemRole")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(UpdateCodeSystemRoleResponseObject); ok {
-		if err := validResponse.VisitUpdateCodeSystemRoleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3037,6 +2992,76 @@ func (sh *strictHandler) GetAllPermissions(ctx *gin.Context, projectId ProjectId
 	}
 }
 
+// CreatePermission operation middleware
+func (sh *strictHandler) CreatePermission(ctx *gin.Context, projectId ProjectId) {
+	var request CreatePermissionRequestObject
+
+	request.ProjectId = projectId
+
+	var body CreatePermissionJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePermission(ctx, request.(CreatePermissionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePermission")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(CreatePermissionResponseObject); ok {
+		if err := validResponse.VisitCreatePermissionResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdatePermission operation middleware
+func (sh *strictHandler) UpdatePermission(ctx *gin.Context, projectId ProjectId) {
+	var request UpdatePermissionRequestObject
+
+	request.ProjectId = projectId
+
+	var body UpdatePermissionJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdatePermission(ctx, request.(UpdatePermissionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdatePermission")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UpdatePermissionResponseObject); ok {
+		if err := validResponse.VisitUpdatePermissionResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeletePermission operation middleware
 func (sh *strictHandler) DeletePermission(ctx *gin.Context, projectId ProjectId, userId UserId) {
 	var request DeletePermissionRequestObject
@@ -3093,137 +3118,66 @@ func (sh *strictHandler) GetPermission(ctx *gin.Context, projectId ProjectId, us
 	}
 }
 
-// CreatePermission operation middleware
-func (sh *strictHandler) CreatePermission(ctx *gin.Context, projectId ProjectId, userId UserId) {
-	var request CreatePermissionRequestObject
-
-	request.ProjectId = projectId
-	request.UserId = userId
-
-	var body CreatePermissionJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.CreatePermission(ctx, request.(CreatePermissionRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "CreatePermission")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(CreatePermissionResponseObject); ok {
-		if err := validResponse.VisitCreatePermissionResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// UpdatePermission operation middleware
-func (sh *strictHandler) UpdatePermission(ctx *gin.Context, projectId ProjectId, userId UserId) {
-	var request UpdatePermissionRequestObject
-
-	request.ProjectId = projectId
-	request.UserId = userId
-
-	var body UpdatePermissionJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdatePermission(ctx, request.(UpdatePermissionRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdatePermission")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(UpdatePermissionResponseObject); ok {
-		if err := validResponse.VisitUpdatePermissionResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AAD//0rR7m+GawAA",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

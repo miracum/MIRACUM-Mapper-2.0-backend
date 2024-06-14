@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
@@ -12,10 +11,10 @@ import (
 
 // GetAllCodeSystemRoles implements api.StrictServerInterface.
 func (s *Server) GetAllCodeSystemRoles(ctx context.Context, request api.GetAllCodeSystemRolesRequestObject) (api.GetAllCodeSystemRolesResponseObject, error) {
-
+	projectId := request.ProjectId
 	var codeSystemRoles []models.CodeSystemRole = []models.CodeSystemRole{}
 
-	if err := s.Database.GetAllCodeSystemRolesQuery(&codeSystemRoles, request.ProjectId); err != nil {
+	if err := s.Database.GetAllCodeSystemRolesQuery(&codeSystemRoles, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.GetAllCodeSystemRoles404JSONResponse(err.Error()), nil
@@ -24,17 +23,19 @@ func (s *Server) GetAllCodeSystemRoles(ctx context.Context, request api.GetAllCo
 		}
 	}
 
-	codeSystems := transform.GormCodeSystemRolesToApiCodeSystemRoles(codeSystemRoles)
+	codeSystems := transform.GormCodeSystemRolesToApiCodeSystemRoles(&codeSystemRoles)
 
-	return api.GetAllCodeSystemRoles200JSONResponse(codeSystems), nil
+	return api.GetAllCodeSystemRoles200JSONResponse(*codeSystems), nil
 
 }
 
 // GetCodeSystemRole implements api.StrictServerInterface.
 func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSystemRoleRequestObject) (api.GetCodeSystemRoleResponseObject, error) {
+	projectId := request.ProjectId
+	codeSystemRoleId := request.CodesystemRoleId
 	var codeSystemRole models.CodeSystemRole = models.CodeSystemRole{}
 
-	if err := s.Database.GetCodeSystemRoleQuery(&codeSystemRole, request.ProjectId, request.CodesystemRoleId); err != nil {
+	if err := s.Database.GetCodeSystemRoleQuery(&codeSystemRole, projectId, codeSystemRoleId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.GetCodeSystemRole404JSONResponse(err.Error()), nil
@@ -43,37 +44,19 @@ func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSyste
 		}
 	}
 
-	codeSystem := transform.GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole)
+	codeSystem := transform.GormCodeSystemRoleToApiCodeSystemRole(&codeSystemRole)
 
-	return api.GetCodeSystemRole200JSONResponse(codeSystem), nil
+	return api.GetCodeSystemRole200JSONResponse(*codeSystem), nil
 }
 
 // UpdateCodeSystemRole implements api.StrictServerInterface.
 func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCodeSystemRoleRequestObject) (api.UpdateCodeSystemRoleResponseObject, error) {
+	projectId := request.ProjectId
 	codeSystemRole := request.Body
-	codeSystemRoleId := request.CodesystemRoleId
-	projectID := request.ProjectId
 
-	if codeSystemRole.Id == nil {
-		codeSystemRole.Id = &codeSystemRoleId
-	} else if *codeSystemRole.Id != codeSystemRoleId {
-		return api.UpdateCodeSystemRole400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("CodeSystemRole ID %d in URL does not match CodeSystemRole ID %d in body", codeSystemRoleId, *codeSystemRole.Id))}, nil
-	}
+	db_codeSystemRole := transform.ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole)
 
-	db_codeSystemRole := transform.ApiCodeSystemRoleToGormCodeSystemRole(*codeSystemRole)
-
-	checkFunc := func(oldCodeSystemRole, newCodeSystemRole *models.CodeSystemRole) error {
-		if oldCodeSystemRole.CodeSystemID != newCodeSystemRole.CodeSystemID {
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Specified SystemID %d does not match existing SystemID %d for CodeSystemRole", newCodeSystemRole.CodeSystem.ID, oldCodeSystemRole.CodeSystem.ID))
-		} else if oldCodeSystemRole.CodeSystem.Name != newCodeSystemRole.CodeSystem.Name {
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Specified System Name %s does not match existing System Name %s for CodeSystemRole", newCodeSystemRole.CodeSystem.Name, oldCodeSystemRole.CodeSystem.Name))
-		} else if oldCodeSystemRole.CodeSystem.Version != newCodeSystemRole.CodeSystem.Version {
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Specified System Version %s does not match existing System Version %s for CodeSystemRole", newCodeSystemRole.CodeSystem.Version, oldCodeSystemRole.CodeSystem.Version))
-		}
-		return nil
-	}
-
-	if err := s.Database.UpdateCodeSystemRoleQuery(&db_codeSystemRole, projectID, codeSystemRoleId, checkFunc); err != nil {
+	if err := s.Database.UpdateCodeSystemRoleQuery(db_codeSystemRole, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.UpdateCodeSystemRole404JSONResponse(api.BadRequestErrorJSONResponse(err.Error())), nil
@@ -86,5 +69,6 @@ func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCod
 		}
 	}
 
-	return api.UpdateCodeSystemRole200JSONResponse(*codeSystemRole), nil
+	// TODO test if gorm returns full object after update and so everything is returned correctly
+	return api.UpdateCodeSystemRole200JSONResponse(*transform.GormCodeSystemRoleToApiCodeSystemRole(db_codeSystemRole)), nil
 }

@@ -42,7 +42,7 @@ func (s *Server) GetAllProjects(ctx context.Context, request api.GetAllProjectsR
 
 	var apiProjects []api.Project = []api.Project{}
 	for _, project := range projects {
-		apiProjects = append(apiProjects, transform.GormProjectToApiProject(project))
+		apiProjects = append(apiProjects, *transform.GormProjectToApiProject(&project))
 	}
 
 	return api.GetAllProjects200JSONResponse(apiProjects), nil
@@ -52,23 +52,9 @@ func (s *Server) GetAllProjects(ctx context.Context, request api.GetAllProjectsR
 func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectRequestObject) (api.CreateProjectResponseObject, error) {
 	projectDetails := request.Body
 
-	// if len(projectDetails.CodeSystemRoles) == 0 {
-	// 	return api.CreateProject422JSONResponse("CodeSystemRoles are required"), nil
-	// }
-
-	if projectDetails.Id != nil {
-		return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: "ID must not be provided"}, nil
-	}
-
-	project, err := transform.ApiProjectDetailsToGormProject(*projectDetails)
+	project, err := transform.ApiCreateProjectDetailsToGormProject(projectDetails)
 	if err != nil {
 		return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
-		// switch {
-		// case errors.Is(err, transform.ErrInvalidUUID):
-		// 	return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: "Invalid uuid provided"}, nil
-		// default:
-		// 	return api.CreateProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
-		// }
 	}
 
 	// Create the project in the database
@@ -81,9 +67,10 @@ func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectReq
 		}
 	}
 	// Create the project in the database
-	id := int32(project.Model.ID)
-	projectDetails.Id = &id
-	return api.CreateProject200JSONResponse(*projectDetails), nil
+	// id := int32(project.Model.ID)
+	// projectDetails.Id = &id
+	// TODO check that project contains id etc
+	return api.CreateProject200JSONResponse(transform.GormProjectToApiProjectDetails(project)), nil
 }
 
 func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
@@ -99,7 +86,7 @@ func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestOb
 		}
 	}
 
-	projectDetails := transform.GormProjectToApiProjectDetails(project)
+	projectDetails := transform.GormProjectToApiProjectDetails(&project)
 
 	return api.GetProject200JSONResponse(projectDetails), nil
 }
@@ -107,15 +94,6 @@ func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestOb
 // UpdateProject implements api.StrictServerInterface.
 func (s *Server) UpdateProject(ctx context.Context, request api.UpdateProjectRequestObject) (api.UpdateProjectResponseObject, error) {
 	project := request.Body
-	projectId := request.ProjectId
-
-	if project.Id == nil {
-		project.Id = &projectId
-	} else {
-		if *project.Id != projectId {
-			return api.UpdateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(fmt.Sprintf("Project ID %d in URL does not match project ID %d in body", projectId, *project.Id))}, nil
-		}
-	}
 
 	checkFunc := func(oldProject, newProject *models.Project) error {
 		if oldProject.StatusRequired != newProject.StatusRequired || oldProject.EquivalenceRequired != newProject.EquivalenceRequired {
@@ -124,21 +102,19 @@ func (s *Server) UpdateProject(ctx context.Context, request api.UpdateProjectReq
 		return nil
 	}
 
-	db_project := transform.ApiProjectToGormProject(*project)
-	if err := s.Database.UpdateProjectQuery(&db_project, checkFunc); err != nil {
+	db_project := transform.ApiUpdateProjectToGormProject(project)
+	if err := s.Database.UpdateProjectQuery(db_project, checkFunc); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
-			return api.UpdateProject404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
-		// TODO
+			return api.UpdateProject404JSONResponse(err.Error()), nil
 		case errors.Is(err, database.ErrClientError):
 			return api.UpdateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
-		// case errors.Is(err, database.???) error for trying to update status-/equivalenceRequired
 		default:
 			return api.UpdateProject500JSONResponse{}, err
 		}
 	}
 
-	return api.UpdateProject200JSONResponse(*project), nil
+	return api.UpdateProject200JSONResponse(*transform.GormProjectToApiProject(db_project)), nil
 
 }
 
@@ -157,6 +133,5 @@ func (s *Server) DeleteProject(ctx context.Context, request api.DeleteProjectReq
 		}
 	}
 
-	api_project := transform.GormProjectToApiProject(project)
-	return api.DeleteProject200JSONResponse(api_project), nil
+	return api.DeleteProject200JSONResponse(*transform.GormProjectToApiProject(&project)), nil
 }

@@ -6,29 +6,42 @@ import (
 	"miracummapper/internal/utilities"
 )
 
-func GormProjectPermissionToApiProjectPermission(projectPermission models.ProjectPermission) api.ProjectPermission {
-	var permission api.ProjectPermission
-	permission = api.ProjectPermission{
-		Role:     api.ProjectPermissionRole(projectPermission.Role),
-		UserId:   projectPermission.UserID.String(),
-		UserName: &projectPermission.User.UserName, // possibly nil
+func GormProjectPermissionsToApiProjectPermissions(projectPermissions *[]models.ProjectPermission) *[]api.ProjectPermission {
+	var permissions []api.ProjectPermission
+	for _, permission := range *projectPermissions {
+		permissions = append(permissions, *GormProjectPermissionToApiProjectPermission(&permission))
 	}
-
-	return permission
+	return &permissions
 }
 
-func ApiProjectPermissionToGormProjectPermission(projectPermission api.ProjectPermission, projectId int32) (models.ProjectPermission, error) {
+func GormProjectPermissionToApiProjectPermission(projectPermission *models.ProjectPermission) *api.ProjectPermission {
+	return &api.ProjectPermission{
+		Role:     api.ProjectPermissionRole(projectPermission.Role),
+		UserId:   projectPermission.UserID.String(),
+		UserName: projectPermission.User.UserName,
+	}
+}
+
+func convertToGormProjectPermission(userId string, role models.ProjectPermissionRole, projectId int32) (*models.ProjectPermission, error) {
 	var permission models.ProjectPermission
 
-	userUuid, err := utilities.ParseUUID(projectPermission.UserId)
+	userUuid, err := utilities.ParseUUID(userId)
 	if err != nil {
-		return permission, err
+		return &permission, err
 	}
 	permission = models.ProjectPermission{
-		Role:      models.ProjectPermissionRole(projectPermission.Role),
+		Role:      role,
 		UserID:    userUuid,
 		ProjectID: uint32(projectId),
 	}
 
-	return permission, nil
+	return &permission, nil
+}
+
+func ApiProjectPermissionToGormProjectPermission(projectPermission *api.ProjectPermission, projectId int32) (*models.ProjectPermission, error) {
+	return convertToGormProjectPermission(projectPermission.UserId, models.ProjectPermissionRole(projectPermission.Role), projectId)
+}
+
+func ApiSendProjectPermissionToGormProjectPermission(projectPermission *api.SendProjectPermission, projectId int32) (*models.ProjectPermission, error) {
+	return convertToGormProjectPermission(projectPermission.UserId, models.ProjectPermissionRole(projectPermission.Role), projectId)
 }
