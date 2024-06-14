@@ -34,6 +34,9 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 		for i, element := range mapping.Elements {
 			var concept models.Concept
 			if err := tx.First(&concept, element.ConceptID).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return database.NewDBError(database.NotFound, fmt.Sprintf("Concept with ID %d couldn't be found.", *element.ConceptID))
+				}
 				return err
 			}
 			mapping.Elements[i].Concept = concept
