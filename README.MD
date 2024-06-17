@@ -27,7 +27,7 @@ docker-compose up --build
 
 The Docker container will be available at `http://localhost:8080`.
 
-The Service can be configured using a `config.yaml` file. The following default values a re used:
+The Service can be configured using a `config.yaml` file. The following default values are used:
 
 ```yaml
 # Version of the config file
