@@ -32,7 +32,7 @@ tags:
     description: Operations about projects
   - name: project-permission
     description: Operations about project permissions
-  - name: project-code-system-roles
+  - name: project-codesystem-roles
     description: Operations about the defined systems of a project
   - name: mapping
     description: Operations about mappings
@@ -67,7 +67,7 @@ paths:
         - project
       summary: Get all projects
       description: Get all projects with pagination. Sorting can also be specified by query parameters.
-      operationId: getProjects
+      operationId: getAllProjects
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/pageSize"
@@ -88,7 +88,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/Project" # id required
+                  "$ref": "#/components/schemas/Project"
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
@@ -105,13 +105,13 @@ paths:
       summary: Create a new project
       description: Create a new project with permissions and code system roles (the columns in the mapping table). Code system roles can not be changed after creation.
       parameters: []
-      operationId: addProject
+      operationId: createProject
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/ProjectDetails" # id prohibited/ignored, CodeSystemRoles required, Permissions optional
+              "$ref": "#/components/schemas/CreateProjectDetails" # id prohibited/ignored, CodeSystemRoles required, Permissions optional
       responses:
         "200":
           description: Success
@@ -132,7 +132,42 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /project/{project_id}:
+    put:
+      tags:
+        - project
+      summary: Update the project information
+      description: Update the project information. Does not update the permissions for the users or the code system roles (the columns in the mapping table).
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateProject"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Project"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Exception # validate if id is provided in requestBody, it matches with the id in the path
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}:
     get:
       tags:
         - project
@@ -158,43 +193,6 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-    put:
-      tags:
-        - project
-      summary: Update the project information
-      description: Update the project information. Does not update the permissions for the users or the code system roles (the columns in the mapping table).
-      parameters:
-        - $ref: "#/components/parameters/project_id"
-      operationId: editProject
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Project" # id required
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Project" # id required
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "422":
-          description: Validation Exception # validate if id is provided in requestBody, it matches with the id in the path
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
     delete:
       tags:
         - project
@@ -209,7 +207,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/Project" # id required
+                "$ref": "#/components/schemas/Project"
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
@@ -223,7 +221,7 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /project/{project_id}/permissions:
+  /projects/{project_id}/permissions:
     get:
       tags:
         - project-permission
@@ -251,48 +249,20 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/permissions/{user_id}:
-    get:
-      tags:
-        - project-permission
-      summary: Get project permission for a specific user
-      description: Get the project permission for a specific user by the user ID.
-      parameters:
-        - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/user_id"
-      operationId: getPermission
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ProjectPermission"
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project or user not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
     post:
       tags:
         - project-permission
       summary: Create a new project permission for user
-      description: Create a new project  permission for a user by the user ID.
+      description: Create a new project permission for a user by the user ID.
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/user_id"
-      operationId: addPermission
+      operationId: createPermission
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/ProjectPermission"
+              "$ref": "#/components/schemas/SendProjectPermission"
       responses:
         "200":
           description: Success
@@ -323,14 +293,13 @@ paths:
       description: Update a project permission for a user by the user ID
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/user_id"
       operationId: updatePermission
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/ProjectPermission"
+              "$ref": "#/components/schemas/SendProjectPermission"
       responses:
         "200":
           description: Success
@@ -348,6 +317,33 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/permissions/{user_id}:
+    get:
+      tags:
+        - project-permission
+      summary: Get project permission for a specific user
+      description: Get the project permission for a specific user by the user ID.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/user_id"
+      operationId: getPermission
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ProjectPermission"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or user not found
           content:
             application/json:
               schema:
@@ -380,10 +376,10 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/code-system-roles:
+  /projects/{project_id}/codesystem-roles:
     get:
       tags:
-        - project-code-system-roles
+        - project-codesystem-roles
       summary: Get all code system roles for a project
       description: Get all code system roles (columns in the mapping table) for a project by project ID
       parameters:
@@ -397,7 +393,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/CodeSystemRole" # id required
+                  "$ref": "#/components/schemas/CodeSystemRole"
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
@@ -408,54 +404,54 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-    # post:
-    #   tags:
-    #     - project-code-system-roles
-    #   summary: create a new code system role (column in the mapping table) for a project by project ID
-    #   description: create a new element for each mapping with this code system role
-    #   parameters:
-    #     - $ref: "#/components/parameters/project_id"
-    #   operationId: addCodeSystemRole
-    #   requestBody:
-    #     required: true
-    #     content:
-    #       application/json:
-    #         schema:
-    #           "$ref": "#/components/schemas/CodeSystemRole"
-    #   responses:
-    #     "200":
-    #       description: Success
-    #       content:
-    #         application/json:
-    #           schema:
-    #             type: array
-    #             items:
-    #               "$ref": "#/components/schemas/CodeSystemRole" # id optional
-    #     "400":
-    #       "$ref": "#/components/responses/BadRequestError"
-    #     "404":
-    #       description: Project not found
-    #       content:
-    #         application/json:
-    #           schema:
-    #             "$ref": "#/components/schemas/ErrorResponse"
-    #     "422":
-    #       description: Validation Exception
-    #       content:
-    #         application/json:
-    #           schema:
-    #             "$ref": "#/components/schemas/ErrorResponse"
-    #     "500":
-    #       "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/code-system-roles/{code-system-role_id}:
+    put:
+      tags:
+        - project-codesystem-roles
+      summary: Update a code system role by ID
+      description: Update name or type from a code system role (column in the mapping table) by ID
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: updateCodeSystemRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateCodeSystemRole" # id optional
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemRole" # id optional
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or codesystem-role not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description:
+            Validation Error # if trying to change the system of the codesystem-role. only name or type of the codesystem-role can be changed
+            # if codesystem-role id is provided in the request body and doesn't match the codesystem-role id in the path
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/codesystem-roles/{codesystem-role_id}:
     get:
       tags:
-        - project-code-system-roles
+        - project-codesystem-roles
       summary: Get a code system role by ID
       description: Get a code system role (column in the mapping table) by ID
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/code-system-role_id"
+        - $ref: "#/components/parameters/codesystem-role_id"
       operationId: getCodeSystemRole
       responses:
         "200":
@@ -467,80 +463,14 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Code-System-Role not found
+          description: Project or codesystem-role not found
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-    put:
-      tags:
-        - project-code-system-roles
-      summary: Update a code system role by ID
-      description: Update name or type from a code system role (column in the mapping table) by ID
-      parameters:
-        - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/code-system-role_id"
-      operationId: updateCodeSystemRole
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/CodeSystemRole" # id optional
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CodeSystemRole" # id optional
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project or Code-System-Role not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "422":
-          description:
-            Validation Error # if trying to change the system of the code-system-role. only name or type of the code-system-role can be changed
-            # if code-system-role id is provided in the request body and doesn't match the code-system-role id in the path
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
-    # delete:
-    #   tags:
-    #     - project-code-system-roles
-    #   summary: delete a code system role (column in the mapping table) by ID
-    #   description: ""
-    #   parameters:
-    #     - $ref: "#/components/parameters/project_id"
-    #     - $ref: "#/components/parameters/code-system-role_id"
-    #   operationId: deleteCodeSystemRole
-    #   responses:
-    #     "200":
-    #       description: Success
-    #       content:
-    #         application/json:
-    #           schema:
-    #             "$ref": "#/components/schemas/CodeSystemRole" # id optional
-    #     "400":
-    #       "$ref": "#/components/responses/BadRequestError"
-    #     "404":
-    #       description: Project or Code-System-Role not found
-    #       content:
-    #         application/json:
-    #           schema:
-    #             "$ref": "#/components/schemas/ErrorResponse"
-    #     "500":
-    #       "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/mappings:
+  /projects/{project_id}/mappings:
     get:
       tags:
         - mapping
@@ -586,13 +516,13 @@ paths:
       description: Create a new mapping for a project by project ID including all needed elements (specified by code_system_roles from the corresponding project)
       parameters:
         - $ref: "#/components/parameters/project_id"
-      operationId: addMapping
+      operationId: createMapping
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/Mapping" # id prohibited/ignored
+              "$ref": "#/components/schemas/CreateMapping" # id prohibited/ignored
       responses:
         "200":
           description: Success
@@ -616,48 +546,20 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /project/{project_id}/mapping/{mapping_id}:
-    get:
-      tags:
-        - mapping
-      summary: Get a mapping with its elements by ID
-      description: Get a mapping by ID and all included elements. The elements include the concept with the system-id.
-      parameters:
-        - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/mapping_id"
-      operationId: getMappingByID
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Mapping" # id required
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project or Mapping not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - mapping
-      summary: Update a mapping and its elements by ID
-      description: Update a mapping by ID and all included elements. The elements include the concept with the system-id.
+      summary: Update a mapping and its elements by their concept IDs
+      description: Update a mapping by ID and all included elements by using the corresponding concept IDs.
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/mapping_id"
       operationId: updateMapping
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/Mapping" # id required
+              "$ref": "#/components/schemas/UpdateMapping" # id required
       responses:
         "200":
           description: Success
@@ -675,6 +577,70 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "422":
           description: Validation Error # if trying to change the project of the mapping
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - mapping
+      summary: Update a mapping and its elements by their concept IDs
+      description: Update a mapping by ID and all included elements by using the corresponding concept IDs. Missing elements are deleted.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: patchMapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateMapping"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Error # if trying to change the project of the mapping
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/mappings/{mapping_id}:
+    get:
+      tags:
+        - mapping
+      summary: Get a mapping with its elements by ID
+      description: Get a mapping by ID and all included elements. The elements include the concept with the system-id.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/mapping_id"
+      operationId: getMapping
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Mapping" # id required
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
           content:
             application/json:
               schema:
@@ -707,7 +673,7 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /code-systems:
+  /codesystems:
     get:
       tags:
         - code-system
@@ -726,7 +692,7 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Code-System-Role not found
+          description: Project or codesystem-role not found
           content:
             application/json:
               schema:
@@ -738,13 +704,13 @@ paths:
         - code-system
       summary: Create a new code system
       description: Create a new code system. Only admins can create code systems.
-      operationId: addCodeSystem
+      operationId: createCodeSystem
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/CodeSystem" # id prohibited/ignored
+              "$ref": "#/components/schemas/CreateCodeSystem" # id prohibited/ignored
       responses:
         "200":
           description: Success
@@ -771,39 +737,11 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /code-system/{code-system_id}:
-    get:
-      tags:
-        - code-system
-      summary: Get a code system by ID
-      description: Get a code system by ID.
-      parameters:
-        - $ref: "#/components/parameters/code-system_id"
-      operationId: getCodeSystem
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CodeSystem" # id required
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: CodeSystem not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
     put:
       tags:
         - code-system
       summary: Update a code system by ID
       description: Update a code system by ID. Only admins can update code systems.
-      parameters:
-        - $ref: "#/components/parameters/code-system_id"
       operationId: updateCodeSystem
       requestBody:
         required: true
@@ -837,13 +775,39 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /codesystems/{codesystem_id}:
+    get:
+      tags:
+        - code-system
+      summary: Get a code system by ID
+      description: Get a code system by ID.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+      operationId: getCodeSystem
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystem" # id required
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     delete:
       tags:
         - code-system
       summary: Delete a code system by ID
       description: Delete a code system by ID. Only admins can delete code systems.
       parameters:
-        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/codesystem_id"
       operationId: deleteCodeSystem
       responses:
         "200":
@@ -865,7 +829,7 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /code-system/{code-system_id}/concepts:
+  /codesystems/{codesystem_id}/concepts:
     get:
       tags:
         - concept
@@ -873,7 +837,7 @@ paths:
       description: Get all concepts for a code system by ID. Paging and sorting can be specified by query parameters.
       operationId: getAllConcepts
       parameters:
-        - $ref: "#/components/parameters/code-system_id"
+        - $ref: "#/components/parameters/codesystem_id"
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/pageSize"
         - name: sortBy
@@ -883,8 +847,20 @@ paths:
           schema:
             type: string
             default: code
-            enum: [code, display]
+            enum: [code, meaning]
         - $ref: "#/components/parameters/sortOrder"
+        - name: codeSearch
+          in: query
+          description: search for the code
+          required: false
+          schema:
+            type: string
+        - name: meaningSearch
+          in: query
+          description: search for meaning
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -898,47 +874,6 @@ paths:
           "$ref": "#/components/responses/BadRequestError"
         "404":
           description: CodeSystem not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        "500":
-          "$ref": "#/components/responses/InternalServerError"
-  /code-system/{code-system_id}/find-concept:
-    get:
-      tags:
-        - concept
-      summary: Find a concept by code or meaning
-      description: Find a concept by code or meaning. The code can be searched by a search string. A Limit can be specified by query parameters.
-      parameters:
-        - $ref: "#/components/parameters/code-system_id"
-        - $ref: "#/components/parameters/limit"
-        - name: codeSearch
-          in: query
-          description: search string for the code field
-          required: false
-          schema:
-            type: string
-        - name: meaningSearch
-          in: query
-          description: search string for the meaning field
-          required: false
-          schema:
-            type: string
-      operationId: findConceptByCode
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  "$ref": "#/components/schemas/Concept" # id required
-        "400":
-          "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Concept not found
           content:
             application/json:
               schema:
@@ -963,8 +898,8 @@ components:
       description: The ID of the user
       schema:
         type: string # uuid
-    code-system-role_id:
-      name: code-system-role_id
+    codesystem-role_id:
+      name: codesystem-role_id
       in: path
       required: true
       description: The ID of the code system role
@@ -979,10 +914,10 @@ components:
       description: The ID of the mapping
       schema:
         type: integer
-        format: int32
+        format: int64
         minimum: 1
-    code-system_id:
-      name: code-system_id
+    codesystem_id:
+      name: codesystem_id
       in: path
       required: true
       description: The ID of the Codesystem
@@ -1018,18 +953,8 @@ components:
         type: string
         enum: [asc, desc]
         default: asc
-    limit:
-      name: limit
-      in: query
-      description: maximum number of items to return
-      required: false
-      schema:
-        type: integer
-        default: 5
-        minimum: 1
-        maximum: 25
   schemas:
-    Project:
+    BaseProject:
       type: object
       required:
         - name
@@ -1038,9 +963,6 @@ components:
         - equivalence_required
         - status_required
       properties:
-        id:
-          type: integer
-          format: int32
         name:
           type: string
         version:
@@ -1051,10 +973,43 @@ components:
           type: boolean
         status_required:
           type: boolean
-        modified:
-          type: string
-        created:
-          type: string
+    UpdateProject:
+      allOf:
+        - $ref: "#/components/schemas/BaseProject"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int32
+    Project:
+      allOf:
+        - $ref: "#/components/schemas/UpdateProject"
+        - type: object
+          required:
+            - modified
+            - created
+          properties:
+            modified:
+              type: string
+            created:
+              type: string
+    CreateProjectDetails:
+      allOf:
+        - $ref: "#/components/schemas/BaseProject"
+        - type: object
+          required:
+            - code_system_roles
+          properties:
+            project_permissions:
+              type: array
+              items:
+                $ref: "#/components/schemas/SendProjectPermission"
+            code_system_roles:
+              type: array
+              items:
+                $ref: "#/components/schemas/CreateCodeSystemRole"
     ProjectDetails:
       allOf:
         - $ref: "#/components/schemas/Project"
@@ -1069,8 +1024,8 @@ components:
             code_system_roles:
               type: array
               items:
-                $ref: "#/components/schemas/CodeSystemRole" # id required
-    ProjectPermission:
+                $ref: "#/components/schemas/CodeSystemRole"
+    SendProjectPermission:
       type: object
       required:
         - user_id
@@ -1078,91 +1033,151 @@ components:
       properties:
         user_id:
           type: string # uuid
-        user_name:
-          type: string
         role:
           type: string
           enum: [reviewer, project_owner, editor]
-    CodeSystemRole:
+    ProjectPermission:
+      allOf:
+      - $ref: "#/components/schemas/SendProjectPermission"
+      - type: object
+        required:
+          - user_name
+        properties:
+          user_name:
+            type: string
+    CreateCodeSystemRole:
       type: object
-      required: # todo, was alles außer id?
-        - name
-        - system
-        - type
-        - position
+      required:
+       - name
+       - system
+       - type
       properties:
-        id:
-          type: integer
-          format: int32
         name:
           type: string
         system:
-          type: object
-          required:
-            - id
-          properties:
-            # id? über drop down version und name anzeigen von allen codesystemen und bei auswahl id, system, name, uri zurückgeben?
-            id:
-              type: integer
-              format: int32
-            name:
-              type: string
-            version:
-              type: string
-        type:
-          type: string
-          enum: [source, destination]
-        position:
           type: integer
           format: int32
-    Mapping:
+        type:
+          type: string
+          enum: [source, target]
+    UpdateCodeSystemRole:
+        type: object
+        required:
+          - id
+          - name
+          - type
+        properties:
+          id:
+            type: integer
+            format: int32
+          name:
+            type: string
+          type:
+            type: string
+            enum: [source, target]
+    CodeSystemRole:
+      allOf:
+        - $ref: "#/components/schemas/UpdateCodeSystemRole"
+        - type: object
+          required:
+            - system
+          properties:
+            system:
+              type: object
+              required:
+                - id
+                - name
+                - version
+              properties:
+                id:
+                  type: integer
+                  format: int32
+                name:
+                  type: string
+                version:
+                  type: string
+
+#############################      
+    CreateMapping:
       type: object
+      # required:
+      #   - elements
       properties:
-        id:
-          type: integer
-          format: int64
         equivalence:
           type: string
           enum: [related-to, equivalent, source-is-narrower-than-target, source-is-broader-than-target, not-related]
         status:
           type: string
+          enum: [active, inactive, pending]
         comment:
-          type: string
-        created:
-          type: string
-        modified:
           type: string
         elements:
           type: array
           items:
             $ref: "#/components/schemas/Element"
+    UpdateMapping:
+      allOf:
+        - $ref: "#/components/schemas/CreateMapping"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+    Mapping:
+      allOf:
+        - $ref: "#/components/schemas/UpdateMapping"
+        - type: object
+          required: 
+            - modified
+            - created
+            - elements
+          properties:
+            elements:
+              type: array
+              items:
+                $ref: "#/components/schemas/FullElement"
+            created:
+              type: string
+            modified:
+              type: string
     Element:
-      type: object
       properties:
-        concept:
-          $ref: "#/components/schemas/Concept"
-        system-id:
+        codeSystemRole:
           type: integer
           format: int32
+        concept:
+          type: integer
+          format: int64
+    FullElement:
+      allOf:
+        - $ref: "#/components/schemas/Element"
+        - type: object
+          properties:
+            concept:
+              $ref: "#/components/schemas/Concept"
     Concept:
       type: object
+      required:
+        - id
+        - code
+        - meaning
       properties:
         id:
           type: integer
+          format: int64
         code:
           type: string
         meaning:
           type: string
-    CodeSystem:
+    CreateCodeSystem:
       type: object
       required:
         - uri
         - version
         - name
       properties:
-        id:
-          type: integer
-          format: int32
         uri:
           type: string
         version:
@@ -1175,13 +1190,16 @@ components:
           type: string
         author:
           type: string
-    # Error:
-    #   type: object
-    #   properties:
-    #     code:
-    #       type: integer
-    #     message:
-    #       type: string
+    CodeSystem:
+      allOf:
+        - $ref: "#/components/schemas/CreateCodeSystem"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int32
     ErrorResponse:
       type: string
   responses:

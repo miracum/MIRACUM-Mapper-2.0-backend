@@ -9,28 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
-	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
-		return db.Order("Position ASC")
-	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId)
-	if db.Error != nil {
-		switch {
-		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
-		default:
-			return db.Error
-		}
-	} else {
-		return nil
-	}
+func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error {
+	db := gq.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&projects)
+	return db.Error
 }
 
-// AddProject implements database.Datastore.
-func (gq *GormQuery) AddProjectQuery(project *models.Project) error {
+// CreateProject implements database.Datastore.
+func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 	db := gq.Database.Create(&project)
 	if db.Error != nil {
 		// cast error to postgres error
-		pgErr, ok := handlePgError(db)
+		pgErr, ok := handlePgError(db.Error)
 		if !ok {
 			return db.Error
 		}
@@ -61,28 +50,24 @@ func (gq *GormQuery) AddProjectQuery(project *models.Project) error {
 	}
 }
 
-// DeleteProject implements database.Datastore.
-func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32) error {
-	db := gq.Database.Delete(&project, projectId)
+func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
+	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
+		return db.Order("Position ASC") // TODO maybe sort at the end is also possible
+	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId) // TODO & is not necessary here
 	if db.Error != nil {
-		switch {
-		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
-		default:
+		pgErr, ok := handlePgError(db.Error)
+		if !ok {
 			return db.Error
 		}
-	} else {
-		if db.RowsAffected == 0 {
+		switch {
+		case errors.Is(pgErr, gorm.ErrRecordNotFound):
 			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+		default:
+			return pgErr
 		}
+	} else {
 		return nil
 	}
-}
-
-// GetProjectsQuery implements database.Datastore.
-func (gq *GormQuery) GetProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error {
-	db := gq.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&projects)
-	return db.Error
 }
 
 // UpdateProject implements database.Datastore.
@@ -114,6 +99,38 @@ func (gq *GormQuery) UpdateProjectQuery(project *models.Project, checkFunc func(
 			return err
 		}
 		return nil
+	})
+	return err
+}
+
+// DeleteProject implements database.Datastore.
+func (gq *GormQuery) DeleteProjectQuery(project *models.Project, projectId int32) error {
+
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		// get project so it can be returned in the api and then delete it
+		if err := tx.First(&project, projectId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+			default:
+				return err
+			}
+		}
+
+		db := tx.Delete(&project, projectId)
+		if db.Error != nil {
+			// switch {
+			// case errors.Is(db.Error, gorm.ErrRecordNotFound):
+			// 	return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+			// default:
+			return db.Error
+			// }
+		} else {
+			if db.RowsAffected == 0 {
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+			}
+			return nil
+		}
 	})
 	return err
 }

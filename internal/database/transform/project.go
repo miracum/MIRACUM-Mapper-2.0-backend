@@ -1,21 +1,12 @@
 package transform
 
 import (
-	"errors"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database/models"
-
-	"github.com/google/uuid"
+	"miracummapper/internal/utilities"
 )
 
-var (
-	ErrInvalidUUID = errors.New("invalid uuid provided")
-	// Define other errors here...
-)
-
-func GormProjectToApiProjectDetails(project models.Project) api.ProjectDetails {
-	id := int32(project.ID)
-	// modified := project.UpdatedAt.String()
+func GormProjectToApiProjectDetails(project *models.Project) api.ProjectDetails {
 	var modified string
 	if !project.UpdatedAt.IsZero() {
 		modified = project.UpdatedAt.String()
@@ -25,48 +16,21 @@ func GormProjectToApiProjectDetails(project models.Project) api.ProjectDetails {
 	var projectDetails api.ProjectDetails = api.ProjectDetails{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  &id,
-		Modified:            &modified,
+		Id:                  int32(project.ID),
+		Modified:            modified,
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
 		Version:             project.Version,
 	}
 
-	// Map CodeSystemRoles
-	for _, role := range project.CodeSystemRoles {
-		id := int32(role.ID)
-		projectDetails.CodeSystemRoles = append(projectDetails.CodeSystemRoles, api.CodeSystemRole{
-			Id:       &id,
-			Name:     role.Name,
-			Position: int32(role.Position),
-			System: struct {
-				Id      int32   `json:"id"`
-				Name    *string `json:"name,omitempty"`
-				Version *string `json:"version,omitempty"`
-			}{
-				Id:      int32(role.CodeSystemID),
-				Name:    &role.CodeSystem.Name,
-				Version: &role.CodeSystem.Version,
-			},
-			Type: api.CodeSystemRoleType(role.Type),
-		})
-	}
+	projectDetails.CodeSystemRoles = *GormCodeSystemRolesToApiCodeSystemRoles(&project.CodeSystemRoles)
 
-	// Map Permissions
-	var permissions []api.ProjectPermission
-	for _, perm := range project.Permissions {
-		permissions = append(permissions, api.ProjectPermission{
-			Role:     api.ProjectPermissionRole(perm.Role),
-			UserId:   perm.UserID.String(),
-			UserName: &perm.User.UserName, // Assuming User is preloaded
-		})
-	}
-	projectDetails.ProjectPermissions = &permissions
+	projectDetails.ProjectPermissions = GormProjectPermissionsToApiProjectPermissions(&project.Permissions)
 
 	return projectDetails
 }
 
-func ApiProjectDetailsToGormProject(projectDetails api.ProjectDetails) (*models.Project, error) {
+func ApiCreateProjectDetailsToGormProject(projectDetails *api.CreateProjectDetails) (*models.Project, error) {
 	project := models.Project{
 		Name:                projectDetails.Name,
 		Description:         projectDetails.Description,
@@ -75,21 +39,13 @@ func ApiProjectDetailsToGormProject(projectDetails api.ProjectDetails) (*models.
 		StatusRequired:      projectDetails.StatusRequired,
 	}
 
-	// Append the CodeSystemRoles
-	for i, role := range projectDetails.CodeSystemRoles {
-		project.CodeSystemRoles = append(project.CodeSystemRoles, models.CodeSystemRole{
-			Name:         role.Name,
-			Type:         models.CodeSystemRoleType(role.Type),
-			Position:     uint32(i),
-			CodeSystemID: uint32(role.System.Id),
-		})
-	}
+	project.CodeSystemRoles = *ApiCreateCodeSystemRolesToGormCodeSystemRoles(&projectDetails.CodeSystemRoles)
 
 	// Append the ProjectPermissions
 	for _, permission := range *projectDetails.ProjectPermissions {
-		userID, err := uuid.Parse(permission.UserId)
+		userID, err := utilities.ParseUUID(permission.UserId)
 		if err != nil {
-			return nil, ErrInvalidUUID
+			return nil, err
 		}
 		project.Permissions = append(project.Permissions, models.ProjectPermission{
 			Role:   models.ProjectPermissionRole(permission.Role),
@@ -99,29 +55,28 @@ func ApiProjectDetailsToGormProject(projectDetails api.ProjectDetails) (*models.
 	return &project, nil
 }
 
-func GormProjectToApiProject(project models.Project) api.Project {
-	id := int32(project.ID)
+func GormProjectToApiProject(project *models.Project) *api.Project {
 	var modified string
 	if !project.UpdatedAt.IsZero() {
 		modified = project.UpdatedAt.String()
 	} else {
 		modified = ""
 	}
-	return api.Project{
+	return &api.Project{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  &id,
-		Modified:            &modified,
+		Id:                  int32(project.ID),
+		Modified:            modified,
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
 		Version:             project.Version,
 	}
 }
 
-func ApiProjectToGormProject(project api.Project) models.Project {
-	return models.Project{
+func ApiUpdateProjectToGormProject(project *api.UpdateProject) *models.Project {
+	return &models.Project{
 		Model: models.Model{
-			ID: uint32(*project.Id),
+			ID: uint32(project.Id),
 		},
 		Name:                project.Name,
 		Description:         project.Description,

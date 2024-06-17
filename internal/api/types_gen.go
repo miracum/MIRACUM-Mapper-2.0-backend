@@ -10,24 +10,82 @@ const (
 
 // Defines values for CodeSystemRoleType.
 const (
-	Destination CodeSystemRoleType = "destination"
-	Source      CodeSystemRoleType = "source"
+	CodeSystemRoleTypeSource CodeSystemRoleType = "source"
+	CodeSystemRoleTypeTarget CodeSystemRoleType = "target"
+)
+
+// Defines values for CreateCodeSystemRoleType.
+const (
+	CreateCodeSystemRoleTypeSource CreateCodeSystemRoleType = "source"
+	CreateCodeSystemRoleTypeTarget CreateCodeSystemRoleType = "target"
+)
+
+// Defines values for CreateMappingEquivalence.
+const (
+	CreateMappingEquivalenceEquivalent                 CreateMappingEquivalence = "equivalent"
+	CreateMappingEquivalenceNotRelated                 CreateMappingEquivalence = "not-related"
+	CreateMappingEquivalenceRelatedTo                  CreateMappingEquivalence = "related-to"
+	CreateMappingEquivalenceSourceIsBroaderThanTarget  CreateMappingEquivalence = "source-is-broader-than-target"
+	CreateMappingEquivalenceSourceIsNarrowerThanTarget CreateMappingEquivalence = "source-is-narrower-than-target"
+)
+
+// Defines values for CreateMappingStatus.
+const (
+	CreateMappingStatusActive   CreateMappingStatus = "active"
+	CreateMappingStatusInactive CreateMappingStatus = "inactive"
+	CreateMappingStatusPending  CreateMappingStatus = "pending"
 )
 
 // Defines values for MappingEquivalence.
 const (
-	Equivalent                 MappingEquivalence = "equivalent"
-	NotRelated                 MappingEquivalence = "not-related"
-	RelatedTo                  MappingEquivalence = "related-to"
-	SourceIsBroaderThanTarget  MappingEquivalence = "source-is-broader-than-target"
-	SourceIsNarrowerThanTarget MappingEquivalence = "source-is-narrower-than-target"
+	MappingEquivalenceEquivalent                 MappingEquivalence = "equivalent"
+	MappingEquivalenceNotRelated                 MappingEquivalence = "not-related"
+	MappingEquivalenceRelatedTo                  MappingEquivalence = "related-to"
+	MappingEquivalenceSourceIsBroaderThanTarget  MappingEquivalence = "source-is-broader-than-target"
+	MappingEquivalenceSourceIsNarrowerThanTarget MappingEquivalence = "source-is-narrower-than-target"
+)
+
+// Defines values for MappingStatus.
+const (
+	MappingStatusActive   MappingStatus = "active"
+	MappingStatusInactive MappingStatus = "inactive"
+	MappingStatusPending  MappingStatus = "pending"
 )
 
 // Defines values for ProjectPermissionRole.
 const (
-	Editor       ProjectPermissionRole = "editor"
-	ProjectOwner ProjectPermissionRole = "project_owner"
-	Reviewer     ProjectPermissionRole = "reviewer"
+	ProjectPermissionRoleEditor       ProjectPermissionRole = "editor"
+	ProjectPermissionRoleProjectOwner ProjectPermissionRole = "project_owner"
+	ProjectPermissionRoleReviewer     ProjectPermissionRole = "reviewer"
+)
+
+// Defines values for SendProjectPermissionRole.
+const (
+	SendProjectPermissionRoleEditor       SendProjectPermissionRole = "editor"
+	SendProjectPermissionRoleProjectOwner SendProjectPermissionRole = "project_owner"
+	SendProjectPermissionRoleReviewer     SendProjectPermissionRole = "reviewer"
+)
+
+// Defines values for UpdateCodeSystemRoleType.
+const (
+	Source UpdateCodeSystemRoleType = "source"
+	Target UpdateCodeSystemRoleType = "target"
+)
+
+// Defines values for UpdateMappingEquivalence.
+const (
+	Equivalent                 UpdateMappingEquivalence = "equivalent"
+	NotRelated                 UpdateMappingEquivalence = "not-related"
+	RelatedTo                  UpdateMappingEquivalence = "related-to"
+	SourceIsBroaderThanTarget  UpdateMappingEquivalence = "source-is-broader-than-target"
+	SourceIsNarrowerThanTarget UpdateMappingEquivalence = "source-is-narrower-than-target"
+)
+
+// Defines values for UpdateMappingStatus.
+const (
+	Active   UpdateMappingStatus = "active"
+	Inactive UpdateMappingStatus = "inactive"
+	Pending  UpdateMappingStatus = "pending"
 )
 
 // Defines values for SortOrder.
@@ -39,13 +97,26 @@ const (
 // Defines values for GetAllConceptsParamsSortBy.
 const (
 	Code    GetAllConceptsParamsSortBy = "code"
-	Display GetAllConceptsParamsSortBy = "display"
+	Meaning GetAllConceptsParamsSortBy = "meaning"
 )
 
 // Defines values for GetAllConceptsParamsSortOrder.
 const (
 	GetAllConceptsParamsSortOrderAsc  GetAllConceptsParamsSortOrder = "asc"
 	GetAllConceptsParamsSortOrderDesc GetAllConceptsParamsSortOrder = "desc"
+)
+
+// Defines values for GetAllProjectsParamsSortBy.
+const (
+	GetAllProjectsParamsSortByDateCreated GetAllProjectsParamsSortBy = "dateCreated"
+	GetAllProjectsParamsSortById          GetAllProjectsParamsSortBy = "id"
+	GetAllProjectsParamsSortByName        GetAllProjectsParamsSortBy = "name"
+)
+
+// Defines values for GetAllProjectsParamsSortOrder.
+const (
+	GetAllProjectsParamsSortOrderAsc  GetAllProjectsParamsSortOrder = "asc"
+	GetAllProjectsParamsSortOrderDesc GetAllProjectsParamsSortOrder = "desc"
 )
 
 // Defines values for GetAllMappingsParamsSortBy.
@@ -64,24 +135,20 @@ const (
 	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
 )
 
-// Defines values for GetProjectsParamsSortBy.
-const (
-	GetProjectsParamsSortByDateCreated GetProjectsParamsSortBy = "dateCreated"
-	GetProjectsParamsSortById          GetProjectsParamsSortBy = "id"
-	GetProjectsParamsSortByName        GetProjectsParamsSortBy = "name"
-)
-
-// Defines values for GetProjectsParamsSortOrder.
-const (
-	GetProjectsParamsSortOrderAsc  GetProjectsParamsSortOrder = "asc"
-	GetProjectsParamsSortOrderDesc GetProjectsParamsSortOrder = "desc"
-)
+// BaseProject defines model for BaseProject.
+type BaseProject struct {
+	Description         string `json:"description"`
+	EquivalenceRequired bool   `json:"equivalence_required"`
+	Name                string `json:"name"`
+	StatusRequired      bool   `json:"status_required"`
+	Version             string `json:"version"`
+}
 
 // CodeSystem defines model for CodeSystem.
 type CodeSystem struct {
 	Author      *string `json:"author,omitempty"`
 	Description *string `json:"description,omitempty"`
-	Id          *int32  `json:"id,omitempty"`
+	Id          int32   `json:"id"`
 	Name        string  `json:"name"`
 	Title       *string `json:"title,omitempty"`
 	Uri         string  `json:"uri"`
@@ -90,13 +157,12 @@ type CodeSystem struct {
 
 // CodeSystemRole defines model for CodeSystemRole.
 type CodeSystemRole struct {
-	Id       *int32 `json:"id,omitempty"`
-	Name     string `json:"name"`
-	Position int32  `json:"position"`
-	System   struct {
-		Id      int32   `json:"id"`
-		Name    *string `json:"name,omitempty"`
-		Version *string `json:"version,omitempty"`
+	Id     int32  `json:"id"`
+	Name   string `json:"name"`
+	System struct {
+		Id      int32  `json:"id"`
+		Name    string `json:"name"`
+		Version string `json:"version"`
 	} `json:"system"`
 	Type CodeSystemRoleType `json:"type"`
 }
@@ -106,54 +172,108 @@ type CodeSystemRoleType string
 
 // Concept defines model for Concept.
 type Concept struct {
-	Code    *string `json:"code,omitempty"`
-	Id      *int    `json:"id,omitempty"`
-	Meaning *string `json:"meaning,omitempty"`
+	Code    string `json:"code"`
+	Id      int64  `json:"id"`
+	Meaning string `json:"meaning"`
+}
+
+// CreateCodeSystem defines model for CreateCodeSystem.
+type CreateCodeSystem struct {
+	Author      *string `json:"author,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Title       *string `json:"title,omitempty"`
+	Uri         string  `json:"uri"`
+	Version     string  `json:"version"`
+}
+
+// CreateCodeSystemRole defines model for CreateCodeSystemRole.
+type CreateCodeSystemRole struct {
+	Name   string                   `json:"name"`
+	System int32                    `json:"system"`
+	Type   CreateCodeSystemRoleType `json:"type"`
+}
+
+// CreateCodeSystemRoleType defines model for CreateCodeSystemRole.Type.
+type CreateCodeSystemRoleType string
+
+// CreateMapping defines model for CreateMapping.
+type CreateMapping struct {
+	Comment     *string                   `json:"comment,omitempty"`
+	Elements    *[]Element                `json:"elements,omitempty"`
+	Equivalence *CreateMappingEquivalence `json:"equivalence,omitempty"`
+	Status      *CreateMappingStatus      `json:"status,omitempty"`
+}
+
+// CreateMappingEquivalence defines model for CreateMapping.Equivalence.
+type CreateMappingEquivalence string
+
+// CreateMappingStatus defines model for CreateMapping.Status.
+type CreateMappingStatus string
+
+// CreateProjectDetails defines model for CreateProjectDetails.
+type CreateProjectDetails struct {
+	CodeSystemRoles     []CreateCodeSystemRole   `json:"code_system_roles"`
+	Description         string                   `json:"description"`
+	EquivalenceRequired bool                     `json:"equivalence_required"`
+	Name                string                   `json:"name"`
+	ProjectPermissions  *[]SendProjectPermission `json:"project_permissions,omitempty"`
+	StatusRequired      bool                     `json:"status_required"`
+	Version             string                   `json:"version"`
 }
 
 // Element defines model for Element.
 type Element struct {
-	Concept  *Concept `json:"concept,omitempty"`
-	SystemId *int32   `json:"system-id,omitempty"`
+	CodeSystemRole *int32 `json:"codeSystemRole,omitempty"`
+	Concept        *int64 `json:"concept,omitempty"`
 }
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse = string
 
+// FullElement defines model for FullElement.
+type FullElement struct {
+	CodeSystemRole *int32   `json:"codeSystemRole,omitempty"`
+	Concept        *Concept `json:"concept,omitempty"`
+}
+
 // Mapping defines model for Mapping.
 type Mapping struct {
 	Comment     *string             `json:"comment,omitempty"`
-	Created     *string             `json:"created,omitempty"`
-	Elements    *[]Element          `json:"elements,omitempty"`
+	Created     string              `json:"created"`
+	Elements    []FullElement       `json:"elements"`
 	Equivalence *MappingEquivalence `json:"equivalence,omitempty"`
-	Id          *int64              `json:"id,omitempty"`
-	Modified    *string             `json:"modified,omitempty"`
-	Status      *string             `json:"status,omitempty"`
+	Id          int64               `json:"id"`
+	Modified    string              `json:"modified"`
+	Status      *MappingStatus      `json:"status,omitempty"`
 }
 
 // MappingEquivalence defines model for Mapping.Equivalence.
 type MappingEquivalence string
 
+// MappingStatus defines model for Mapping.Status.
+type MappingStatus string
+
 // Project defines model for Project.
 type Project struct {
-	Created             *string `json:"created,omitempty"`
-	Description         string  `json:"description"`
-	EquivalenceRequired bool    `json:"equivalence_required"`
-	Id                  *int32  `json:"id,omitempty"`
-	Modified            *string `json:"modified,omitempty"`
-	Name                string  `json:"name"`
-	StatusRequired      bool    `json:"status_required"`
-	Version             string  `json:"version"`
+	Created             string `json:"created"`
+	Description         string `json:"description"`
+	EquivalenceRequired bool   `json:"equivalence_required"`
+	Id                  int32  `json:"id"`
+	Modified            string `json:"modified"`
+	Name                string `json:"name"`
+	StatusRequired      bool   `json:"status_required"`
+	Version             string `json:"version"`
 }
 
 // ProjectDetails defines model for ProjectDetails.
 type ProjectDetails struct {
 	CodeSystemRoles     []CodeSystemRole     `json:"code_system_roles"`
-	Created             *string              `json:"created,omitempty"`
+	Created             string               `json:"created"`
 	Description         string               `json:"description"`
 	EquivalenceRequired bool                 `json:"equivalence_required"`
-	Id                  *int32               `json:"id,omitempty"`
-	Modified            *string              `json:"modified,omitempty"`
+	Id                  int32                `json:"id"`
+	Modified            string               `json:"modified"`
 	Name                string               `json:"name"`
 	ProjectPermissions  *[]ProjectPermission `json:"project_permissions,omitempty"`
 	StatusRequired      bool                 `json:"status_required"`
@@ -164,23 +284,64 @@ type ProjectDetails struct {
 type ProjectPermission struct {
 	Role     ProjectPermissionRole `json:"role"`
 	UserId   string                `json:"user_id"`
-	UserName *string               `json:"user_name,omitempty"`
+	UserName string                `json:"user_name"`
 }
 
 // ProjectPermissionRole defines model for ProjectPermission.Role.
 type ProjectPermissionRole string
 
-// CodeSystemRoleId defines model for code-system-role_id.
-type CodeSystemRoleId = int32
+// SendProjectPermission defines model for SendProjectPermission.
+type SendProjectPermission struct {
+	Role   SendProjectPermissionRole `json:"role"`
+	UserId string                    `json:"user_id"`
+}
 
-// CodeSystemId defines model for code-system_id.
-type CodeSystemId = int32
+// SendProjectPermissionRole defines model for SendProjectPermission.Role.
+type SendProjectPermissionRole string
 
-// Limit defines model for limit.
-type Limit = int
+// UpdateCodeSystemRole defines model for UpdateCodeSystemRole.
+type UpdateCodeSystemRole struct {
+	Id   int32                    `json:"id"`
+	Name string                   `json:"name"`
+	Type UpdateCodeSystemRoleType `json:"type"`
+}
+
+// UpdateCodeSystemRoleType defines model for UpdateCodeSystemRole.Type.
+type UpdateCodeSystemRoleType string
+
+// UpdateMapping defines model for UpdateMapping.
+type UpdateMapping struct {
+	Comment     *string                   `json:"comment,omitempty"`
+	Elements    *[]Element                `json:"elements,omitempty"`
+	Equivalence *UpdateMappingEquivalence `json:"equivalence,omitempty"`
+	Id          int64                     `json:"id"`
+	Status      *UpdateMappingStatus      `json:"status,omitempty"`
+}
+
+// UpdateMappingEquivalence defines model for UpdateMapping.Equivalence.
+type UpdateMappingEquivalence string
+
+// UpdateMappingStatus defines model for UpdateMapping.Status.
+type UpdateMappingStatus string
+
+// UpdateProject defines model for UpdateProject.
+type UpdateProject struct {
+	Description         string `json:"description"`
+	EquivalenceRequired bool   `json:"equivalence_required"`
+	Id                  int32  `json:"id"`
+	Name                string `json:"name"`
+	StatusRequired      bool   `json:"status_required"`
+	Version             string `json:"version"`
+}
+
+// CodesystemRoleId defines model for codesystem-role_id.
+type CodesystemRoleId = int32
+
+// CodesystemId defines model for codesystem_id.
+type CodesystemId = int32
 
 // MappingId defines model for mapping_id.
-type MappingId = int32
+type MappingId = int64
 
 // Page defines model for page.
 type Page = int
@@ -216,6 +377,12 @@ type GetAllConceptsParams struct {
 
 	// SortOrder Order of sorting (asc or desc)
 	SortOrder *GetAllConceptsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// CodeSearch search for the code
+	CodeSearch *string `form:"codeSearch,omitempty" json:"codeSearch,omitempty"`
+
+	// MeaningSearch search for meaning
+	MeaningSearch *string `form:"meaningSearch,omitempty" json:"meaningSearch,omitempty"`
 }
 
 // GetAllConceptsParamsSortBy defines parameters for GetAllConcepts.
@@ -224,17 +391,26 @@ type GetAllConceptsParamsSortBy string
 // GetAllConceptsParamsSortOrder defines parameters for GetAllConcepts.
 type GetAllConceptsParamsSortOrder string
 
-// FindConceptByCodeParams defines parameters for FindConceptByCode.
-type FindConceptByCodeParams struct {
-	// Limit maximum number of items to return
-	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+// GetAllProjectsParams defines parameters for GetAllProjects.
+type GetAllProjectsParams struct {
+	// Page Page number (must be a positive integer)
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
 
-	// CodeSearch search string for the code field
-	CodeSearch *string `form:"codeSearch,omitempty" json:"codeSearch,omitempty"`
+	// PageSize Number of items per page (minimum 1, maximum 100)
+	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
-	// MeaningSearch search string for the meaning field
-	MeaningSearch *string `form:"meaningSearch,omitempty" json:"meaningSearch,omitempty"`
+	// SortBy Field to sort sortBy
+	SortBy *GetAllProjectsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Order of sorting (asc or desc)
+	SortOrder *GetAllProjectsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 }
+
+// GetAllProjectsParamsSortBy defines parameters for GetAllProjects.
+type GetAllProjectsParamsSortBy string
+
+// GetAllProjectsParamsSortOrder defines parameters for GetAllProjects.
+type GetAllProjectsParamsSortOrder string
 
 // GetAllMappingsParams defines parameters for GetAllMappings.
 type GetAllMappingsParams struct {
@@ -257,50 +433,32 @@ type GetAllMappingsParamsSortBy string
 // GetAllMappingsParamsSortOrder defines parameters for GetAllMappings.
 type GetAllMappingsParamsSortOrder string
 
-// GetProjectsParams defines parameters for GetProjects.
-type GetProjectsParams struct {
-	// Page Page number (must be a positive integer)
-	Page *Page `form:"page,omitempty" json:"page,omitempty"`
-
-	// PageSize Number of items per page (minimum 1, maximum 100)
-	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// SortBy Field to sort sortBy
-	SortBy *GetProjectsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
-
-	// SortOrder Order of sorting (asc or desc)
-	SortOrder *GetProjectsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-}
-
-// GetProjectsParamsSortBy defines parameters for GetProjects.
-type GetProjectsParamsSortBy string
-
-// GetProjectsParamsSortOrder defines parameters for GetProjects.
-type GetProjectsParamsSortOrder string
+// CreateCodeSystemJSONRequestBody defines body for CreateCodeSystem for application/json ContentType.
+type CreateCodeSystemJSONRequestBody = CreateCodeSystem
 
 // UpdateCodeSystemJSONRequestBody defines body for UpdateCodeSystem for application/json ContentType.
 type UpdateCodeSystemJSONRequestBody = CodeSystem
 
-// AddCodeSystemJSONRequestBody defines body for AddCodeSystem for application/json ContentType.
-type AddCodeSystemJSONRequestBody = CodeSystem
+// CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
+type CreateProjectJSONRequestBody = CreateProjectDetails
 
-// EditProjectJSONRequestBody defines body for EditProject for application/json ContentType.
-type EditProjectJSONRequestBody = Project
+// UpdateProjectJSONRequestBody defines body for UpdateProject for application/json ContentType.
+type UpdateProjectJSONRequestBody = UpdateProject
 
 // UpdateCodeSystemRoleJSONRequestBody defines body for UpdateCodeSystemRole for application/json ContentType.
-type UpdateCodeSystemRoleJSONRequestBody = CodeSystemRole
+type UpdateCodeSystemRoleJSONRequestBody = UpdateCodeSystemRole
+
+// PatchMappingJSONRequestBody defines body for PatchMapping for application/json ContentType.
+type PatchMappingJSONRequestBody = UpdateMapping
+
+// CreateMappingJSONRequestBody defines body for CreateMapping for application/json ContentType.
+type CreateMappingJSONRequestBody = CreateMapping
 
 // UpdateMappingJSONRequestBody defines body for UpdateMapping for application/json ContentType.
-type UpdateMappingJSONRequestBody = Mapping
+type UpdateMappingJSONRequestBody = UpdateMapping
 
-// AddMappingJSONRequestBody defines body for AddMapping for application/json ContentType.
-type AddMappingJSONRequestBody = Mapping
-
-// AddPermissionJSONRequestBody defines body for AddPermission for application/json ContentType.
-type AddPermissionJSONRequestBody = ProjectPermission
+// CreatePermissionJSONRequestBody defines body for CreatePermission for application/json ContentType.
+type CreatePermissionJSONRequestBody = SendProjectPermission
 
 // UpdatePermissionJSONRequestBody defines body for UpdatePermission for application/json ContentType.
-type UpdatePermissionJSONRequestBody = ProjectPermission
-
-// AddProjectJSONRequestBody defines body for AddProject for application/json ContentType.
-type AddProjectJSONRequestBody = ProjectDetails
+type UpdatePermissionJSONRequestBody = SendProjectPermission

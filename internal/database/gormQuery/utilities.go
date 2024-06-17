@@ -6,15 +6,14 @@ import (
 	"regexp"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"gorm.io/gorm"
 )
 
-func handlePgError(db *gorm.DB) (*pgconn.PgError, bool) {
-	err, ok := db.Error.(*pgconn.PgError)
+func handlePgError(gormErr error) (*pgconn.PgError, bool) {
+	err, ok := gormErr.(*pgconn.PgError)
 	if !ok {
 		// The error is not a *pgconn.PgError
 		// Try to unwrap it and cast it again
-		if unwrappedErr := errors.Unwrap(db.Error); unwrappedErr != nil {
+		if unwrappedErr := errors.Unwrap(gormErr); unwrappedErr != nil {
 			err, ok = unwrappedErr.(*pgconn.PgError)
 			if !ok {
 				// The unwrapped error is also not a *pgconn.PgError

@@ -7,12 +7,41 @@ import (
 )
 
 type Datastore interface {
+	// Project
+	GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
+	CreateProjectQuery(project *models.Project) error
 	GetProjectQuery(project *models.Project, projectId int32) error
-	GetProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
-	AddProjectQuery(project *models.Project) error
-	DeleteProjectQuery(project *models.Project, projectId int32) error
 	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
-	//Add other methods here...
+	DeleteProjectQuery(project *models.Project, projectId int32) error
+
+	// ProjectPermission
+	GetAllProjectPermissionsQuery(projectPermissions *[]models.ProjectPermission, projectId int32) error
+	CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
+	GetProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
+	UpdateProjectPermissionQuery(projectPermission *models.ProjectPermission) error
+	DeleteProjectPermissionQuery(projectPermission *models.ProjectPermission, projectId int32, userId uuid.UUID) error
+
+	// CodeSystemRole
+	GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error
+	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
+	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32) error
+
+	// Mapping
+	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error
+	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error
+	GetMappingQuery(mapping *models.Mapping, projectId int, mappingId int64) error
+	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error
+	DeleteMappingQuery(mapping *models.Mapping) error
+
+	// CodeSystem
+	GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error
+	CreateCodeSystemQuery(codeSystem *models.CodeSystem) error
+	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
+	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
+	UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error
+
+	// Concept
+	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 }
 
 type ErrorType int
