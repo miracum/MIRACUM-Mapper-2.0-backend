@@ -880,6 +880,134 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
+  /import-code-system:
+    post:
+      summary: Import a code system from a CSV file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateCodeSystem"
+      responses:
+        "200":
+          description: Import job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportJob"
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                    description: The ID of the created import job
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /import-code-system/jobs:
+    get:
+      summary: Get all current import jobs
+      responses:
+        "200":
+          description: A list of all import jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ImportJob"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /import-code-system/jobs/{jobId}:
+    get:
+      summary: Get a specific import job by ID
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Details of the specified import job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportJob"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+    delete:
+      summary: Delete a specific import job by ID
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Import job deleted successfully
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /import-code-system/jobs/{jobId}/confirm:
+    post:
+      summary: Confirm the import of the code system for the specified job
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Code system import confirmed and processed
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
 components:
   parameters:
     project_id:
@@ -1038,19 +1166,19 @@ components:
           enum: [reviewer, project_owner, editor]
     ProjectPermission:
       allOf:
-      - $ref: "#/components/schemas/SendProjectPermission"
-      - type: object
-        required:
-          - user_name
-        properties:
-          user_name:
-            type: string
+        - $ref: "#/components/schemas/SendProjectPermission"
+        - type: object
+          required:
+            - user_name
+          properties:
+            user_name:
+              type: string
     CreateCodeSystemRole:
       type: object
       required:
-       - name
-       - system
-       - type
+        - name
+        - system
+        - type
       properties:
         name:
           type: string
@@ -1061,20 +1189,20 @@ components:
           type: string
           enum: [source, target]
     UpdateCodeSystemRole:
-        type: object
-        required:
-          - id
-          - name
-          - type
-        properties:
-          id:
-            type: integer
-            format: int32
-          name:
-            type: string
-          type:
-            type: string
-            enum: [source, target]
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        type:
+          type: string
+          enum: [source, target]
     CodeSystemRole:
       allOf:
         - $ref: "#/components/schemas/UpdateCodeSystemRole"
@@ -1097,7 +1225,7 @@ components:
                 version:
                   type: string
 
-#############################      
+    #############################
     CreateMapping:
       type: object
       # required:
@@ -1105,7 +1233,14 @@ components:
       properties:
         equivalence:
           type: string
-          enum: [related-to, equivalent, source-is-narrower-than-target, source-is-broader-than-target, not-related]
+          enum:
+            [
+              related-to,
+              equivalent,
+              source-is-narrower-than-target,
+              source-is-broader-than-target,
+              not-related,
+            ]
         status:
           type: string
           enum: [active, inactive, pending]
@@ -1129,7 +1264,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/UpdateMapping"
         - type: object
-          required: 
+          required:
             - modified
             - created
             - elements
@@ -1202,13 +1337,43 @@ components:
               format: int32
     ErrorResponse:
       type: string
+    ImportJob:
+      type: object
+      required:
+        - id
+        - status
+        - codesystemType
+        - codeSystem
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the import job
+        status:
+          type: string
+          description: Current status of the job (In Progress, Done, Failed)
+        numReadLines:
+          type: integer
+          description: Number of lines read from the CSV file
+        hash:
+          type: string
+          description: Hash of the CSV file content
+        detectedColumns:
+          type: array
+          items:
+            type: string
+          description: List of columns detected in the CSV file
+        codesystemType:
+          type: string
+          description: The type of the codesystem
+        codeSystem:
+          $ref: "#/components/schemas/CodeSystem"
   responses:
-  #   UnauthorizedError:
-  #     description: Unauthorized
-  #     content:
-  #       application/json:
-  #         schema:
-  #           $ref: "#/components/schemas/Error"
+    #   UnauthorizedError:
+    #     description: Unauthorized
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: "#/components/schemas/Error"
     BadRequestError:
       description: Invalid Request (e.g., negative id supplied, invalid body (e.g. missing field) or query parameters)
       content:

@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path"
@@ -41,6 +42,21 @@ type ServerInterface interface {
 	// Get all concepts for a code system by ID
 	// (GET /codesystems/{codesystem_id}/concepts)
 	GetAllConcepts(c *gin.Context, codesystemId CodesystemId, params GetAllConceptsParams)
+	// Import a code system from a CSV file
+	// (POST /import-code-system)
+	PostImportCodeSystem(c *gin.Context)
+	// Get all current import jobs
+	// (GET /import-code-system/jobs)
+	GetImportCodeSystemJobs(c *gin.Context)
+	// Delete a specific import job by ID
+	// (DELETE /import-code-system/jobs/{jobId})
+	DeleteImportCodeSystemJobsJobId(c *gin.Context, jobId string)
+	// Get a specific import job by ID
+	// (GET /import-code-system/jobs/{jobId})
+	GetImportCodeSystemJobsJobId(c *gin.Context, jobId string)
+	// Confirm the import of the code system for the specified job
+	// (POST /import-code-system/jobs/{jobId}/confirm)
+	PostImportCodeSystemJobsJobIdConfirm(c *gin.Context, jobId string)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(c *gin.Context)
@@ -296,6 +312,124 @@ func (siw *ServerInterfaceWrapper) GetAllConcepts(c *gin.Context) {
 	}
 
 	siw.Handler.GetAllConcepts(c, codesystemId, params)
+}
+
+// PostImportCodeSystem operation middleware
+func (siw *ServerInterfaceWrapper) PostImportCodeSystem(c *gin.Context) {
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PostImportCodeSystem(c)
+}
+
+// GetImportCodeSystemJobs operation middleware
+func (siw *ServerInterfaceWrapper) GetImportCodeSystemJobs(c *gin.Context) {
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetImportCodeSystemJobs(c)
+}
+
+// DeleteImportCodeSystemJobsJobId operation middleware
+func (siw *ServerInterfaceWrapper) DeleteImportCodeSystemJobsJobId(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", c.Param("jobId"), &jobId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter jobId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteImportCodeSystemJobsJobId(c, jobId)
+}
+
+// GetImportCodeSystemJobsJobId operation middleware
+func (siw *ServerInterfaceWrapper) GetImportCodeSystemJobsJobId(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", c.Param("jobId"), &jobId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter jobId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetImportCodeSystemJobsJobId(c, jobId)
+}
+
+// PostImportCodeSystemJobsJobIdConfirm operation middleware
+func (siw *ServerInterfaceWrapper) PostImportCodeSystemJobsJobIdConfirm(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", c.Param("jobId"), &jobId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter jobId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"normal", "admin"})
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PostImportCodeSystemJobsJobIdConfirm(c, jobId)
 }
 
 // Ping operation middleware
@@ -960,6 +1094,11 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/codesystems/:codesystem_id", wrapper.DeleteCodeSystem)
 	router.GET(options.BaseURL+"/codesystems/:codesystem_id", wrapper.GetCodeSystem)
 	router.GET(options.BaseURL+"/codesystems/:codesystem_id/concepts", wrapper.GetAllConcepts)
+	router.POST(options.BaseURL+"/import-code-system", wrapper.PostImportCodeSystem)
+	router.GET(options.BaseURL+"/import-code-system/jobs", wrapper.GetImportCodeSystemJobs)
+	router.DELETE(options.BaseURL+"/import-code-system/jobs/:jobId", wrapper.DeleteImportCodeSystemJobsJobId)
+	router.GET(options.BaseURL+"/import-code-system/jobs/:jobId", wrapper.GetImportCodeSystemJobsJobId)
+	router.POST(options.BaseURL+"/import-code-system/jobs/:jobId/confirm", wrapper.PostImportCodeSystemJobsJobIdConfirm)
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
 	router.POST(options.BaseURL+"/projects", wrapper.CreateProject)
@@ -1274,6 +1413,234 @@ type GetAllConcepts500JSONResponse struct {
 }
 
 func (response GetAllConcepts500JSONResponse) VisitGetAllConceptsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystemRequestObject struct {
+	JSONBody      *PostImportCodeSystemJSONRequestBody
+	MultipartBody *multipart.Reader
+}
+
+type PostImportCodeSystemResponseObject interface {
+	VisitPostImportCodeSystemResponse(w http.ResponseWriter) error
+}
+
+type PostImportCodeSystem200JSONResponse ImportJob
+
+func (response PostImportCodeSystem200JSONResponse) VisitPostImportCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystem400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response PostImportCodeSystem400JSONResponse) VisitPostImportCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystem404JSONResponse ErrorResponse
+
+func (response PostImportCodeSystem404JSONResponse) VisitPostImportCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystem500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PostImportCodeSystem500JSONResponse) VisitPostImportCodeSystemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobsRequestObject struct {
+}
+
+type GetImportCodeSystemJobsResponseObject interface {
+	VisitGetImportCodeSystemJobsResponse(w http.ResponseWriter) error
+}
+
+type GetImportCodeSystemJobs200JSONResponse []ImportJob
+
+func (response GetImportCodeSystemJobs200JSONResponse) VisitGetImportCodeSystemJobsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobs400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetImportCodeSystemJobs400JSONResponse) VisitGetImportCodeSystemJobsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobs404JSONResponse ErrorResponse
+
+func (response GetImportCodeSystemJobs404JSONResponse) VisitGetImportCodeSystemJobsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobs500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetImportCodeSystemJobs500JSONResponse) VisitGetImportCodeSystemJobsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteImportCodeSystemJobsJobIdRequestObject struct {
+	JobId string `json:"jobId"`
+}
+
+type DeleteImportCodeSystemJobsJobIdResponseObject interface {
+	VisitDeleteImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error
+}
+
+type DeleteImportCodeSystemJobsJobId200Response struct {
+}
+
+func (response DeleteImportCodeSystemJobsJobId200Response) VisitDeleteImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type DeleteImportCodeSystemJobsJobId400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response DeleteImportCodeSystemJobsJobId400JSONResponse) VisitDeleteImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteImportCodeSystemJobsJobId404JSONResponse ErrorResponse
+
+func (response DeleteImportCodeSystemJobsJobId404JSONResponse) VisitDeleteImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteImportCodeSystemJobsJobId500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteImportCodeSystemJobsJobId500JSONResponse) VisitDeleteImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobsJobIdRequestObject struct {
+	JobId string `json:"jobId"`
+}
+
+type GetImportCodeSystemJobsJobIdResponseObject interface {
+	VisitGetImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error
+}
+
+type GetImportCodeSystemJobsJobId200JSONResponse ImportJob
+
+func (response GetImportCodeSystemJobsJobId200JSONResponse) VisitGetImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobsJobId400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetImportCodeSystemJobsJobId400JSONResponse) VisitGetImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobsJobId404JSONResponse ErrorResponse
+
+func (response GetImportCodeSystemJobsJobId404JSONResponse) VisitGetImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetImportCodeSystemJobsJobId500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetImportCodeSystemJobsJobId500JSONResponse) VisitGetImportCodeSystemJobsJobIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystemJobsJobIdConfirmRequestObject struct {
+	JobId string `json:"jobId"`
+}
+
+type PostImportCodeSystemJobsJobIdConfirmResponseObject interface {
+	VisitPostImportCodeSystemJobsJobIdConfirmResponse(w http.ResponseWriter) error
+}
+
+type PostImportCodeSystemJobsJobIdConfirm200Response struct {
+}
+
+func (response PostImportCodeSystemJobsJobIdConfirm200Response) VisitPostImportCodeSystemJobsJobIdConfirmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type PostImportCodeSystemJobsJobIdConfirm400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response PostImportCodeSystemJobsJobIdConfirm400JSONResponse) VisitPostImportCodeSystemJobsJobIdConfirmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystemJobsJobIdConfirm404JSONResponse ErrorResponse
+
+func (response PostImportCodeSystemJobsJobIdConfirm404JSONResponse) VisitPostImportCodeSystemJobsJobIdConfirmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImportCodeSystemJobsJobIdConfirm500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response PostImportCodeSystemJobsJobIdConfirm500JSONResponse) VisitPostImportCodeSystemJobsJobIdConfirmResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -2267,6 +2634,21 @@ type StrictServerInterface interface {
 	// Get all concepts for a code system by ID
 	// (GET /codesystems/{codesystem_id}/concepts)
 	GetAllConcepts(ctx context.Context, request GetAllConceptsRequestObject) (GetAllConceptsResponseObject, error)
+	// Import a code system from a CSV file
+	// (POST /import-code-system)
+	PostImportCodeSystem(ctx context.Context, request PostImportCodeSystemRequestObject) (PostImportCodeSystemResponseObject, error)
+	// Get all current import jobs
+	// (GET /import-code-system/jobs)
+	GetImportCodeSystemJobs(ctx context.Context, request GetImportCodeSystemJobsRequestObject) (GetImportCodeSystemJobsResponseObject, error)
+	// Delete a specific import job by ID
+	// (DELETE /import-code-system/jobs/{jobId})
+	DeleteImportCodeSystemJobsJobId(ctx context.Context, request DeleteImportCodeSystemJobsJobIdRequestObject) (DeleteImportCodeSystemJobsJobIdResponseObject, error)
+	// Get a specific import job by ID
+	// (GET /import-code-system/jobs/{jobId})
+	GetImportCodeSystemJobsJobId(ctx context.Context, request GetImportCodeSystemJobsJobIdRequestObject) (GetImportCodeSystemJobsJobIdResponseObject, error)
+	// Confirm the import of the code system for the specified job
+	// (POST /import-code-system/jobs/{jobId}/confirm)
+	PostImportCodeSystemJobsJobIdConfirm(ctx context.Context, request PostImportCodeSystemJobsJobIdConfirmRequestObject) (PostImportCodeSystemJobsJobIdConfirmResponseObject, error)
 	// Check if the server is running
 	// (GET /ping)
 	Ping(ctx context.Context, request PingRequestObject) (PingResponseObject, error)
@@ -2507,6 +2889,156 @@ func (sh *strictHandler) GetAllConcepts(ctx *gin.Context, codesystemId Codesyste
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetAllConceptsResponseObject); ok {
 		if err := validResponse.VisitGetAllConceptsResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PostImportCodeSystem operation middleware
+func (sh *strictHandler) PostImportCodeSystem(ctx *gin.Context) {
+	var request PostImportCodeSystemRequestObject
+
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/json") {
+
+		var body PostImportCodeSystemJSONRequestBody
+		if err := ctx.ShouldBindJSON(&body); err != nil {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Error(err)
+			return
+		}
+		request.JSONBody = &body
+	}
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "multipart/form-data") {
+		if reader, err := ctx.Request.MultipartReader(); err == nil {
+			request.MultipartBody = reader
+		} else {
+			ctx.Error(err)
+			return
+		}
+	}
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PostImportCodeSystem(ctx, request.(PostImportCodeSystemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostImportCodeSystem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PostImportCodeSystemResponseObject); ok {
+		if err := validResponse.VisitPostImportCodeSystemResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetImportCodeSystemJobs operation middleware
+func (sh *strictHandler) GetImportCodeSystemJobs(ctx *gin.Context) {
+	var request GetImportCodeSystemJobsRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetImportCodeSystemJobs(ctx, request.(GetImportCodeSystemJobsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetImportCodeSystemJobs")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetImportCodeSystemJobsResponseObject); ok {
+		if err := validResponse.VisitGetImportCodeSystemJobsResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteImportCodeSystemJobsJobId operation middleware
+func (sh *strictHandler) DeleteImportCodeSystemJobsJobId(ctx *gin.Context, jobId string) {
+	var request DeleteImportCodeSystemJobsJobIdRequestObject
+
+	request.JobId = jobId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteImportCodeSystemJobsJobId(ctx, request.(DeleteImportCodeSystemJobsJobIdRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteImportCodeSystemJobsJobId")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteImportCodeSystemJobsJobIdResponseObject); ok {
+		if err := validResponse.VisitDeleteImportCodeSystemJobsJobIdResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetImportCodeSystemJobsJobId operation middleware
+func (sh *strictHandler) GetImportCodeSystemJobsJobId(ctx *gin.Context, jobId string) {
+	var request GetImportCodeSystemJobsJobIdRequestObject
+
+	request.JobId = jobId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetImportCodeSystemJobsJobId(ctx, request.(GetImportCodeSystemJobsJobIdRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetImportCodeSystemJobsJobId")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetImportCodeSystemJobsJobIdResponseObject); ok {
+		if err := validResponse.VisitGetImportCodeSystemJobsJobIdResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PostImportCodeSystemJobsJobIdConfirm operation middleware
+func (sh *strictHandler) PostImportCodeSystemJobsJobIdConfirm(ctx *gin.Context, jobId string) {
+	var request PostImportCodeSystemJobsJobIdConfirmRequestObject
+
+	request.JobId = jobId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PostImportCodeSystemJobsJobIdConfirm(ctx, request.(PostImportCodeSystemJobsJobIdConfirmRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostImportCodeSystemJobsJobIdConfirm")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PostImportCodeSystemJobsJobIdConfirmResponseObject); ok {
+		if err := validResponse.VisitPostImportCodeSystemJobsJobIdConfirmResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -3121,63 +3653,71 @@ func (sh *strictHandler) GetPermission(ctx *gin.Context, projectId ProjectId, us
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
