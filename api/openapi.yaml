@@ -40,6 +40,8 @@ tags:
     description: Operations about code systems
   - name: concept
     description: Operations about concepts
+  - name : import-code-system
+    description: Operations about importing code systems
 paths:
   /ping:
     get:
@@ -881,7 +883,26 @@ paths:
         "500":
           "$ref": "#/components/responses/InternalServerError"
   /import-code-system:
+    get:
+      tags:
+        - import-code-system
+      summary: Get all current import jobs
+      responses:
+        "200":
+          description: A list of all import jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ImportJob"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
     post:
+      tags:
+        - import-code-system
       summary: Import a code system from a CSV file
       requestBody:
         content:
@@ -909,38 +930,50 @@ paths:
                     description: The ID of the created import job
         "400":
           "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project or Mapping not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /import-code-system/jobs:
-    get:
-      summary: Get all current import jobs
+    put:
+      tags:
+        - import-code-system
+      summary: Update an import job by id
+      description: Update the code system information of an ImportJob
+      operationId: updateCodeSystem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CodeSystem" # id optional
       responses:
         "200":
-          description: A list of all import jobs
+          description: Success
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ImportJob"
+                "$ref": "#/components/schemas/ImportJob" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Mapping not found
+          description: Codesystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Error # if id is provided in the request body it must match the id in the path
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /import-code-system/jobs/{jobId}:
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /import-code-system/{jobId}:
     get:
+      tags:
+        - import-code-system
       summary: Get a specific import job by ID
       parameters:
         - in: path
@@ -958,7 +991,7 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Mapping not found
+          description: Import job not found
           content:
             application/json:
               schema:
@@ -966,6 +999,8 @@ paths:
         "500":
           "$ref": "#/components/responses/InternalServerError"
     delete:
+      tags:
+        - import-code-system
       summary: Delete a specific import job by ID
       parameters:
         - in: path
@@ -979,15 +1014,17 @@ paths:
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Mapping not found
+          description: Import job not found
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
-  /import-code-system/jobs/{jobId}/confirm:
+  /import-code-system/{jobId}/confirm:
     post:
+      tags:
+        - import-code-system
       summary: Confirm the import of the code system for the specified job
       parameters:
         - in: path
@@ -997,11 +1034,11 @@ paths:
             type: string
       responses:
         "200":
-          description: Code system import confirmed and processed
+          description: Code system import confirmed and start processing
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "404":
-          description: Project or Mapping not found
+          description: Import job not found
           content:
             application/json:
               schema:
@@ -1093,14 +1130,22 @@ components:
       properties:
         name:
           type: string
+          example: "Awesome Mapping Project"
         version:
           type: string
+          example: "1.0.0"
+          description: Semantic versioning
         description:
           type: string
+          example: "This is a project to map concepts in an n:m relationship with each other."
         equivalence_required:
           type: boolean
+          example: true
+          description: If true, the mappings in the project can have an equivalence value, if false, the equivalence value is not allowed
         status_required:
           type: boolean
+          example: true
+          description: If true, the mappings in the project can have a status value, if false, the status value is not allowed
     UpdateProject:
       allOf:
         - $ref: "#/components/schemas/BaseProject"
@@ -1111,6 +1156,8 @@ components:
             id:
               type: integer
               format: int32
+              example: 10
+              description: The ID of the project (IDs get assigned in a sequential order)
     Project:
       allOf:
         - $ref: "#/components/schemas/UpdateProject"
@@ -1121,8 +1168,12 @@ components:
           properties:
             modified:
               type: string
+              example: "2024-01-01T12:00:00Z"
+              description: Date of the last modification of the project
             created:
               type: string
+              example: "2024-01-01T11:30:00Z"
+              description: Date of the creation of the project
     CreateProjectDetails:
       allOf:
         - $ref: "#/components/schemas/BaseProject"
@@ -1132,10 +1183,24 @@ components:
           properties:
             project_permissions:
               type: array
+              description: List of permissions for the project to create.
+              example:
+                - user_id: "123e4567-e89b-12d3-a456-426614174000"
+                  role: "project_owner"
+                - user_id: "123e4567-e89b-12d3-a456-426614174001"
+                  role: "editor"
               items:
                 $ref: "#/components/schemas/SendProjectPermission"
             code_system_roles:
               type: array
+              description: List of code system roles (columns in the mapping table) for the project to create. This specifies which concepts of which code systems can be mapped with each other in the project.
+              example:
+                - name: "Loinc Codes"
+                  system: 1
+                  type: "source"
+                - name: "Snomed CT Codes"
+                  system: 2
+                  type: "target"
               items:
                 $ref: "#/components/schemas/CreateCodeSystemRole"
     ProjectDetails:
@@ -1147,10 +1212,34 @@ components:
           properties:
             project_permissions:
               type: array
+              description: List of permissions for the project. This specifies which user has which role in the project.
+              example:
+                - user_id: "123e4567-e89b-12d3-a456-426614174000"
+                  role: "project_owner"
+                  user_name: "Example Admin User"
+                - user_id: "123e4567-e89b-12d3-a456-426614174001"
+                  role: "editor"
+                  user_name: "Miracum Mapping Expert"
               items:
                 $ref: "#/components/schemas/ProjectPermission"
             code_system_roles:
               type: array
+              description: List of code system roles (columns in the mapping table) for the project. This specifies which concepts of which code systems can be mapped with each other in the project.
+              example:
+                - id: 1
+                  name: "Loinc Codes"
+                  system:
+                    id: 1
+                    name: "Loinc"
+                    version: "2.68"
+                  type: "source"
+                - id: 2
+                  name: "Snomed CT Codes"
+                  system:
+                    id: 2
+                    name: "Snomed CT"
+                    version: "2021-07-31"
+                  type: "target"
               items:
                 $ref: "#/components/schemas/CodeSystemRole"
     SendProjectPermission:
@@ -1160,10 +1249,13 @@ components:
         - role
       properties:
         user_id:
-          type: string # uuid
+          type: string
+          description: The ID of the user to assign the role to
+          example: "123e4567-e89b-12d3-a456-426614174000"
         role:
           type: string
           enum: [reviewer, project_owner, editor]
+          description: The role to assign to the user. Reviewer can only view the project and adjust existing mappings, editor can edit the project including the deletion and adding of new mappings, project_owner can edit the project and assign roles to other users.
     ProjectPermission:
       allOf:
         - $ref: "#/components/schemas/SendProjectPermission"
@@ -1173,6 +1265,8 @@ components:
           properties:
             user_name:
               type: string
+              description: The name of the user to assign the role to
+              example: "Example Admin User"
     CreateCodeSystemRole:
       type: object
       required:
@@ -1182,12 +1276,16 @@ components:
       properties:
         name:
           type: string
+          description: The name of the code system role (column in the mapping table)
+          example: "Loinc Codes"
         system:
           type: integer
           format: int32
+          description: The reference to the codeSystem to use for the code system role
         type:
           type: string
           enum: [source, target]
+          description: The type of the code system. Source is one of n codeSystems from which the concepts are mapped, target is one of m codeSystems to which the concepts are mapped.
     UpdateCodeSystemRole:
       type: object
       required:
@@ -1200,9 +1298,11 @@ components:
           format: int32
         name:
           type: string
+          description: The name of the code system role (column in the mapping table)
         type:
           type: string
           enum: [source, target]
+          description: The type of the code system. Source is one of n codeSystems from which the concepts are mapped, target is one of m codeSystems to which the concepts are mapped.
     CodeSystemRole:
       allOf:
         - $ref: "#/components/schemas/UpdateCodeSystemRole"
@@ -1220,12 +1320,13 @@ components:
                 id:
                   type: integer
                   format: int32
+                  description: The ID of the code system from this code system role
                 name:
                   type: string
+                  description: The name of the code system from this code system role
                 version:
                   type: string
-
-    #############################
+                  description: The version of the code system from this code system role
     CreateMapping:
       type: object
       # required:
@@ -1241,15 +1342,24 @@ components:
               source-is-broader-than-target,
               not-related,
             ]
+          description: Can only be set if the project allows it (equivalence_required = true). The equivalence describes in which relationship the source concepts stands to the target concepts.
         status:
           type: string
           enum: [active, inactive, pending]
+          description: Can only be set if the project allows it (status_required = true). The status describes the current state of the mapping.
         comment:
           type: string
+          description: A comment for the mapping
         elements:
           type: array
           items:
             $ref: "#/components/schemas/Element"
+          description: List of elements for the mapping. The provided elements have to match to the code system roles of the project.
+          example:
+            - codeSystemRole: 1
+              concept: 1
+            - codeSystemRole: 2
+              concept: 2
     UpdateMapping:
       allOf:
         - $ref: "#/components/schemas/CreateMapping"
@@ -1260,6 +1370,7 @@ components:
             id:
               type: integer
               format: int64
+              description: The ID of the mapping
     Mapping:
       allOf:
         - $ref: "#/components/schemas/UpdateMapping"
@@ -1273,18 +1384,36 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/FullElement"
+              description: List of elements for the mapping. Each element includes the concept with their code and meaning
+              example:
+                - codeSystemRole: 2
+                  concept:
+                    id: 1
+                    code: "1234-5"
+                    meaning: "Example Concept"
+                - codeSystemRole: 1
+                  concept:
+                    id: 2
+                    code: "1234-6"
+                    meaning: "Another Example Concept"
             created:
               type: string
+              description: Date of the creation of the mapping
+              example: "2024-01-01T11:30:00Z"
             modified:
               type: string
+              description: Date of the last modification of the mapping
+              example: "2024-01-01T12:00:00Z"
     Element:
       properties:
         codeSystemRole:
           type: integer
           format: int32
+          description: The ID of the code system role (column in the mapping table)
         concept:
           type: integer
           format: int64
+          description: The ID of the concept
     FullElement:
       allOf:
         - $ref: "#/components/schemas/Element"
@@ -1292,6 +1421,7 @@ components:
           properties:
             concept:
               $ref: "#/components/schemas/Concept"
+              description: The concept with their code and meaning
     Concept:
       type: object
       required:
@@ -1302,10 +1432,13 @@ components:
         id:
           type: integer
           format: int64
+          description: The ID of the concept
         code:
           type: string
+          description: The code of the concept defined by the code system
         meaning:
           type: string
+          description: The meaning of the concept
     CreateCodeSystem:
       type: object
       required:
@@ -1315,16 +1448,28 @@ components:
       properties:
         uri:
           type: string
+          description: The Uniform Resource Identifier (URI) of the code system
+          example: "http://loinc.org"
         version:
           type: string
+          description: The version of the code system
+          example: "2.68"
         name:
           type: string
+          description: The name of the code system
+          example: "Loinc"
         title:
           type: string
+          description: The title of the code system
+          example: "Logical Observation Identifiers Names and Codes"
         description:
           type: string
+          description: The description of the code system
+          example: "LOINC is a database and universal standard for identifying medical laboratory observations"
         author:
           type: string
+          description: The author of the code system
+          example: "Regenstrief Institute"
     CodeSystem:
       allOf:
         - $ref: "#/components/schemas/CreateCodeSystem"
@@ -1335,6 +1480,7 @@ components:
             id:
               type: integer
               format: int32
+              description: The ID of the code system
     ErrorResponse:
       type: string
     ImportJob:
@@ -1350,7 +1496,8 @@ components:
           description: Unique identifier for the import job
         status:
           type: string
-          description: Current status of the job (In Progress, Done, Failed)
+          enum: [progress, done, failed]
+          description: Current status of the job
         numReadLines:
           type: integer
           description: Number of lines read from the CSV file
@@ -1365,8 +1512,12 @@ components:
         codesystemType:
           type: string
           description: The type of the codesystem
+        errorMessage:
+          type: string
+          description: If the job failed, this field contains the error message
         codeSystem:
           $ref: "#/components/schemas/CodeSystem"
+          description: The code system to import
   responses:
     #   UnauthorizedError:
     #     description: Unauthorized
