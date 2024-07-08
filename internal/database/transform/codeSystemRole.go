@@ -30,11 +30,12 @@ func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole
 	}
 }
 
-func ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.UpdateCodeSystemRole) *models.CodeSystemRole {
+func ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.UpdateCodeSystemRole, projectId *api.ProjectId) *models.CodeSystemRole {
 	return &models.CodeSystemRole{
-		ID:   uint32(codeSystemRole.Id),
-		Type: models.CodeSystemRoleType(codeSystemRole.Type),
-		Name: codeSystemRole.Name,
+		ID:        uint32(codeSystemRole.Id),
+		Type:      models.CodeSystemRoleType(codeSystemRole.Type),
+		Name:      codeSystemRole.Name,
+		ProjectID: uint32(*projectId),
 	}
 }
 
