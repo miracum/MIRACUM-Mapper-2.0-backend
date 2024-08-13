@@ -52,6 +52,23 @@ func (s *Server) GetAllProjects(ctx context.Context, request api.GetAllProjectsR
 func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectRequestObject) (api.CreateProjectResponseObject, error) {
 	projectDetails := request.Body
 
+	if len(projectDetails.CodeSystemRoles) == 0 {
+		return api.CreateProject422JSONResponse("CodeSystemRoles must not be empty"), nil
+	} else if len(projectDetails.ProjectPermissions) == 0 {
+		return api.CreateProject422JSONResponse("Permissions must not be empty"), nil
+	}
+
+	adminExists := false
+	for _, permission := range projectDetails.ProjectPermissions {
+		if permission.Role == "admin" {
+			adminExists = true
+			break
+		}
+	}
+	if !adminExists {
+		return api.CreateProject422JSONResponse("At least one admin permission is required"), nil
+	}
+
 	project, err := transform.ApiCreateProjectDetailsToGormProject(projectDetails)
 	if err != nil {
 		return api.CreateProject400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil

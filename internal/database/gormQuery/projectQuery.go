@@ -107,6 +107,9 @@ func (gq *GormQuery) UpdateProjectQuery(project *models.Project, checkFunc func(
 		if err := tx.Save(&project).Error; err != nil {
 			return err
 		}
+
+		// add missing created timestamp
+		project.CreatedAt = project_old.CreatedAt
 		return nil
 	})
 	return err

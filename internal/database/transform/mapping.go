@@ -8,8 +8,20 @@ import (
 // TODO return by reference. Currently, each time a copy is created --> unnecessary and slow
 func GormMappingToApiMapping(mapping models.Mapping) api.Mapping {
 	id := int64(mapping.ID)
-	created := mapping.CreatedAt.String()
-	modified := mapping.UpdatedAt.String()
+	var modified string
+	if !mapping.UpdatedAt.IsZero() {
+		modified = mapping.UpdatedAt.String()
+	} else {
+		modified = ""
+	}
+
+	var created string
+	if !mapping.CreatedAt.IsZero() {
+		created = mapping.CreatedAt.String()
+	} else {
+		created = ""
+	}
+
 	var api_mapping api.Mapping = api.Mapping{
 		Comment:     mapping.Comment,
 		Created:     created,
