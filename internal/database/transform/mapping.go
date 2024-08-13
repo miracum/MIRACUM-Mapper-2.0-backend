@@ -61,15 +61,27 @@ func ApiCreateMappingToGormMapping(mapping api.CreateMapping, projectId int32) m
 }
 
 func ApiUpdateMappingToGormMapping(mapping api.UpdateMapping, projectId int32) models.Mapping {
-	createMapping := api.CreateMapping{
-		Equivalence: (*api.CreateMappingEquivalence)(mapping.Equivalence),
-		Status:      (*api.CreateMappingStatus)(mapping.Status),
-		Comment:     mapping.Comment,
-		Elements:    mapping.Elements,
+	var elements []models.Element = []models.Element{}
+	for _, element := range *mapping.Elements {
+		conceptId := uint64(*element.Concept)
+		codeSystemRoleId := uint32(*element.CodeSystemRole)
+		elements = append(elements, models.Element{
+			ConceptID:        &conceptId,
+			CodeSystemRoleID: codeSystemRoleId,
+			MappingID:        uint64(mapping.Id),
+		})
 	}
 
-	dbMapping := ApiCreateMappingToGormMapping(createMapping, projectId)
-	dbMapping.ID = uint64(mapping.Id)
+	dbMapping := models.Mapping{
+		ModelBigId: models.ModelBigId{
+			ID: uint64(mapping.Id),
+		},
+		Comment:     mapping.Comment,
+		Equivalence: (*models.Equivalence)(mapping.Equivalence),
+		Status:      (*models.Status)(mapping.Status),
+		Elements:    elements,
+		ProjectID:   uint32(projectId),
+	}
 
 	return dbMapping
 

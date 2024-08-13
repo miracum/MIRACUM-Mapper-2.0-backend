@@ -40,6 +40,7 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 				return err
 			}
 			mapping.Elements[i].Concept = concept
+			tx.Save(&mapping.Elements[i])
 		}
 
 		unusedCodeSystemRoleIds, err := checkFunc(mapping, &project)
