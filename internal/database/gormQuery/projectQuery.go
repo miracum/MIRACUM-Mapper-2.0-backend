@@ -62,6 +62,9 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId) // TODO & is not necessary here
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
+		if db.Error.Error() == "record not found" {
+			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+		}
 		if !ok {
 			return db.Error
 		}
