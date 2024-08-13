@@ -16,38 +16,44 @@ func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, pageSize in
 
 // CreateProject implements database.Datastore.
 func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
-	db := gq.Database.Create(&project)
-	if db.Error != nil {
-		// cast error to postgres error
-		pgErr, ok := handlePgError(db.Error)
-		if !ok {
-			return db.Error
-		}
-		switch pgErr.Code {
-		case "23503":
-			switch pgErr.ConstraintName {
-			case "fk_users_project_permissions":
-				userID, err := extractIDFromErrorDetail(pgErr.Detail, "user_id")
-				if err != nil {
-					return db.Error
-				}
-				return database.NewDBError(database.ClientError, fmt.Sprintf("User with id %s specified in permissions does not exist", userID))
-
-			case "fk_code_systems_code_system_roles":
-				codeSystemID, err := extractIDFromErrorDetail(pgErr.Detail, "code_system_id")
-				if err != nil {
-					return db.Error
-				}
-				return database.NewDBError(database.ClientError, fmt.Sprintf("Code System with id %s specified in code system roles does not exist", codeSystemID))
-			default:
-				return db.Error
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(&project).Error
+		if err != nil {
+			// cast error to postgres error
+			pgErr, ok := handlePgError(err)
+			if !ok {
+				return err
 			}
-		default:
-			return db.Error
+			switch pgErr.Code {
+			case "23503":
+				switch pgErr.ConstraintName {
+				case "fk_users_project_permissions":
+					userID, err := extractIDFromErrorDetail(pgErr.Detail, "user_id")
+					if err != nil {
+						return err
+					}
+					return database.NewDBError(database.ClientError, fmt.Sprintf("User with id %s specified in permissions does not exist", userID))
+
+				case "fk_code_systems_code_system_roles":
+					codeSystemID, err := extractIDFromErrorDetail(pgErr.Detail, "code_system_id")
+					if err != nil {
+						return err
+					}
+					return database.NewDBError(database.ClientError, fmt.Sprintf("Code System with id %s specified in code system roles does not exist", codeSystemID))
+				default:
+					return err
+				}
+			default:
+				return err
+			}
+		} else {
+			if err = tx.Preload("CodeSystemRoles").Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, project.ID).Error; err != nil {
+				return nil
+			}
+			return err
 		}
-	} else {
-		return nil
-	}
+	})
+	return err
 }
 
 func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {

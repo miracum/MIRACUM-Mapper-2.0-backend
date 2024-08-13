@@ -13,11 +13,19 @@ func GormProjectToApiProjectDetails(project *models.Project) api.ProjectDetails 
 	} else {
 		modified = ""
 	}
+	var created string
+	if !project.CreatedAt.IsZero() {
+		created = project.CreatedAt.String()
+	} else {
+		created = ""
+	}
+
 	var projectDetails api.ProjectDetails = api.ProjectDetails{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
 		Id:                  int32(project.ID),
 		Modified:            modified,
+		Created:             created,
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
 		Version:             project.Version,
