@@ -29,6 +29,15 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 			}
 		}
 
+		if err := tx.First(mapping, mapping.ID).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Mapping with ID %d couldn't be found.", mapping.ID))
+			default:
+				return err
+			}
+		}
+
 		// Get all ConceptIDs from the Elements in the Mapping and find them in the database
 		//  concepts := make([]models.Concept, len(mapping.Elements))
 		for i, element := range mapping.Elements {
