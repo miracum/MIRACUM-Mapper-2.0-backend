@@ -29,6 +29,15 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 			}
 		}
 
+		if err := tx.First(mapping, mapping.ID).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Mapping with ID %d couldn't be found.", mapping.ID))
+			default:
+				return err
+			}
+		}
+
 		// Get all ConceptIDs from the Elements in the Mapping and find them in the database
 		//  concepts := make([]models.Concept, len(mapping.Elements))
 		for i, element := range mapping.Elements {
@@ -40,6 +49,7 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 				return err
 			}
 			mapping.Elements[i].Concept = concept
+			tx.Save(&mapping.Elements[i])
 		}
 
 		unusedCodeSystemRoleIds, err := checkFunc(mapping, &project)
@@ -108,7 +118,7 @@ func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, map
 					}
 					return err
 				} else {
-					return database.NewDBError(database.NotFound, fmt.Sprintf("The mapping with id %d does not have a permission for the project with id %d.", mappingId, projectId))
+					return database.NewDBError(database.NotFound, fmt.Sprintf("The mapping with id %d does not exist in the project with id %d.", mappingId, projectId))
 				}
 			default:
 				return err

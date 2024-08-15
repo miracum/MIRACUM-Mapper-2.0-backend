@@ -1001,6 +1001,7 @@ components:
         - type: object
           required:
             - code_system_roles
+            - project_permissions
           properties:
             project_permissions:
               type: array
