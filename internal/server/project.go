@@ -58,16 +58,16 @@ func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectReq
 		return api.CreateProject422JSONResponse("Permissions must not be empty"), nil
 	}
 
-	adminExists := false
-	for _, permission := range projectDetails.ProjectPermissions {
-		if permission.Role == "admin" {
-			adminExists = true
-			break
-		}
-	}
-	if !adminExists {
-		return api.CreateProject422JSONResponse("At least one admin permission is required"), nil
-	}
+	// adminExists := false
+	// for _, permission := range projectDetails.ProjectPermissions {
+	// 	if permission.Role == "projectOwner" {
+	// 		adminExists = true
+	// 		break
+	// 	}
+	// }
+	// if !adminExists {
+	// 	return api.CreateProject422JSONResponse("At least one admin permission is required"), nil
+	// }
 
 	project, err := transform.ApiCreateProjectDetailsToGormProject(projectDetails)
 	if err != nil {

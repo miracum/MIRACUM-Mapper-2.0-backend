@@ -118,7 +118,7 @@ func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, map
 					}
 					return err
 				} else {
-					return database.NewDBError(database.NotFound, fmt.Sprintf("The mapping with id %d does not have a permission for the project with id %d.", mappingId, projectId))
+					return database.NewDBError(database.NotFound, fmt.Sprintf("The mapping with id %d does not exist in the project with id %d.", mappingId, projectId))
 				}
 			default:
 				return err
