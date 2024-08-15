@@ -54,7 +54,7 @@ func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCod
 	projectId := request.ProjectId
 	codeSystemRole := request.Body
 
-	db_codeSystemRole := transform.ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole)
+	db_codeSystemRole := transform.ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole, &projectId)
 
 	if err := s.Database.UpdateCodeSystemRoleQuery(db_codeSystemRole, projectId); err != nil {
 		switch {

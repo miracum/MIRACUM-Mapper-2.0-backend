@@ -66,7 +66,9 @@ func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
 			},
 		})
 
-	return []gin.HandlerFunc{validator}, nil
+	cors := middlewares.SetupCORS()
+
+	return []gin.HandlerFunc{cors, validator}, nil
 }
 
 var _ api.StrictServerInterface = (*Server)(nil)
