@@ -18,13 +18,15 @@ func (gq *GormQuery) GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSy
 		}
 		switch {
 		case errors.Is(pgErr, gorm.ErrRecordNotFound):
-			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemRole with Project ID %d couldn't be found.", projectId))
+			return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
 		default:
 			return pgErr
 		}
+	} else if db.RowsAffected == 0 {
+		return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
 	}
 	if len(*codeSystemRoles) == 0 {
-		return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemRole with Project ID %d couldn't be found.", projectId))
+		return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d has no CodeSystemRoles.", projectId))
 	}
 	return nil
 }
@@ -59,7 +61,17 @@ func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystem
 		if err := tx.Preload("CodeSystem").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRole.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
-				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemRole with ID %d couldn't be found.", codeSystemRole.ID))
+				var project models.Project
+				if err := tx.First(&project, projectId).Error; err != nil {
+					switch {
+					case errors.Is(err, gorm.ErrRecordNotFound):
+						return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+					default:
+						return err
+					}
+				} else {
+					return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemRole with ID %d couldn't be found.", codeSystemRole.ID))
+				}
 			default:
 				return err
 			}
@@ -71,6 +83,7 @@ func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystem
 		if err := tx.Save(codeSystemRole).Error; err != nil {
 			return err
 		}
+		codeSystemRole.CodeSystem = oldCodeSystemRole.CodeSystem
 		return nil
 	})
 	return err
