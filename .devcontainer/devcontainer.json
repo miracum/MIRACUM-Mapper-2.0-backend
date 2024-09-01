@@ -1,0 +1,30 @@
+{
+    "name": "Miracum Mapper Backend",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/zsh"
+            },
+            "extensions": [
+                "golang.go",
+                "ms-vscode.go",
+                "esbenp.prettier-vscode",
+                "github.copilot",
+                "shardulm94.trailing-spaces",
+                "ms-azuretools.vscode-docker",
+                "42Crunch.vscode-openapi",
+                "Arjun.swagger-viewer"
+            ]
+        }
+    },
+    "postCreateCommand": "go mod download",
+    "mounts": [
+        "source=${localWorkspaceFolder}/,target=/workspace,type=bind,consistency=cached",
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+    "workspaceFolder": "/workspace"
+}
