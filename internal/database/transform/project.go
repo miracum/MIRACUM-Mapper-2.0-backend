@@ -13,11 +13,20 @@ func GormProjectToApiProjectDetails(project *models.Project) api.ProjectDetails 
 	} else {
 		modified = ""
 	}
+
+	var created string
+	if !project.CreatedAt.IsZero() {
+		created = project.CreatedAt.String()
+	} else {
+		created = ""
+	}
+
 	var projectDetails api.ProjectDetails = api.ProjectDetails{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
 		Id:                  int32(project.ID),
 		Modified:            modified,
+		Created:             created,
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
 		Version:             project.Version,
@@ -42,7 +51,7 @@ func ApiCreateProjectDetailsToGormProject(projectDetails *api.CreateProjectDetai
 	project.CodeSystemRoles = *ApiCreateCodeSystemRolesToGormCodeSystemRoles(&projectDetails.CodeSystemRoles)
 
 	// Append the ProjectPermissions
-	for _, permission := range *projectDetails.ProjectPermissions {
+	for _, permission := range projectDetails.ProjectPermissions {
 		userID, err := utilities.ParseUUID(permission.UserId)
 		if err != nil {
 			return nil, err
@@ -62,6 +71,14 @@ func GormProjectToApiProject(project *models.Project) *api.Project {
 	} else {
 		modified = ""
 	}
+
+	var created string
+	if !project.CreatedAt.IsZero() {
+		created = project.CreatedAt.String()
+	} else {
+		created = ""
+	}
+
 	return &api.Project{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
@@ -70,6 +87,7 @@ func GormProjectToApiProject(project *models.Project) *api.Project {
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
 		Version:             project.Version,
+		Created:             created,
 	}
 }
 
