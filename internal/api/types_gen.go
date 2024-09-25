@@ -217,13 +217,13 @@ type CreateMappingStatus string
 
 // CreateProjectDetails defines model for CreateProjectDetails.
 type CreateProjectDetails struct {
-	CodeSystemRoles     []CreateCodeSystemRole   `json:"code_system_roles"`
-	Description         string                   `json:"description"`
-	EquivalenceRequired bool                     `json:"equivalence_required"`
-	Name                string                   `json:"name"`
-	ProjectPermissions  *[]SendProjectPermission `json:"project_permissions,omitempty"`
-	StatusRequired      bool                     `json:"status_required"`
-	Version             string                   `json:"version"`
+	CodeSystemRoles     []CreateCodeSystemRole  `json:"code_system_roles"`
+	Description         string                  `json:"description"`
+	EquivalenceRequired bool                    `json:"equivalence_required"`
+	Name                string                  `json:"name"`
+	ProjectPermissions  []SendProjectPermission `json:"project_permissions"`
+	StatusRequired      bool                    `json:"status_required"`
+	Version             string                  `json:"version"`
 }
 
 // Element defines model for Element.

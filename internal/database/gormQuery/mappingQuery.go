@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error {
+func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool, update bool) error {
 	// start transaction, get CodeSystemRole ids for project, call check function, if no error, create mapping
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
@@ -29,6 +29,23 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 			}
 		}
 
+		if update {
+			oldMapping := models.Mapping{}
+			if err := tx.First(&oldMapping, mapping.ID).Error; err != nil {
+				switch {
+				case errors.Is(err, gorm.ErrRecordNotFound):
+					return database.NewDBError(database.NotFound, fmt.Sprintf("Mapping with ID %d couldn't be found.", mapping.ID))
+				default:
+					return err
+				}
+			}
+		}
+
+		db := tx.Save(mapping)
+		if db.Error != nil {
+			return db.Error
+		}
+
 		// Get all ConceptIDs from the Elements in the Mapping and find them in the database
 		//  concepts := make([]models.Concept, len(mapping.Elements))
 		for i, element := range mapping.Elements {
@@ -40,6 +57,7 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 				return err
 			}
 			mapping.Elements[i].Concept = concept
+			tx.Save(&mapping.Elements[i])
 		}
 
 		unusedCodeSystemRoleIds, err := checkFunc(mapping, &project)
@@ -61,10 +79,7 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 				mapping.Elements = append(mapping.Elements, elements...)
 			}
 		}
-
-		db := tx.Save(mapping)
-
-		return db.Error
+		return nil
 	})
 	return err
 }
@@ -92,7 +107,7 @@ func (gq *GormQuery) GetAllMappingsQuery(mappings *[]models.Mapping, projectId i
 
 // CreateMappingQuery implements database.Datastore.
 func (gq *GormQuery) CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error {
-	return CreateOrUpdateMapping(gq, mapping, checkFunc, false)
+	return CreateOrUpdateMapping(gq, mapping, checkFunc, false, false)
 }
 
 // GetMappingQuery implements database.Datastore.
@@ -108,7 +123,7 @@ func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, map
 					}
 					return err
 				} else {
-					return database.NewDBError(database.NotFound, fmt.Sprintf("The mapping with id %d does not have a permission for the project with id %d.", mappingId, projectId))
+					return database.NewDBError(database.NotFound, fmt.Sprintf("The mapping with id %d does not exist in the project with id %d.", mappingId, projectId))
 				}
 			default:
 				return err
@@ -122,13 +137,13 @@ func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, map
 // UpdateMappingQuery implements database.Datastore.
 func (gq *GormQuery) UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error {
 	// TODO it has to be checked if the mapping exists in the project. If there is another project which has the same CodeSystem Roles and the projectId of the other project is set in the update mapping url, the mapping would get moved to the other project
-	return CreateOrUpdateMapping(gq, mapping, checkFunc, deleteMissingElements)
+	return CreateOrUpdateMapping(gq, mapping, checkFunc, deleteMissingElements, true)
 }
 
 // DeleteMappingQuery implements database.Datastore.
 func (gq *GormQuery) DeleteMappingQuery(mapping *models.Mapping) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("project_id = ?", mapping.ProjectID).First(mapping, mapping.ID).Error; err != nil {
+		if err := tx.Where("project_id = ?", mapping.ProjectID).Preload("Elements").Preload("Elements.Concept.CodeSystem").First(mapping, mapping.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				// TODO This check to determine if the Project or the CodeSystemRole is not found is bad

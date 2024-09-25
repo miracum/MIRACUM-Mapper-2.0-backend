@@ -2,7 +2,10 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"miracummapper/internal/api"
+	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
 	"miracummapper/internal/utilities"
@@ -41,7 +44,13 @@ func (s *Server) GetAllConcepts(ctx context.Context, request api.GetAllConceptsR
 	var concepts []models.Concept = []models.Concept{}
 
 	if err := s.Database.GetAllConceptsQuery(&concepts, codeSystemId, pageSize, offset, sortBy, sortOrder, meaning, code); err != nil {
-		return api.GetAllConcepts500JSONResponse{}, err
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllConcepts404JSONResponse(fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId)), nil
+		default:
+			return api.GetAllConcepts500JSONResponse{}, err
+		}
+
 	}
 
 	var apiConcepts []api.Concept = []api.Concept{}

@@ -8,15 +8,15 @@ import "time"
 //	  models.Model
 //	}
 type Model struct {
-	ID        uint32 `gorm:"primarykey"` // implicitly autoIncrement
-	CreatedAt time.Time
+	ID        uint32    `gorm:"primarykey"` // implicitly autoIncrement
+	CreatedAt time.Time `gorm:"<-:create"`
 	UpdatedAt time.Time
 	//DeletedAt DeletedAt `gorm:"index"`
 }
 
 type ModelBigId struct {
-	ID        uint64 `gorm:"primarykey"` // implicitly autoIncrement
-	CreatedAt time.Time
+	ID        uint64    `gorm:"primarykey"` // implicitly autoIncrement
+	CreatedAt time.Time `gorm:"<-:create"`
 	UpdatedAt time.Time
 	//DeletedAt DeletedAt `gorm:"index"`
 }
