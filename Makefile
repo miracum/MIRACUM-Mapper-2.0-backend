@@ -14,3 +14,9 @@ build:
 
 clean:
 	rm -f $(BINARY_NAME)
+
+run: build
+	$(BINARY_NAME)
+
+run-docker: build
+	docker compose up --build

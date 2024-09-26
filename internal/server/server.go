@@ -66,7 +66,15 @@ func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
 			},
 		})
 
-	cors := middlewares.SetupCORS()
+	// TODO: make this configurable through config file
+	allowedOrigins := []string{
+		"http://localhost:5173",
+		"http://127.0.0.1:5173",
+		"http://localhost:8080",
+		"http://localhost:18512",
+	}
+
+	cors := middlewares.SetupCORS(allowedOrigins)
 
 	return []gin.HandlerFunc{cors, validator}, nil
 }
