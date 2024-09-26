@@ -33,3 +33,6 @@ __debug_*
 
 .DS_Store
 miracummapper
+
+# python
+.venv/
