@@ -55,7 +55,6 @@ func (e Status) Value() (driver.Value, error) {
 	return string(e), nil
 }
 
-// Mapping defines model for Mapping.
 type Mapping struct {
 	ModelBigId
 	ProjectID   uint32       `gorm:"index"`

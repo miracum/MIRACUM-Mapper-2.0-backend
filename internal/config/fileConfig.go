@@ -42,7 +42,7 @@ func NewFileConfig() *FileConfig {
 
 func getFileConfig(configPath string) (*FileConfig, error) {
 	// Load default config
-	defaultConfig, err := loadConfig("default-config.yaml") // ./default-config.yaml
+	defaultConfig, err := loadConfig("default-config.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default config: %v", err)
 	}

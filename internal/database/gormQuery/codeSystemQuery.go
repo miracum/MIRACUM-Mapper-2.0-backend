@@ -112,7 +112,7 @@ func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {
 		batchSize := 100
 		totalConcepts := len(*concepts)
 
-		// Create batch of 100 concepts at a time in the database
+		// Create batch of 100 concepts at a time in the database for better performance
 		for i := 0; i < totalConcepts; i += batchSize {
 			end := i + batchSize
 			if end > totalConcepts {
@@ -121,6 +121,7 @@ func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {
 
 			batch := (*concepts)[i:end]
 
+			// The log level is set to silent as the batch create can create a huge amount of logs slowing down the create process significantly for huge code systems
 			if err := tx.Session(&gorm.Session{Logger: tx.Logger.LogMode(logger.Silent)}).Create(&batch).Error; err != nil {
 				return err
 			}

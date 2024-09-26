@@ -1,6 +1,5 @@
 package models
 
-// Project defines model for Project.
 type Project struct {
 	Model
 	Description         string

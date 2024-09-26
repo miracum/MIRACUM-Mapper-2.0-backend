@@ -34,7 +34,6 @@ func (gq *GormQuery) GetAllProjectPermissionsQuery(projectPermissions *[]models.
 func (gq *GormQuery) CreateProjectPermissionQuery(projectPermission *models.ProjectPermission) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(projectPermission).Error; err != nil {
-			// cast error to postgres error
 			pgErr, ok := handlePgError(err)
 			if !ok {
 				return err

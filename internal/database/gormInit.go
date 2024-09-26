@@ -21,10 +21,6 @@ func NewGormConnection(config *config.Config) *gorm.DB {
 }
 
 func getGormConnection(config *config.Config) (*gorm.DB, error) {
-	// db, err := createGormConnection(config)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	db, err := connectToDb(config)
 	if err != nil {
@@ -75,7 +71,6 @@ func executeSQL(db *gorm.DB, sqlStatements []string) error {
 }
 
 func initEnums(db *gorm.DB) error {
-	// Define SQL statements for creating enums
 	enumStatements := []string{
 		"CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');",
 		"CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');",
@@ -83,7 +78,6 @@ func initEnums(db *gorm.DB) error {
 		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'projectOwner', 'editor');",
 	}
 
-	// Execute SQL statements with exception handling
 	if err := executeSQLWithExceptionHandling(db, enumStatements); err != nil {
 		return err
 	}
@@ -146,7 +140,6 @@ func setupFullTextSearch(db *gorm.DB) error {
         $$;`,
 	}
 
-	// Execute SQL statements with exception handling
 	if err := executeSQL(db, sqlStatements); err != nil {
 		return err
 	}
@@ -156,10 +149,9 @@ func setupFullTextSearch(db *gorm.DB) error {
 func setupFullTextSearchOld(db *gorm.DB) error {
 	sqlStatements := []string{
 		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
-		// Update display_search_vector column
+
 		"UPDATE concepts SET display_search_vector = to_tsvector('english', display);",
 
-		// Check if the index exists before creating it
 		`DO $$
 		BEGIN
 		    IF NOT EXISTS (
@@ -174,7 +166,6 @@ func setupFullTextSearchOld(db *gorm.DB) error {
 		END
 		$$;`,
 
-		// Create or replace function
 		`CREATE OR REPLACE FUNCTION concepts_display_trigger() RETURNS trigger AS $$
 		    begin
 		      new.display_search_vector := to_tsvector('english', new.display);
@@ -182,7 +173,6 @@ func setupFullTextSearchOld(db *gorm.DB) error {
 		    end
 		$$ LANGUAGE plpgsql;`,
 
-		// Create trigger
 		`DO $$
 		BEGIN
 		    IF NOT EXISTS (
@@ -205,7 +195,7 @@ func setupFullTextSearchOld(db *gorm.DB) error {
 		END IF;
 	END
 	$$;`,
-		// Check if the index exists before creating it (for code_system_id)
+
 		`DO $$
     BEGIN
         IF NOT EXISTS (
@@ -220,7 +210,6 @@ func setupFullTextSearchOld(db *gorm.DB) error {
     END
     $$;`,
 
-		// Check if the index exists before creating it (for LOWER(code))
 		`DO $$
     BEGIN
         IF NOT EXISTS (
@@ -249,7 +238,6 @@ func setupFullTextSearchOld(db *gorm.DB) error {
 		// $$;`,
 	}
 
-	// Execute SQL statements with exception handling
 	if err := executeSQL(db, sqlStatements); err != nil {
 		return err
 	}
@@ -266,9 +254,8 @@ func createGormConnection(config *config.Config) (*gorm.DB, error) {
 		config.Env.DBName)
 
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{
-		// Conn: db,
 		DSN: DSN,
-	}), &gorm.Config{}) // Use db.Driver() instead of db.DriverName()
+	}), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GORM database connection: %v", err)
 	}
@@ -403,6 +390,7 @@ func createTestData(gormDB *gorm.DB) {
 		Code    string
 		Meaning string
 	}{
+		// artificially generated test data which is not valid
 		{"1000-9", "Hemoglobin A1c/Hemoglobin.total in Blood"},
 		{"1001-7", "Hemoglobin A1c in Blood by HPLC"},
 		{"1002-5", "Glucose level in Blood"},

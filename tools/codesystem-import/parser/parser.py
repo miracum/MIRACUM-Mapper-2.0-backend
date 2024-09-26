@@ -31,9 +31,9 @@ def apply_template(format_string, placeholders, row):
     row (namedtuple): A named tuple from the DataFrame containing the data.
 
     Returns:
-    str: The processed template string with placeholders replaced by actual values.
+    str: The processed template string with placeholders replaced by the actual values.
     """
-    values = [str(getattr(row, placeholder)) for placeholder in placeholders]
+    values = [str(getattr(row, placeholder)) if pd.notna(getattr(row, placeholder)) else '' for placeholder in placeholders]
     return format_string.format(*values)
 
 def parse_csv(input_file, output_file, config_file):
@@ -52,29 +52,20 @@ def parse_csv(input_file, output_file, config_file):
     with open(config_file, 'r') as file:
         config = json.load(file)
 
-    # Validate the configuration
-    required_keys = ['code', 'meaning']
-    for key in required_keys:
-            if key not in config:
-                raise ValueError(f"Configuration must contain '{key}' key.")
-
     # Initialize the output DataFrame
     output_df = pd.DataFrame()
 
-    # compile the templates for the required keys and heck if all placeholders exist in the DataFrame columns. Store the placeholders in a map
+    # Compile the templates for each key in the config and check if all placeholders exist in the DataFrame columns. Store the placeholders in a map
     placeholders_map, format_string_map = {}, {}
-    for key in required_keys:
-        format_string, placeholders = compile_template(config[key])
+    for key, template in config.items():
+        format_string, placeholders = compile_template(template)
         format_string_map[key], placeholders_map[key] = format_string, placeholders
         for placeholder in placeholders:
             if placeholder not in df.columns:
                 raise ValueError(f"Placeholder '{placeholder}' not found in input CSV columns.")
 
-    # Initialize the output DataFrame
-    output_df = pd.DataFrame()
-
-    # Compile the templates for the required keys and apply them to each row with a progress bar
-    for key in required_keys:
+    # Compile the templates for each key in the config and apply them to each row with a progress bar
+    for key in config.keys():
         format_string, placeholders = format_string_map[key], placeholders_map[key]
         output_df[key] = [apply_template(format_string, placeholders, row) for row in tqdm(df.itertuples(index=False, name='Pandas'), total=len(df), desc=f"Processing {key}")]
 

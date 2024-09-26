@@ -30,6 +30,7 @@ var (
 	}
 )
 
+// callback function to check if the mapping is valid
 var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32, error) {
 	var errorMessages []string
 
@@ -56,13 +57,13 @@ var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32
 				}
 				break
 			}
-			// since the roles are ordered in ascending order, we can break here because all remaining roles will have an ID greater than the codeSystemRoleID of the element
+			// since the roles are ordered in ascending order, break can be performed here because all remaining roles will have an ID greater than the codeSystemRoleID of the element
 			if element.CodeSystemRoleID < role.ID {
 				break
 			}
 		}
 
-		if !isValid { // || element.CodeSystemRoleID > project.CodeSystemRoles[len(project.CodeSystemRoles)-1].ID
+		if !isValid {
 			errorMessages = append(errorMessages, fmt.Sprintf("Invalid mapping: CodeSystemRoleID %d is not valid", element.CodeSystemRoleID))
 		}
 	}
@@ -127,8 +128,6 @@ func (s *Server) CreateMapping(ctx context.Context, request api.CreateMappingReq
 			return api.CreateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to add the mapping"}, nil
 		}
 	}
-	// id := uint64(mapping.ID) // TODO this could result in a negative number
-	// mapping.ModelBigId.ID = id
 
 	return api.CreateMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
 }

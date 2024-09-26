@@ -10,8 +10,6 @@ import (
 )
 
 func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool, update bool) error {
-	// start transaction, get CodeSystemRole ids for project, call check function, if no error, create mapping
-
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		project := models.Project{
 			Model: models.Model{
@@ -47,7 +45,6 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 		}
 
 		// Get all ConceptIDs from the Elements in the Mapping and find them in the database
-		//  concepts := make([]models.Concept, len(mapping.Elements))
 		for i, element := range mapping.Elements {
 			var concept models.Concept
 			if err := tx.First(&concept, element.ConceptID).Error; err != nil {
@@ -84,7 +81,6 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 	return err
 }
 
-// GetAllMappingsQuery implements database.Datastore.
 func (gq *GormQuery) GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("project_id = ?", projectId).Preload("Elements.Concept.CodeSystem").Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&mappings).Error; err != nil {
@@ -105,12 +101,10 @@ func (gq *GormQuery) GetAllMappingsQuery(mappings *[]models.Mapping, projectId i
 
 }
 
-// CreateMappingQuery implements database.Datastore.
 func (gq *GormQuery) CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error {
 	return CreateOrUpdateMapping(gq, mapping, checkFunc, false, false)
 }
 
-// GetMappingQuery implements database.Datastore.
 func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, mappingId int64) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("project_id = ?", projectId).Preload("Elements.Concept.CodeSystem").First(mapping, mappingId).Error; err != nil {
@@ -134,13 +128,11 @@ func (gq *GormQuery) GetMappingQuery(mapping *models.Mapping, projectId int, map
 	return err
 }
 
-// UpdateMappingQuery implements database.Datastore.
 func (gq *GormQuery) UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error {
 	// TODO it has to be checked if the mapping exists in the project. If there is another project which has the same CodeSystem Roles and the projectId of the other project is set in the update mapping url, the mapping would get moved to the other project
 	return CreateOrUpdateMapping(gq, mapping, checkFunc, deleteMissingElements, true)
 }
 
-// DeleteMappingQuery implements database.Datastore.
 func (gq *GormQuery) DeleteMappingQuery(mapping *models.Mapping) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("project_id = ?", mapping.ProjectID).Preload("Elements").Preload("Elements.Concept.CodeSystem").First(mapping, mapping.ID).Error; err != nil {

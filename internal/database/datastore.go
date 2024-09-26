@@ -52,7 +52,6 @@ const (
 	NotFound            ErrorType = iota
 	InternalServerError ErrorType = iota
 	ClientError         ErrorType = iota
-	// Add other error types here...
 )
 
 // The ID allows for tracing the error in the logs. In the future it could be possible to additionally set a value if the code should be printed as an api response and in the Error() function a check could be made to only return the message if the value is not set.
@@ -79,9 +78,7 @@ const (
 // }
 
 func (e DatabaseError) Error() string {
-	//return fmt.Sprintf("Database error %s: %s", e.ID, e.Message)
 	return e.Message
-	// return fmt.Sprintf("%s (Reference-Code:%s)", e.Message, e.ID)
 }
 
 func (e DatabaseError) Is(target error) bool {
@@ -102,7 +99,6 @@ var (
 	ErrClientError = DatabaseError{
 		Type: ClientError,
 	}
-	// Define other error types here
 )
 
 // var (
