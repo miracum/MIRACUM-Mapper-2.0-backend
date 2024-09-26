@@ -92,6 +92,69 @@ func initEnums(db *gorm.DB) error {
 
 func setupFullTextSearch(db *gorm.DB) error {
 	sqlStatements := []string{
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_code_trigram'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_code_trigram ON concepts USING gin (code gin_trgm_ops);';
+            END IF;
+        END
+        $$;`,
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_display_fulltext'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_display_fulltext ON concepts USING gin (to_tsvector(''english'', display));';
+            END IF;
+        END
+        $$;`,
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_code_lower'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_code_lower ON concepts (LOWER(code));';
+            END IF;
+        END
+        $$;`,
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_display_lower'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_display_lower ON concepts (LOWER(display));';
+            END IF;
+        END
+        $$;`,
+	}
+
+	// Execute SQL statements with exception handling
+	if err := executeSQL(db, sqlStatements); err != nil {
+		return err
+	}
+	return nil
+}
+
+func setupFullTextSearchOld(db *gorm.DB) error {
+	sqlStatements := []string{
 		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
 		// Update display_search_vector column
 		"UPDATE concepts SET display_search_vector = to_tsvector('english', display);",
@@ -104,7 +167,7 @@ func setupFullTextSearch(db *gorm.DB) error {
 		        FROM   pg_class c
 		        JOIN   pg_namespace n ON n.oid = c.relnamespace
 		        WHERE  c.relname = 'display_search_vector_idx'
-		        AND    n.nspname = 'public'  -- Adjust the schema name if necessary
+		        AND    n.nspname = 'public'
 		    ) THEN
 		        EXECUTE 'CREATE INDEX display_search_vector_idx ON concepts USING gin(display_search_vector);';
 		    END IF;
@@ -136,7 +199,7 @@ func setupFullTextSearch(db *gorm.DB) error {
 			FROM   pg_class c
 			JOIN   pg_namespace n ON n.oid = c.relnamespace
 			WHERE  c.relname = 'idx_display_trgm'
-			AND    n.nspname = 'public'  -- or your schema name here
+			AND    n.nspname = 'public'
 		) THEN
 			EXECUTE 'CREATE INDEX idx_display_trgm ON public.concepts USING gin (display gin_trgm_ops);';
 		END IF;

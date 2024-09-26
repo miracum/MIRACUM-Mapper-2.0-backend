@@ -7,6 +7,7 @@ import (
 	"miracummapper/internal/database/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
@@ -120,7 +121,7 @@ func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {
 
 			batch := (*concepts)[i:end]
 
-			if err := tx.Create(&batch).Error; err != nil {
+			if err := tx.Session(&gorm.Session{Logger: tx.Logger.LogMode(logger.Silent)}).Create(&batch).Error; err != nil {
 				return err
 			}
 		}
