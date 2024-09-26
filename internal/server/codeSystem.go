@@ -1,14 +1,24 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
 )
+
+type CSVProcessingJob struct {
+	CodeSystemID int32
+	Reader       *csv.Reader
+	Database     database.Datastore
+}
 
 // GetAllCodeSystems implements api.StrictServerInterface.
 func (s *Server) GetAllCodeSystems(ctx context.Context, request api.GetAllCodeSystemsRequestObject) (api.GetAllCodeSystemsResponseObject, error) {
@@ -98,4 +108,102 @@ func (s *Server) DeleteCodeSystem(ctx context.Context, request api.DeleteCodeSys
 	}
 
 	return api.DeleteCodeSystem200JSONResponse(*transform.GormCodeSystemToApiCodeSystem(&codeSystem)), nil
+}
+
+// helper functions for import code system
+
+func validateCSVHeader(reader *csv.Reader) (map[string]int, error) {
+	header, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("error reading the CSV header: %v", err)
+	}
+
+	requiredColumns := map[string]int{"code": -1, "meaning": -1}
+	for i, column := range header {
+		if j, exists := requiredColumns[column]; j == -1 && exists {
+			requiredColumns[column] = i
+		} else if j != -1 {
+			return nil, fmt.Errorf("error: column found multiple times in csv file: %s", column)
+		}
+	}
+	for column, present := range requiredColumns {
+		if present == -1 {
+			return nil, fmt.Errorf("missing required column: %s", column)
+		}
+	}
+
+	return requiredColumns, nil
+}
+
+func processCSVRows(job CSVProcessingJob, requiredColumns map[string]int) {
+	codeIndex := requiredColumns["code"]
+	meaningIndex := requiredColumns["meaning"]
+
+	var concepts []models.Concept
+
+	for {
+		record, err := job.Reader.Read()
+		if err != nil {
+			if err == csv.ErrFieldCount {
+				log.Printf("CSV file has inconsistent number of fields")
+				return
+			}
+			if err == io.EOF {
+				break
+			}
+			log.Printf("Error reading CSV file: %v", err)
+			return
+		}
+
+		concept := models.Concept{
+			Code:         record[codeIndex],
+			Display:      record[meaningIndex],
+			CodeSystemID: uint32(job.CodeSystemID),
+		}
+		concepts = append(concepts, concept)
+
+		// fmt.Printf("Code: %s, Meaning: %s\n", record[codeIndex], record[meaningIndex])
+	}
+	// if err := job.Database.CreateConceptsQuery(&concepts); err != nil {
+	// 	log.Printf("Error inserting concepts into database: %v", err)
+	// 	return
+	// }
+
+	log.Printf("CSV file processed successfully for CodeSystemID: %d", job.CodeSystemID)
+}
+
+// ImportCodeSystem implements api.StrictServerInterface
+func (s *Server) ImportCodeSystem(ctx context.Context, request api.ImportCodeSystemRequestObject) (api.ImportCodeSystemResponseObject, error) {
+	codeSystemId := request.CodesystemId
+	var codeSystem models.CodeSystem
+	var concept models.Concept
+
+	if err := s.Database.GetFirstElementCodeSystemQuery(&codeSystem, codeSystemId, &concept); err != nil {
+		if errors.Is(err, database.ErrNotFound) && codeSystem.ID == 0 {
+			return api.ImportCodeSystem404JSONResponse(fmt.Sprintf("CodeSystem with ID %d couldn't be found.", request.CodesystemId)), nil
+		} else if errors.Is(err, database.ErrNotFound) && codeSystem.ID != 0 && concept.ID == 0 {
+		} else {
+			return api.ImportCodeSystem500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystem"}, nil
+		}
+	}
+
+	// Read the entire CSV content into a buffer
+	file := request.Body
+	buf := new(bytes.Buffer)
+	if _, err := buf.ReadFrom(file); err != nil {
+		return api.ImportCodeSystem500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while reading the CSV file"}, nil
+	}
+
+	// Create a new reader for header validation
+	reader := csv.NewReader(bytes.NewReader(buf.Bytes()))
+	requiredColumns, err := validateCSVHeader(reader)
+	if err != nil {
+		return api.ImportCodeSystem400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+	}
+
+	// Create another reader for row processing
+	reader = csv.NewReader(bytes.NewReader(buf.Bytes()))
+	go processCSVRows(CSVProcessingJob{CodeSystemID: codeSystemId, Reader: reader, Database: s.Database}, requiredColumns)
+
+	return api.ImportCodeSystem202JSONResponse("CSV file is being processed"), nil
 }

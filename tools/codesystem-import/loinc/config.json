@@ -1,0 +1,4 @@
+{
+  "code": "$LOINC_NUM$",
+  "meaning": "Long: $LONG_COMMON_NAME$ Short: $SHORTNAME$"
+}

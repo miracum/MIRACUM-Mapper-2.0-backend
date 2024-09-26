@@ -28,13 +28,12 @@ func (e CodeSystemRoleType) Value() (driver.Value, error) {
 	return string(e), nil
 }
 
-// CodeSystemRole defines model for CodeSystemRole.
 type CodeSystemRole struct {
 	ID           uint32             `gorm:"primarykey"`
 	Type         CodeSystemRoleType `gorm:"type:CodeSystemRoleType"`
 	Name         string
 	Position     uint32
-	ProjectID    uint32
+	ProjectID    uint32 `gorm:"index"`
 	CodeSystemID uint32
 	Elements     []Element `gorm:"constraint:OnDelete:CASCADE"`
 	CodeSystem   CodeSystem

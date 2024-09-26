@@ -34,8 +34,8 @@ func (gq *GormQuery) GetAllConceptsQuery(concepts *[]models.Concept, codeSystemI
 		// Add meaning condition if meaning is not empty
 		if meaning != "" {
 			formattedMeaning := strings.Join(strings.Fields(meaning), ":* & ") + ":*" // Adjust for partial matches
-			query = query.Where("display_search_vector @@ to_tsquery(?) OR similarity(display, ?) > 0.3", formattedMeaning, meaning)
-			// query = query.Where("display_search_vector @@ to_tsquery(?)", formattedMeaning)
+			// query = query.Where("display_search_vector @@ to_tsquery(?) OR similarity(display, ?) > 0.3", formattedMeaning, meaning)
+			query = query.Where("display_search_vector @@ to_tsquery(?)", formattedMeaning)
 			// query = query.Where("similarity(display, ?) > 0.8", meaning)
 			// query = query.Select("*, similarity(display, ?) > set_limit(0.99) AS s", meaning).Order("s DESC")
 		}

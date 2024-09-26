@@ -98,11 +98,3 @@ func ApiUpdateMappingToGormMapping(mapping api.UpdateMapping, projectId int32) m
 	return dbMapping
 
 }
-
-// func ApiConceptsToGormElement(concept api.Concept) models.Element {
-// 	concept_id := uint32(*concept.Id)
-// 	return models.Element{
-// 		CodeSystemRoleID: uint32(*element.SystemId),
-// 		ConceptID:        &concept_id,
-// 	}
-// }

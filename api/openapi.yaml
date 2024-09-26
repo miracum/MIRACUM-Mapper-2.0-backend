@@ -829,6 +829,47 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/import:
+    post:
+      tags:
+        - code-system
+      summary: Import concepts for a code system by ID
+      description: Import concepts for a code system by ID. The concepts are imported from a CSV file. The format of the CSV must be "code,meaning"
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+      operationId: importCodeSystem
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+              # type: object
+              # properties:
+              #   file:
+              #     type: string
+              #     format: binary
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "CSV is in the correct format. Start importing concepts now"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
   /codesystems/{codesystem_id}/concepts:
     get:
       tags:
@@ -1096,9 +1137,7 @@ components:
                 name:
                   type: string
                 version:
-                  type: string
-
-#############################      
+                  type: string     
     CreateMapping:
       type: object
       # required:

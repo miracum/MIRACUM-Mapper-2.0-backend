@@ -6,7 +6,6 @@ import (
 
 // var (
 // 	ErrInvalidUUID = errors.New("invalid uuid provided")
-// 	// Define other errors here...
 // )
 
 func ParseUUID(id string) (uuid.UUID, error) {

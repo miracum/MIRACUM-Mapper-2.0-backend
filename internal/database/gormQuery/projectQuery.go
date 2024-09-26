@@ -14,7 +14,6 @@ func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, pageSize in
 	return db.Error
 }
 
-// CreateProject implements database.Datastore.
 func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&project).Error
@@ -79,7 +78,6 @@ func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) e
 	}
 }
 
-// UpdateProject implements database.Datastore.
 func (gq *GormQuery) UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		project_old := models.Project{}

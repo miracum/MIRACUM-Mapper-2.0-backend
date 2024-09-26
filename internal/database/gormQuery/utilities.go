@@ -17,19 +17,15 @@ func handlePgError(gormErr error) (*pgconn.PgError, bool) {
 			err, ok = unwrappedErr.(*pgconn.PgError)
 			if !ok {
 				// The unwrapped error is also not a *pgconn.PgError
-				// Handle this case appropriately
 				return nil, false
 			}
 		} else {
 			// The error could not be unwrapped
-			// Handle this case appropriately
 			return nil, false
 		}
 	}
 
 	// Now err is a *pgconn.PgError
-	// You can use it as you wish
-	// For example, return it directly
 	return err, true
 }
 

@@ -21,10 +21,6 @@ func NewGormConnection(config *config.Config) *gorm.DB {
 }
 
 func getGormConnection(config *config.Config) (*gorm.DB, error) {
-	// db, err := createGormConnection(config)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	db, err := connectToDb(config)
 	if err != nil {
@@ -75,7 +71,6 @@ func executeSQL(db *gorm.DB, sqlStatements []string) error {
 }
 
 func initEnums(db *gorm.DB) error {
-	// Define SQL statements for creating enums
 	enumStatements := []string{
 		"CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');",
 		"CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');",
@@ -83,7 +78,6 @@ func initEnums(db *gorm.DB) error {
 		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'projectOwner', 'editor');",
 	}
 
-	// Execute SQL statements with exception handling
 	if err := executeSQLWithExceptionHandling(db, enumStatements); err != nil {
 		return err
 	}
@@ -92,11 +86,72 @@ func initEnums(db *gorm.DB) error {
 
 func setupFullTextSearch(db *gorm.DB) error {
 	sqlStatements := []string{
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_code_trigram'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_code_trigram ON concepts USING gin (code gin_trgm_ops);';
+            END IF;
+        END
+        $$;`,
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_display_fulltext'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_display_fulltext ON concepts USING gin (to_tsvector(''english'', display));';
+            END IF;
+        END
+        $$;`,
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_code_lower'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_code_lower ON concepts (LOWER(code));';
+            END IF;
+        END
+        $$;`,
+		`DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM   pg_class c
+                JOIN   pg_namespace n ON n.oid = c.relnamespace
+                WHERE  c.relname = 'idx_display_lower'
+                AND    n.nspname = 'public'
+            ) THEN
+                EXECUTE 'CREATE INDEX idx_display_lower ON concepts (LOWER(display));';
+            END IF;
+        END
+        $$;`,
+	}
+
+	if err := executeSQL(db, sqlStatements); err != nil {
+		return err
+	}
+	return nil
+}
+
+func setupFullTextSearchOld(db *gorm.DB) error {
+	sqlStatements := []string{
 		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
-		// Update display_search_vector column
+
 		"UPDATE concepts SET display_search_vector = to_tsvector('english', display);",
 
-		// Check if the index exists before creating it
 		`DO $$
 		BEGIN
 		    IF NOT EXISTS (
@@ -104,14 +159,13 @@ func setupFullTextSearch(db *gorm.DB) error {
 		        FROM   pg_class c
 		        JOIN   pg_namespace n ON n.oid = c.relnamespace
 		        WHERE  c.relname = 'display_search_vector_idx'
-		        AND    n.nspname = 'public'  -- Adjust the schema name if necessary
+		        AND    n.nspname = 'public'
 		    ) THEN
 		        EXECUTE 'CREATE INDEX display_search_vector_idx ON concepts USING gin(display_search_vector);';
 		    END IF;
 		END
 		$$;`,
 
-		// Create or replace function
 		`CREATE OR REPLACE FUNCTION concepts_display_trigger() RETURNS trigger AS $$
 		    begin
 		      new.display_search_vector := to_tsvector('english', new.display);
@@ -119,7 +173,6 @@ func setupFullTextSearch(db *gorm.DB) error {
 		    end
 		$$ LANGUAGE plpgsql;`,
 
-		// Create trigger
 		`DO $$
 		BEGIN
 		    IF NOT EXISTS (
@@ -136,13 +189,13 @@ func setupFullTextSearch(db *gorm.DB) error {
 			FROM   pg_class c
 			JOIN   pg_namespace n ON n.oid = c.relnamespace
 			WHERE  c.relname = 'idx_display_trgm'
-			AND    n.nspname = 'public'  -- or your schema name here
+			AND    n.nspname = 'public'
 		) THEN
 			EXECUTE 'CREATE INDEX idx_display_trgm ON public.concepts USING gin (display gin_trgm_ops);';
 		END IF;
 	END
 	$$;`,
-		// Check if the index exists before creating it (for code_system_id)
+
 		`DO $$
     BEGIN
         IF NOT EXISTS (
@@ -157,7 +210,6 @@ func setupFullTextSearch(db *gorm.DB) error {
     END
     $$;`,
 
-		// Check if the index exists before creating it (for LOWER(code))
 		`DO $$
     BEGIN
         IF NOT EXISTS (
@@ -186,7 +238,6 @@ func setupFullTextSearch(db *gorm.DB) error {
 		// $$;`,
 	}
 
-	// Execute SQL statements with exception handling
 	if err := executeSQL(db, sqlStatements); err != nil {
 		return err
 	}
@@ -203,9 +254,8 @@ func createGormConnection(config *config.Config) (*gorm.DB, error) {
 		config.Env.DBName)
 
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{
-		// Conn: db,
 		DSN: DSN,
-	}), &gorm.Config{}) // Use db.Driver() instead of db.DriverName()
+	}), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GORM database connection: %v", err)
 	}
@@ -340,6 +390,7 @@ func createTestData(gormDB *gorm.DB) {
 		Code    string
 		Meaning string
 	}{
+		// artificially generated test data which is not valid
 		{"1000-9", "Hemoglobin A1c/Hemoglobin.total in Blood"},
 		{"1001-7", "Hemoglobin A1c in Blood by HPLC"},
 		{"1002-5", "Glucose level in Blood"},

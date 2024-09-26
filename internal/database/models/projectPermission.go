@@ -31,10 +31,9 @@ func (e ProjectPermissionRole) Value() (driver.Value, error) {
 	return string(e), nil
 }
 
-// ProjectPermission defines model for ProjectPermission.
 type ProjectPermission struct {
 	Role      ProjectPermissionRole `gorm:"type:ProjectPermissionRole"`
 	UserID    uuid.UUID             `gorm:"primarykey"` // ;constraint:OnDelete:CASCADE
-	ProjectID uint32                `gorm:"primarykey"`
+	ProjectID uint32                `gorm:"primarykey;index"`
 	User      User                  //`gorm:"foreignKey:UserID"`
 }
