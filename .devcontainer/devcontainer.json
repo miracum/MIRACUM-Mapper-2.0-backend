@@ -13,7 +13,6 @@
                 "golang.go",
                 "ms-vscode.go",
                 "esbenp.prettier-vscode",
-                "github.copilot",
                 "shardulm94.trailing-spaces",
                 "ms-azuretools.vscode-docker",
                 "42Crunch.vscode-openapi",
