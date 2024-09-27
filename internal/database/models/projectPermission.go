@@ -11,7 +11,7 @@ type ProjectPermissionRole string
 
 const (
 	AdminRole ProjectPermissionRole = "reviewer"
-	UserRole  ProjectPermissionRole = "projectOwner"
+	UserRole  ProjectPermissionRole = "project_owner"
 	GuestRole ProjectPermissionRole = "editor"
 )
 

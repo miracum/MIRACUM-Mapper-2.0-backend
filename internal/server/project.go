@@ -60,7 +60,7 @@ func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectReq
 
 	// adminExists := false
 	// for _, permission := range projectDetails.ProjectPermissions {
-	// 	if permission.Role == "projectOwner" {
+	// 	if permission.Role == "project_owner" {
 	// 		adminExists = true
 	// 		break
 	// 	}

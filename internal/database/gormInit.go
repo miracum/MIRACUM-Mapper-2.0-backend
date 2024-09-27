@@ -75,7 +75,7 @@ func initEnums(db *gorm.DB) error {
 		"CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');",
 		"CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');",
 		"CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');",
-		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'projectOwner', 'editor');",
+		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'project_owner', 'editor');",
 	}
 
 	if err := executeSQLWithExceptionHandling(db, enumStatements); err != nil {
@@ -86,6 +86,7 @@ func initEnums(db *gorm.DB) error {
 
 func setupFullTextSearch(db *gorm.DB) error {
 	sqlStatements := []string{
+		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
 		`DO $$
         BEGIN
             IF NOT EXISTS (
@@ -341,118 +342,118 @@ func createTestData(gormDB *gorm.DB) {
 	// Save the test user 2 to the database
 	gormDB.FirstOrCreate(&testUser2, models.User{Id: testUser2.Id})
 
-	description := "Example Code System 1"
-	codeSystem := models.CodeSystem{
-		Uri:             "http://example.com/codesystem",
-		Version:         "1.0",
-		Name:            "Example Code System",
-		Description:     &description,
-		Author:          nil,
-		Concepts:        nil,
-		CodeSystemRoles: nil,
-	}
+	// description := "Example Code System 1"
+	// codeSystem := models.CodeSystem{
+	// 	Uri:             "http://example.com/codesystem",
+	// 	Version:         "1.0",
+	// 	Name:            "Example Code System",
+	// 	Description:     &description,
+	// 	Author:          nil,
+	// 	Concepts:        nil,
+	// 	CodeSystemRoles: nil,
+	// }
 
-	gormDB.FirstOrCreate(&codeSystem)
+	// gormDB.FirstOrCreate(&codeSystem)
 
-	description2 := "Example Code System 2"
+	// description2 := "Example Code System 2"
 
-	codeSystem2 := models.CodeSystem{
-		Model:       models.Model{ID: 2},
-		Uri:         "http://example.com/codesystem2",
-		Version:     "1.0",
-		Name:        "Example Code System 2",
-		Description: &description2,
-	}
+	// codeSystem2 := models.CodeSystem{
+	// 	Model:       models.Model{ID: 2},
+	// 	Uri:         "http://example.com/codesystem2",
+	// 	Version:     "1.0",
+	// 	Name:        "Example Code System 2",
+	// 	Description: &description2,
+	// }
 
-	gormDB.FirstOrCreate(&codeSystem2)
+	// gormDB.FirstOrCreate(&codeSystem2)
 
-	// create concept for code system 1
-	concept1 := models.Concept{
-		CodeSystemID: codeSystem.ID,
-		Code:         "1",
-		Display:      "Concept 1",
-	}
+	// // create concept for code system 1
+	// concept1 := models.Concept{
+	// 	CodeSystemID: codeSystem.ID,
+	// 	Code:         "1",
+	// 	Display:      "Concept 1",
+	// }
 
-	gormDB.FirstOrCreate(&concept1)
+	// gormDB.FirstOrCreate(&concept1)
 
-	// create concept for code system 2
+	// // create concept for code system 2
 
-	concept2 := models.Concept{
-		ID:           2,
-		CodeSystemID: codeSystem2.ID,
-		Code:         "2",
-		Display:      "Concept 2",
-	}
+	// concept2 := models.Concept{
+	// 	ID:           2,
+	// 	CodeSystemID: codeSystem2.ID,
+	// 	Code:         "2",
+	// 	Display:      "Concept 2",
+	// }
 
-	gormDB.FirstOrCreate(&concept2)
+	// gormDB.FirstOrCreate(&concept2)
 
-	var sampleLoincCodes = []struct {
-		Code    string
-		Meaning string
-	}{
-		// artificially generated test data which is not valid
-		{"1000-9", "Hemoglobin A1c/Hemoglobin.total in Blood"},
-		{"1001-7", "Hemoglobin A1c in Blood by HPLC"},
-		{"1002-5", "Glucose level in Blood"},
-		{"1003-3", "Potassium level in Serum or Plasma"},
-		{"1004-1", "Sodium level in Serum or Plasma"},
-		{"1005-8", "Cholesterol in Serum or Plasma"},
-		{"1006-6", "Triglycerides in Serum or Plasma"},
-		{"1007-4", "HDL Cholesterol in Serum or Plasma"},
-		{"1008-2", "LDL Cholesterol in Serum or Plasma"},
-		{"1009-0", "Creatinine level in Serum or Plasma"},
-		{"1010-8", "Urea Nitrogen level in Blood"},
-		{"1011-6", "Protein total in Serum or Plasma"},
-		{"1012-4", "Albumin level in Serum or Plasma"},
-		{"1013-2", "Calcium level in Serum or Plasma"},
-		{"1014-0", "Phosphorus level in Serum or Plasma"},
-		{"1015-7", "Iron level in Serum or Plasma"},
-		{"1016-5", "Bilirubin total in Serum or Plasma"},
-		{"1017-3", "Alkaline Phosphatase level in Serum or Plasma"},
-		{"1018-1", "Alanine Aminotransferase level in Serum or Plasma"},
-		{"1019-9", "Aspartate Aminotransferase level in Serum or Plasma"},
-		{"1020-7", "Gamma Glutamyl Transferase level in Serum or Plasma"},
-		{"1021-5", "Blood Uric acid level"},
-		{"1022-3", "C-Reactive Protein level in Serum or Plasma"},
-		{"1023-1", "Thyroid Stimulating Hormone level in Serum or Plasma"},
-		{"1024-9", "Free T4 level in Serum or Plasma"},
-		{"1025-6", "Total T3 level in Serum or Plasma"},
-		{"1026-4", "Prostate Specific Antigen in Serum or Plasma"},
-		{"1027-2", "Rheumatoid Factor in Serum or Plasma"},
-		{"1028-0", "Hepatitis C Virus Antibody in Serum or Plasma"},
-		{"1029-8", "HIV 1+2 Antibodies in Serum or Plasma"},
-		{"1030-6", "Hemoglobin level in Blood"},
-		{"1031-4", "Erythrocyte Sedimentation Rate"},
-		{"1032-2", "White Blood Cell count in Blood"},
-		{"1033-0", "Platelet count in Blood"},
-		{"1034-8", "Red Blood Cell count in Blood"},
-		{"1035-5", "Mean Corpuscular Volume"},
-		{"1036-3", "Mean Corpuscular Hemoglobin"},
-		{"1037-1", "Mean Corpuscular Hemoglobin Concentration"},
-		{"1038-9", "Red Cell Distribution Width"},
-		{"1039-7", "Neutrophils.auto count in Blood"},
-		{"1040-5", "Lymphocytes.auto count in Blood"},
-		{"1041-3", "Monocytes.auto count in Blood"},
-		{"1042-1", "Eosinophils.auto count in Blood"},
-		{"1043-9", "Basophils.auto count in Blood"},
-		{"1044-7", "Blood Type in Blood"},
-		{"1045-4", "Rh(D) Typing in Blood"},
-		{"1046-2", "Antibody Screen in Blood"},
-		{"1047-0", "Direct Antiglobulin Test in Blood"},
-		{"1048-8", "Indirect Antiglobulin Test in Blood"},
-		{"1049-6", "Blood Culture for Bacteria"},
-	}
+	// var sampleLoincCodes = []struct {
+	// 	Code    string
+	// 	Meaning string
+	// }{
+	// 	// artificially generated test data which is not valid
+	// 	{"1000-9", "Hemoglobin A1c/Hemoglobin.total in Blood"},
+	// 	{"1001-7", "Hemoglobin A1c in Blood by HPLC"},
+	// 	{"1002-5", "Glucose level in Blood"},
+	// 	{"1003-3", "Potassium level in Serum or Plasma"},
+	// 	{"1004-1", "Sodium level in Serum or Plasma"},
+	// 	{"1005-8", "Cholesterol in Serum or Plasma"},
+	// 	{"1006-6", "Triglycerides in Serum or Plasma"},
+	// 	{"1007-4", "HDL Cholesterol in Serum or Plasma"},
+	// 	{"1008-2", "LDL Cholesterol in Serum or Plasma"},
+	// 	{"1009-0", "Creatinine level in Serum or Plasma"},
+	// 	{"1010-8", "Urea Nitrogen level in Blood"},
+	// 	{"1011-6", "Protein total in Serum or Plasma"},
+	// 	{"1012-4", "Albumin level in Serum or Plasma"},
+	// 	{"1013-2", "Calcium level in Serum or Plasma"},
+	// 	{"1014-0", "Phosphorus level in Serum or Plasma"},
+	// 	{"1015-7", "Iron level in Serum or Plasma"},
+	// 	{"1016-5", "Bilirubin total in Serum or Plasma"},
+	// 	{"1017-3", "Alkaline Phosphatase level in Serum or Plasma"},
+	// 	{"1018-1", "Alanine Aminotransferase level in Serum or Plasma"},
+	// 	{"1019-9", "Aspartate Aminotransferase level in Serum or Plasma"},
+	// 	{"1020-7", "Gamma Glutamyl Transferase level in Serum or Plasma"},
+	// 	{"1021-5", "Blood Uric acid level"},
+	// 	{"1022-3", "C-Reactive Protein level in Serum or Plasma"},
+	// 	{"1023-1", "Thyroid Stimulating Hormone level in Serum or Plasma"},
+	// 	{"1024-9", "Free T4 level in Serum or Plasma"},
+	// 	{"1025-6", "Total T3 level in Serum or Plasma"},
+	// 	{"1026-4", "Prostate Specific Antigen in Serum or Plasma"},
+	// 	{"1027-2", "Rheumatoid Factor in Serum or Plasma"},
+	// 	{"1028-0", "Hepatitis C Virus Antibody in Serum or Plasma"},
+	// 	{"1029-8", "HIV 1+2 Antibodies in Serum or Plasma"},
+	// 	{"1030-6", "Hemoglobin level in Blood"},
+	// 	{"1031-4", "Erythrocyte Sedimentation Rate"},
+	// 	{"1032-2", "White Blood Cell count in Blood"},
+	// 	{"1033-0", "Platelet count in Blood"},
+	// 	{"1034-8", "Red Blood Cell count in Blood"},
+	// 	{"1035-5", "Mean Corpuscular Volume"},
+	// 	{"1036-3", "Mean Corpuscular Hemoglobin"},
+	// 	{"1037-1", "Mean Corpuscular Hemoglobin Concentration"},
+	// 	{"1038-9", "Red Cell Distribution Width"},
+	// 	{"1039-7", "Neutrophils.auto count in Blood"},
+	// 	{"1040-5", "Lymphocytes.auto count in Blood"},
+	// 	{"1041-3", "Monocytes.auto count in Blood"},
+	// 	{"1042-1", "Eosinophils.auto count in Blood"},
+	// 	{"1043-9", "Basophils.auto count in Blood"},
+	// 	{"1044-7", "Blood Type in Blood"},
+	// 	{"1045-4", "Rh(D) Typing in Blood"},
+	// 	{"1046-2", "Antibody Screen in Blood"},
+	// 	{"1047-0", "Direct Antiglobulin Test in Blood"},
+	// 	{"1048-8", "Indirect Antiglobulin Test in Blood"},
+	// 	{"1049-6", "Blood Culture for Bacteria"},
+	// }
 
-	for i, sampleLoincCode := range sampleLoincCodes {
-		concept := models.Concept{
-			ID:           uint64(i + 3),
-			CodeSystemID: 2,
-			Code:         sampleLoincCode.Code,
-			Display:      sampleLoincCode.Meaning,
-		}
+	// for i, sampleLoincCode := range sampleLoincCodes {
+	// 	concept := models.Concept{
+	// 		ID:           uint64(i + 3),
+	// 		CodeSystemID: 2,
+	// 		Code:         sampleLoincCode.Code,
+	// 		Display:      sampleLoincCode.Meaning,
+	// 	}
 
-		gormDB.FirstOrCreate(&concept)
-	}
+	// 	gormDB.FirstOrCreate(&concept)
+	// }
 
 	// words := []string{"nein", "awesome", "42", "Pills", "Nina", "Loinc", "word7", "word8", "word9", "Very", "and", "for", "some", "Boomer", "Go", "hallo", "blub", "egal", "buch", "katze", "hund", "henrik", "computer", "geben", "halten", "tastatur", "applaudieren", "kontrolle", "schlüssel", "schlange", "schlafen", "schlüsselbund"}
 

@@ -164,10 +164,10 @@ func processCSVRows(job CSVProcessingJob, requiredColumns map[string]int) {
 
 		// fmt.Printf("Code: %s, Meaning: %s\n", record[codeIndex], record[meaningIndex])
 	}
-	// if err := job.Database.CreateConceptsQuery(&concepts); err != nil {
-	// 	log.Printf("Error inserting concepts into database: %v", err)
-	// 	return
-	// }
+	if err := job.Database.CreateConceptsQuery(&concepts); err != nil {
+		log.Printf("Error inserting concepts into database: %v", err)
+		return
+	}
 
 	log.Printf("CSV file processed successfully for CodeSystemID: %d", job.CodeSystemID)
 }
