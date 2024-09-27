@@ -34,9 +34,6 @@ func convertToGormProjectPermission(userId string, role models.ProjectPermission
 		UserID:    userUuid,
 		ProjectID: uint32(projectId),
 	}
-	if role == "project_owner" {
-		permission.Role = models.ProjectPermissionRole("project_owner")
-	}
 
 	return &permission, nil
 }
