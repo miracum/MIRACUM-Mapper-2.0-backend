@@ -35,7 +35,7 @@ func getGormConnection(config *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to auto migrate models: %v", err)
 	}
 
-	if err := setupFullTextSearch(db); err != nil {
+	if err := setupFullTextSearchOld(db); err != nil {
 		return nil, err
 	}
 
@@ -88,57 +88,64 @@ func setupFullTextSearch(db *gorm.DB) error {
 	sqlStatements := []string{
 		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
 		`DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1
-                FROM   pg_class c
-                JOIN   pg_namespace n ON n.oid = c.relnamespace
-                WHERE  c.relname = 'idx_code_trigram'
-                AND    n.nspname = 'public'
-            ) THEN
-                EXECUTE 'CREATE INDEX idx_code_trigram ON concepts USING gin (code gin_trgm_ops);';
-            END IF;
-        END
-        $$;`,
+		BEGIN
+		    IF NOT EXISTS (
+		        SELECT 1
+		        FROM   pg_class c
+		        JOIN   pg_namespace n ON n.oid = c.relnamespace
+		        WHERE  c.relname = 'idx_code_trigram'
+		        AND    n.nspname = 'public'
+		    ) THEN
+		        EXECUTE 'CREATE INDEX idx_code_trigram ON concepts USING gin (code gin_trgm_ops);';
+		    END IF;
+		END
+		$$;`,
+		// `DO $$
+		// BEGIN
+		//     ALTER TABLE concepts ADD COLUMN IF NOT EXISTS display_search_vector tsvector
+		// 	GENERATED ALWAYS AS (to_tsvector('english', display)) STORED;
+		// 	CREATE INDEX IF NOT EXISTS idx_display_search_vector ON concepts USING gin (display_search_vector);
+		// END
+		// $$;`,
 		`DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1
-                FROM   pg_class c
-                JOIN   pg_namespace n ON n.oid = c.relnamespace
-                WHERE  c.relname = 'idx_display_fulltext'
-                AND    n.nspname = 'public'
-            ) THEN
-                EXECUTE 'CREATE INDEX idx_display_fulltext ON concepts USING gin (to_tsvector(''english'', display));';
-            END IF;
-        END
-        $$;`,
+		BEGIN
+		    IF NOT EXISTS (
+		        SELECT 1
+		        FROM   pg_class c
+		        JOIN   pg_namespace n ON n.oid = c.relnamespace
+		        WHERE  c.relname = 'idx_display_fulltext'
+		        AND    n.nspname = 'public'
+		    ) THEN
+		        EXECUTE 'CREATE INDEX idx_display_fulltext ON concepts USING gin (to_tsvector(''english'', display));';
+		    END IF;
+		END
+		$$;`,
 		`DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1
-                FROM   pg_class c
-                JOIN   pg_namespace n ON n.oid = c.relnamespace
-                WHERE  c.relname = 'idx_code_lower'
-                AND    n.nspname = 'public'
-            ) THEN
-                EXECUTE 'CREATE INDEX idx_code_lower ON concepts (LOWER(code));';
-            END IF;
-        END
-        $$;`,
+		BEGIN
+		    IF NOT EXISTS (
+		        SELECT 1
+		        FROM   pg_class c
+		        JOIN   pg_namespace n ON n.oid = c.relnamespace
+		        WHERE  c.relname = 'idx_code_lower'
+		        AND    n.nspname = 'public'
+		    ) THEN
+		        EXECUTE 'CREATE INDEX idx_code_lower ON concepts (LOWER(code));';
+		    END IF;
+		END
+		$$;`,
 		`DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1
-                FROM   pg_class c
-                JOIN   pg_namespace n ON n.oid = c.relnamespace
-                WHERE  c.relname = 'idx_display_lower'
-                AND    n.nspname = 'public'
-            ) THEN
-                EXECUTE 'CREATE INDEX idx_display_lower ON concepts (LOWER(display));';
-            END IF;
-        END
-        $$;`,
+		BEGIN
+		    IF NOT EXISTS (
+		        SELECT 1
+		        FROM   pg_class c
+		        JOIN   pg_namespace n ON n.oid = c.relnamespace
+		        WHERE  c.relname = 'idx_display_lower'
+		        AND    n.nspname = 'public'
+		    ) THEN
+		        EXECUTE 'CREATE INDEX idx_display_lower ON concepts (LOWER(display));';
+		    END IF;
+		END
+		$$;`,
 	}
 
 	if err := executeSQL(db, sqlStatements); err != nil {
@@ -183,19 +190,19 @@ func setupFullTextSearchOld(db *gorm.DB) error {
 		    END IF;
 		END
 		$$;`,
-		`DO $$
-	BEGIN
-		IF NOT EXISTS (
-			SELECT 1
-			FROM   pg_class c
-			JOIN   pg_namespace n ON n.oid = c.relnamespace
-			WHERE  c.relname = 'idx_display_trgm'
-			AND    n.nspname = 'public'
-		) THEN
-			EXECUTE 'CREATE INDEX idx_display_trgm ON public.concepts USING gin (display gin_trgm_ops);';
-		END IF;
-	END
-	$$;`,
+		// 	`DO $$
+		// BEGIN
+		// 	IF NOT EXISTS (
+		// 		SELECT 1
+		// 		FROM   pg_class c
+		// 		JOIN   pg_namespace n ON n.oid = c.relnamespace
+		// 		WHERE  c.relname = 'idx_display_trgm'
+		// 		AND    n.nspname = 'public'
+		// 	) THEN
+		// 		EXECUTE 'CREATE INDEX idx_display_trgm ON public.concepts USING gin (display gin_trgm_ops);';
+		// 	END IF;
+		// END
+		// $$;`,
 
 		`DO $$
     BEGIN

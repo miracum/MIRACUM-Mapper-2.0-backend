@@ -19,4 +19,4 @@ run: build
 	$(BINARY_NAME)
 
 run-docker: build
-	docker compose up --build
+	docker compose up --build -d
