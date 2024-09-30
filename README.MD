@@ -27,6 +27,8 @@ docker-compose up --build
 
 The Docker container will be available at `http://localhost:8080`.
 
+## Configuration
+
 The Service can be configured using a `config.yaml` file. The following default values are used:
 
 ```yaml
@@ -43,6 +45,14 @@ rate_limit:
   limit: 100
   burst: 10
 ```
+
+## Code System Import
+
+The service is able to import codeSystems and their corresponding codes from a `CSV` file. The `CSV` file should have the two columns `code` and `meaning`. The UI doesn't feature an import yet so the `CSV` file has to be uploaded to the `/codesystems/{codesystem_id}/import` endpoint directly (For more information, see the [swagger file](api/openapi.yaml)). In order to create a new CodeSystem, follow these steps:
+
+1. Create a new CodeSystem using the POST `/codesystems` endpointß
+2. Prepare a `CSV` file for import. To achieve it, [this python script](tools/codesystem-import/parser/README.md) can be used.
+3. Upload the `CSV` file to the `/codesystems/{codesystem_id}/import` endpoint. This upload can be done once per code system. If the code system already has codes, the import will fail so it is not possible via the API to update codes within a codesystem after they were created
 
 ## Further Resources
 
