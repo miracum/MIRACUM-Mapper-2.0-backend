@@ -38,14 +38,14 @@ func CreateStrictMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareF
 		})
 
 	strictMiddlewareFuncs := make([]strictgin.StrictGinMiddlewareFunc, 0)
-	for _, h := range []gin.HandlerFunc{validator} {
-		strictMiddlewareFuncs = append(strictMiddlewareFuncs, func(f strictgin.StrictGinHandlerFunc, operationID string) strictgin.StrictGinHandlerFunc {
+	for _, handler := range []gin.HandlerFunc{validator} {
+		strictMiddlewareFuncs = append(strictMiddlewareFuncs, func(strictHandler strictgin.StrictGinHandlerFunc, operationID string) strictgin.StrictGinHandlerFunc {
 			return func(c *gin.Context, request interface{}) (response interface{}, err error) {
-				h(c)
+				handler(c)
 				// if c.IsAborted() {
 				// 	return nil, nil
 				// }
-				return f(c, request)
+				return strictHandler(c, request)
 			}
 		})
 	}

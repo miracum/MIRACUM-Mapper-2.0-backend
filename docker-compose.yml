@@ -13,24 +13,96 @@ services:
       - MIRACUM_MAPPER_KEYCLOAK_CLIENT_ID=mapper
       - MIRACUM_MAPPER_KEYCLOAK_CLIENT_SECRET=secret
       - MIRACUM_MAPPER_SKIP_SSL_CHECK=true
-      - DB_HOST=postgres
-      - DB_NAME=postgres
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_HOST=miracum-postgres
+      - DB_NAME=miracum_db
+      - DB_USER=miracum_user
+      - DB_PASSWORD=miracum_password
     # healthcheck:
     #   test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:8080/health"]
     #   interval: 30s
     #   timeout: 10s
     #   retries: 5
-  postgres:
+    depends_on:
+      - keycloak
+      - miracum-postgres
+    networks:
+      - public_network
+      - miracum_network_internal
+      - shared_network
+      - keycloak_network_internal
+
+  miracum-postgres:
     image: postgres:12
-    container_name: postgres
+    container_name: miracum-postgres
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=miracum_db
+      - POSTGRES_USER=miracum_user
+      - POSTGRES_PASSWORD=miracum_password
     ports:
       - "5432:5432"
-    # volumes:
-    #   - miracum-pgdata:/var/lib/postgresql/data
-    hostname: postgres
+    volumes:
+      - miracum_postgres_data:/var/lib/postgresql/data
+    hostname: miracum-postgres
+    networks:
+      - miracum_network_internal
+
+  keycloak:
+    image: keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_PORT: 8081
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-postgres/keycloak_db
+      KC_DB_USERNAME: keycloak_user
+      KC_DB_PASSWORD: keycloak_password
+    ports:
+      - "8081:8080"
+    depends_on:
+      - keycloak-postgres
+    command: ["start-dev"]
+    networks:
+      - public_network
+      - keycloak_network_internal
+      - shared_network
+
+  keycloak-postgres:
+    image: postgres:12
+    container_name: keycloak-postgres
+    environment:
+      - POSTGRES_DB=keycloak_db
+      - POSTGRES_USER=keycloak_user
+      - POSTGRES_PASSWORD=keycloak_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+    hostname: keycloak-postgres
+    networks:
+      - keycloak_network_internal
+
+volumes:
+  miracum_postgres_data:
+    external: true
+    name: miracum_postgres_data
+  keycloak_postgres_data:
+    external: true
+    name: keycloak_postgres_data
+
+networks:
+  public_network:
+    driver: bridge
+  miracum_network_internal:
+    driver: bridge
+    internal: true
+  keycloak_network_internal:
+    driver: bridge
+    internal: true
+  shared_network:
+    external: true

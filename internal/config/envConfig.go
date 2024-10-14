@@ -6,28 +6,34 @@ import (
 )
 
 type EnvConfig struct {
-	Port       string
-	DBUser     string
-	DBName     string
-	DBHost     string
-	DBPort     string
-	DBPassword string
+	Port          string
+	DBUser        string
+	DBName        string
+	DBHost        string
+	DBPort        string
+	DBPassword    string
+	KeycloakHost  string
+	KeycloakRealm string
 }
 
 var DefaultConfig = EnvConfig{
-	Port:       "8080",
-	DBUser:     "postgres",
-	DBName:     "postgres",
-	DBHost:     "localhost",
-	DBPort:     "5432",
-	DBPassword: "postgres",
+	Port:          "8080",
+	DBUser:        "postgres",
+	DBName:        "postgres",
+	DBHost:        "localhost",
+	DBPort:        "5432",
+	DBPassword:    "postgres",
+	KeycloakHost:  "keycloak:8080",
+	KeycloakRealm: "master",
 }
 
 var EnvKeys = EnvConfig{
-	DBUser:     "DB_USER",
-	DBName:     "DB_NAME",
-	DBHost:     "DB_HOST",
-	DBPassword: "DB_PASSWORD",
+	DBUser:        "DB_USER",
+	DBName:        "DB_NAME",
+	DBHost:        "DB_HOST",
+	DBPassword:    "DB_PASSWORD",
+	KeycloakHost:  "KEYCLOAK_URL",
+	KeycloakRealm: "KEYCLOAK_REALM",
 }
 
 func NewEnvConfig() *EnvConfig {

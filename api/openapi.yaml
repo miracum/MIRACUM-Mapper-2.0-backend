@@ -14,11 +14,11 @@ info:
     # identifier: GPL-3.0-or-later
     url: "https://www.gnu.org/licenses/gpl-3.0.html"
   version: "0.1.0"
-servers:
-  - url: http://localhost:8080
-    description: Development server
-  - url: https://api.miracum.org
-    description: Production server
+# servers:
+#   - url: http://localhost:8080
+#     description: Development server
+#   - url: https://api.miracum.org
+#     description: Production server
 # externalDocs:
 #   description: Find out more about Swagger
 #   url: http://swagger.io
@@ -1265,8 +1265,8 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://<keycloak-url>/auth/realms/<realm-name>/protocol/openid-connect/auth
-          tokenUrl: https://<keycloak-url>/auth/realms/<realm-name>/protocol/openid-connect/token
+          authorizationUrl: http://localhost:8081/auth/realms/master/protocol/openid-connect/auth
+          tokenUrl: http://localhost:8081/auth/realms/master/protocol/openid-connect/token
           scopes:
             admin: grants admin access
             member: grants normal access

@@ -23,6 +23,12 @@ func main() {
 	// database.Migrate(db)
 	db := database.NewGormConnection(config)
 
+	// connect to keycloak and get public certs
+	// keySet, err := middlewares.FetchKeycloakCerts(config)
+	// if err != nil {
+	// 	log.Fatalf("Failed to fetch Keycloak certs: %v", err)
+	// }
+
 	// r := routes.SetupRouter()
 
 	// // run on port from config
@@ -30,7 +36,7 @@ func main() {
 
 	r := gin.Default()
 
-	fa, err := middlewares.NewFakeAuthenticator()
+	fa, err := middlewares.NewFakeAuthenticator(nil) // keySet
 	if err != nil {
 		log.Fatalln("error creating authenticator:", err)
 	}
@@ -56,18 +62,18 @@ func main() {
 
 	// api.RegisterHandlers(r, svr)
 
-	normalJWS, err := fa.CreateJWSWithClaims([]string{"normal"})
-	if err != nil {
-		log.Fatalln("error creating normal JWS:", err)
-	}
+	// normalJWS, err := fa.CreateJWSWithClaims([]string{"normal"})
+	// if err != nil {
+	// 	log.Fatalln("error creating normal JWS:", err)
+	// }
 
-	adminJWS, err := fa.CreateJWSWithClaims([]string{"admin"})
-	if err != nil {
-		log.Fatalln("error creating admin JWS:", err)
-	}
+	// adminJWS, err := fa.CreateJWSWithClaims([]string{"admin"})
+	// if err != nil {
+	// 	log.Fatalln("error creating admin JWS:", err)
+	// }
 
-	log.Println("Normal token", string(normalJWS))
-	log.Println("Admin token", string(adminJWS))
+	// log.Println("Normal token", string(normalJWS))
+	// log.Println("Admin token", string(adminJWS))
 
 	r.Run(":" + config.Env.Port)
 }
