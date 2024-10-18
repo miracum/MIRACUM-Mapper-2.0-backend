@@ -21,10 +21,29 @@ type JWSValidator interface {
 const JWTClaimsContextKey = "jwt_claims"
 
 var (
-	ErrNoAuthHeader      = errors.New("Authorization header is missing")
-	ErrInvalidAuthHeader = errors.New("Authorization header is malformed")
-	ErrClaimsInvalid     = errors.New("Provided claims do not match expected scopes")
+	ErrNoAuthHeader      = errors.New("authorization header is missing")
+	ErrInvalidAuthHeader = errors.New("authorization header is malformed")
+	ErrClaimsInvalid     = errors.New("provided claims do not match expected scopes")
+	ErrorTokenExpired    = errors.New("token Expired")
 )
+
+var ErrorTokenExpiredApi = &AuthenticationError{
+	Reason:   "token expired",
+	Response: &ResponseError{StatusCode: http.StatusUnauthorized},
+}
+
+type AuthenticationError struct {
+	Reason   string
+	Response *ResponseError
+}
+
+func (e *AuthenticationError) Error() string {
+	return e.Reason
+}
+
+type ResponseError struct {
+	StatusCode int
+}
 
 // GetJWSFromRequest extracts a JWS string from an Authorization: Bearer <jws> header
 func GetJWSFromRequest(req *http.Request) (string, error) {
@@ -42,7 +61,7 @@ func GetJWSFromRequest(req *http.Request) (string, error) {
 	return strings.TrimPrefix(authHdr, prefix), nil
 }
 
-func NewAuthenticator(v JWSValidator) openapi3filter.AuthenticationFunc {
+func NewAuthenticate(v JWSValidator) openapi3filter.AuthenticationFunc {
 	return func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 		return Authenticate(v, ctx, input)
 	}
@@ -66,6 +85,9 @@ func Authenticate(v JWSValidator, ctx context.Context, input *openapi3filter.Aut
 	// if the JWS is valid, we have a JWT, which will contain a bunch of claims.
 	token, err := v.ValidateJWS(jws)
 	if err != nil {
+		if errors.Is(err, ErrorTokenExpired) {
+			return ErrorTokenExpiredApi
+		}
 		return fmt.Errorf("validating JWS: %w", err)
 	}
 
@@ -85,34 +107,49 @@ func Authenticate(v JWSValidator, ctx context.Context, input *openapi3filter.Aut
 	return nil
 }
 
-// GetClaimsFromToken returns a list of claims from the token. We store these
-// as a list under the "perms" claim, short for permissions, to keep the token
-// shorter.
+// GetClaimsFromToken returns a list of roles from the token for the specified client.
 func GetClaimsFromToken(t jwt.Token) ([]string, error) {
-	rawPerms, found := t.Get(PermissionsClaim)
+	resourceAccess, found := t.Get("resource_access")
 	if !found {
-		// If the perms aren't found, it means that the token has none, but it has
-		// passed signature validation by now, so it's a valid token, so we return
-		// the empty list.
+		// If the resource_access claim isn't found, return an empty list of roles.
 		return make([]string, 0), nil
 	}
 
-	// rawPerms will be an untyped JSON list, so we need to convert it to
-	// a string list.
-	rawList, ok := rawPerms.([]interface{})
+	resourceAccessMap, ok := resourceAccess.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("'%s' claim is unexpected type'", PermissionsClaim)
+		return nil, fmt.Errorf("resource_access claim is unexpected type")
 	}
 
-	claims := make([]string, len(rawList))
+	clientAccess, found := resourceAccessMap[ClientID]
+	if !found {
+		// If the client-specific access isn't found, return an empty list of roles.
+		return make([]string, 0), nil
+	}
 
-	for i, rawClaim := range rawList {
-		var ok bool
-		claims[i], ok = rawClaim.(string)
+	clientAccessMap, ok := clientAccess.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("client access claim is unexpected type")
+	}
+
+	roles, found := clientAccessMap["roles"]
+	if !found {
+		// If the roles aren't found, return an empty list of roles.
+		return make([]string, 0), nil
+	}
+
+	rolesList, ok := roles.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("roles claim is unexpected type")
+	}
+
+	claims := make([]string, len(rolesList))
+	for i, role := range rolesList {
+		claims[i], ok = role.(string)
 		if !ok {
-			return nil, fmt.Errorf("%s[%d] is not a string", PermissionsClaim, i)
+			return nil, fmt.Errorf("roles[%d] is not a string", i)
 		}
 	}
+
 	return claims, nil
 }
 
@@ -127,12 +164,6 @@ func CheckTokenClaims(expectedClaims []string, t jwt.Token) error {
 		claimsMap[c] = true
 	}
 
-	// for _, e := range expectedClaims {
-	// 	if !claimsMap[e] {
-	// 		return ErrClaimsInvalid
-	// 	}
-	// }
-	// return nil
 	for _, e := range expectedClaims {
 		if claimsMap[e] {
 			return nil

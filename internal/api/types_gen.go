@@ -334,6 +334,14 @@ type UpdateProject struct {
 	Version             string `json:"version"`
 }
 
+// User defines model for User.
+type User struct {
+	Email    *string `json:"email,omitempty"`
+	Fullname *string `json:"fullname,omitempty"`
+	Id       string  `json:"id"`
+	Username string  `json:"username"`
+}
+
 // CodesystemRoleId defines model for codesystem-role_id.
 type CodesystemRoleId = int32
 
@@ -363,6 +371,9 @@ type BadRequestError = string
 
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = string
+
+// UnauthorizedError defines model for UnauthorizedError.
+type UnauthorizedError = string
 
 // GetAllConceptsParams defines parameters for GetAllConcepts.
 type GetAllConceptsParams struct {

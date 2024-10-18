@@ -36,6 +36,8 @@ tags:
     description: Operations about the defined systems of a project
   - name: mapping
     description: Operations about mappings
+  - name: user
+    description: Operations about users
   - name: code-system
     description: Operations about code systems
   - name: concept
@@ -91,6 +93,8 @@ paths:
                   "$ref": "#/components/schemas/Project"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: Page not found (e.g., page number too high)
           content:
@@ -673,6 +677,72 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
+  /users:
+    get:
+      tags:
+        - user
+      summary: Get all users
+      description: Get all users.
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/User"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /users/{user_id}:
+    delete:
+      tags:
+        - user
+      summary: Delete a user
+      description: Delete a user by ID. This will also delete all the permissions, the user has for the project.
+      parameters:
+        - $ref: "#/components/parameters/user_id"
+      operationId: deleteUser
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /users/login:
+    get:
+      tags:
+        - user
+      summary: Updates user-database with information from Access-Token
+      operationId: login
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /codesystems:
     get:
       tags:
@@ -691,12 +761,6 @@ paths:
                   "$ref": "#/components/schemas/CodeSystem"
         "400":
           "$ref": "#/components/responses/BadRequestError"
-        "404":
-          description: Project or codesystem-role not found
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
     post:
@@ -1196,6 +1260,20 @@ components:
           properties:
             concept:
               $ref: "#/components/schemas/Concept"
+    User:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id:
+          type: string
+        fullname:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
     Concept:
       type: object
       required:
@@ -1260,6 +1338,12 @@ components:
         application/json:
           schema:
             type: string
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: string
   securitySchemes:
     OAuth2:
       type: oauth2
@@ -1277,5 +1361,5 @@ components:
   links: {}
   callbacks: {}
 security:
-  - OAuth2: [normal, admin]
+  # - OAuth2: [normal, admin]
   - BearerAuth: [normal, admin]

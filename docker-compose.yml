@@ -25,11 +25,11 @@ services:
     depends_on:
       - keycloak
       - miracum-postgres
-    networks:
-      - public_network
-      - miracum_network_internal
-      - shared_network
-      - keycloak_network_internal
+    # networks:
+    #   - public_network
+    #   - miracum_network_internal
+    #   - shared_network
+    #   - keycloak_network_internal
 
   miracum-postgres:
     image: postgres:12
@@ -43,14 +43,14 @@ services:
     volumes:
       - miracum_postgres_data:/var/lib/postgresql/data
     hostname: miracum-postgres
-    networks:
-      - miracum_network_internal
+    # networks:
+    #   - miracum_network_internal
 
   keycloak:
     image: keycloak/keycloak:latest
     container_name: keycloak
     environment:
-      KC_HOSTNAME: keycloak
+      KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8081
       KC_HOSTNAME_STRICT_BACKCHANNEL: false
       KC_HTTP_ENABLED: true
@@ -67,10 +67,10 @@ services:
     depends_on:
       - keycloak-postgres
     command: ["start-dev"]
-    networks:
-      - public_network
-      - keycloak_network_internal
-      - shared_network
+    # networks:
+    #   - public_network
+    #   - keycloak_network_internal
+    #   - shared_network
 
   keycloak-postgres:
     image: postgres:12
@@ -84,8 +84,8 @@ services:
     volumes:
       - keycloak_postgres_data:/var/lib/postgresql/data
     hostname: keycloak-postgres
-    networks:
-      - keycloak_network_internal
+    # networks:
+    #   - keycloak_network_internal
 
 volumes:
   miracum_postgres_data:
@@ -94,15 +94,14 @@ volumes:
   keycloak_postgres_data:
     external: true
     name: keycloak_postgres_data
-
-networks:
-  public_network:
-    driver: bridge
-  miracum_network_internal:
-    driver: bridge
-    internal: true
-  keycloak_network_internal:
-    driver: bridge
-    internal: true
-  shared_network:
-    external: true
+# networks:
+#   public_network:
+#     driver: bridge
+#   miracum_network_internal:
+#     driver: bridge
+#     internal: true
+#   keycloak_network_internal:
+#     driver: bridge
+#     internal: true
+#   shared_network:
+#     external: true

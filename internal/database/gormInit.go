@@ -327,10 +327,12 @@ func pingGormDB(db *gorm.DB) error {
 func createTestData(gormDB *gorm.DB) {
 	// Create a test user
 	testUser := models.User{
-		Id:          uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"), // Generate a new UUID
-		UserName:    "Test User",
-		LogName:     "testuser",
-		Affiliation: "Test Affiliation",
+		Id:       uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"), // Generate a new UUID
+		FullName: "Test User",
+		// LogName:     "testuser",
+		// Affiliation: "Test Affiliation",
+		UserName: "testuser",
+		Email:    "test.user@123.com",
 		// Initialize ProjectPermissions if needed
 	}
 
@@ -339,10 +341,12 @@ func createTestData(gormDB *gorm.DB) {
 
 	// Create a test user
 	testUser2 := models.User{
-		Id:          uuid.MustParse("b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a20"), // Generate a new UUID
-		UserName:    "Test Use2",
-		LogName:     "testuse2",
-		Affiliation: "Test Affiliatio2",
+		Id:       uuid.MustParse("b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a20"), // Generate a new UUID
+		FullName: "Test User 2",
+		// LogName:     "testuse2",
+		// Affiliation: "Test Affiliatio2",
+		UserName: "testuser2",
+		Email:    "test.user2@123.com",
 		// Initialize ProjectPermissions if needed
 	}
 

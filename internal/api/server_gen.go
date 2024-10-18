@@ -105,6 +105,15 @@ type ServerInterface interface {
 	// Get project permission for a specific user
 	// (GET /projects/{project_id}/permissions/{user_id})
 	GetPermission(c *gin.Context, projectId ProjectId, userId UserId)
+	// Get all users
+	// (GET /users)
+	GetAllUsers(c *gin.Context)
+	// Updates user-database with information from Access-Token
+	// (GET /users/login)
+	Login(c *gin.Context)
+	// Delete a user
+	// (DELETE /users/{user_id})
+	DeleteUser(c *gin.Context, userId UserId)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -118,8 +127,6 @@ type MiddlewareFunc func(c *gin.Context)
 
 // GetAllCodeSystems operation middleware
 func (siw *ServerInterfaceWrapper) GetAllCodeSystems(c *gin.Context) {
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -209,8 +216,6 @@ func (siw *ServerInterfaceWrapper) GetCodeSystem(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -236,8 +241,6 @@ func (siw *ServerInterfaceWrapper) GetAllConcepts(c *gin.Context) {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem_id: %w", err), http.StatusBadRequest)
 		return
 	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -348,8 +351,6 @@ func (siw *ServerInterfaceWrapper) GetAllProjects(c *gin.Context) {
 
 	var err error
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	// Parameter object where we will unmarshal all parameters from the context
@@ -417,8 +418,6 @@ func (siw *ServerInterfaceWrapper) CreateProject(c *gin.Context) {
 // UpdateProject operation middleware
 func (siw *ServerInterfaceWrapper) UpdateProject(c *gin.Context) {
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -473,8 +472,6 @@ func (siw *ServerInterfaceWrapper) GetProject(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -501,8 +498,6 @@ func (siw *ServerInterfaceWrapper) GetAllCodeSystemRoles(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -528,8 +523,6 @@ func (siw *ServerInterfaceWrapper) UpdateCodeSystemRole(c *gin.Context) {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
 		return
 	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -566,8 +559,6 @@ func (siw *ServerInterfaceWrapper) GetCodeSystemRole(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -593,8 +584,6 @@ func (siw *ServerInterfaceWrapper) GetAllMappings(c *gin.Context) {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
 		return
 	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -657,8 +646,6 @@ func (siw *ServerInterfaceWrapper) PatchMapping(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -685,8 +672,6 @@ func (siw *ServerInterfaceWrapper) CreateMapping(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -712,8 +697,6 @@ func (siw *ServerInterfaceWrapper) UpdateMapping(c *gin.Context) {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
 		return
 	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -750,8 +733,6 @@ func (siw *ServerInterfaceWrapper) DeleteMapping(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -787,8 +768,6 @@ func (siw *ServerInterfaceWrapper) GetMapping(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -814,8 +793,6 @@ func (siw *ServerInterfaceWrapper) GetAllPermissions(c *gin.Context) {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
 		return
 	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -843,8 +820,6 @@ func (siw *ServerInterfaceWrapper) CreatePermission(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -870,8 +845,6 @@ func (siw *ServerInterfaceWrapper) UpdatePermission(c *gin.Context) {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
 		return
 	}
-
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
 
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
@@ -908,8 +881,6 @@ func (siw *ServerInterfaceWrapper) DeletePermission(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -945,8 +916,6 @@ func (siw *ServerInterfaceWrapper) GetPermission(c *gin.Context) {
 		return
 	}
 
-	c.Set(OAuth2Scopes, []string{"normal", "admin"})
-
 	c.Set(BearerAuthScopes, []string{"normal", "admin"})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -957,6 +926,64 @@ func (siw *ServerInterfaceWrapper) GetPermission(c *gin.Context) {
 	}
 
 	siw.Handler.GetPermission(c, projectId, userId)
+}
+
+// GetAllUsers operation middleware
+func (siw *ServerInterfaceWrapper) GetAllUsers(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAllUsers(c)
+}
+
+// Login operation middleware
+func (siw *ServerInterfaceWrapper) Login(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.Login(c)
+}
+
+// DeleteUser operation middleware
+func (siw *ServerInterfaceWrapper) DeleteUser(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId UserId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", c.Param("user_id"), &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter user_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"admin"})
+
+	c.Set(BearerAuthScopes, []string{"admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteUser(c, userId)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -1013,11 +1040,16 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PUT(options.BaseURL+"/projects/:project_id/permissions", wrapper.UpdatePermission)
 	router.DELETE(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.DeletePermission)
 	router.GET(options.BaseURL+"/projects/:project_id/permissions/:user_id", wrapper.GetPermission)
+	router.GET(options.BaseURL+"/users", wrapper.GetAllUsers)
+	router.GET(options.BaseURL+"/users/login", wrapper.Login)
+	router.DELETE(options.BaseURL+"/users/:user_id", wrapper.DeleteUser)
 }
 
 type BadRequestErrorJSONResponse string
 
 type InternalServerErrorJSONResponse string
+
+type UnauthorizedErrorJSONResponse string
 
 type GetAllCodeSystemsRequestObject struct {
 }
@@ -1040,15 +1072,6 @@ type GetAllCodeSystems400JSONResponse struct{ BadRequestErrorJSONResponse }
 func (response GetAllCodeSystems400JSONResponse) VisitGetAllCodeSystemsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetAllCodeSystems404JSONResponse ErrorResponse
-
-func (response GetAllCodeSystems404JSONResponse) VisitGetAllCodeSystemsResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -1400,6 +1423,15 @@ type GetAllProjects400JSONResponse struct{ BadRequestErrorJSONResponse }
 func (response GetAllProjects400JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllProjects401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response GetAllProjects401JSONResponse) VisitGetAllProjectsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -2327,6 +2359,124 @@ func (response GetPermission500JSONResponse) VisitGetPermissionResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetAllUsersRequestObject struct {
+}
+
+type GetAllUsersResponseObject interface {
+	VisitGetAllUsersResponse(w http.ResponseWriter) error
+}
+
+type GetAllUsers200JSONResponse []User
+
+func (response GetAllUsers200JSONResponse) VisitGetAllUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllUsers400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetAllUsers400JSONResponse) VisitGetAllUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetAllUsers500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetAllUsers500JSONResponse) VisitGetAllUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type LoginRequestObject struct {
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200JSONResponse User
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Login400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response Login400JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Login500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response Login500JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUserRequestObject struct {
+	UserId UserId `json:"user_id"`
+}
+
+type DeleteUserResponseObject interface {
+	VisitDeleteUserResponse(w http.ResponseWriter) error
+}
+
+type DeleteUser200JSONResponse User
+
+func (response DeleteUser200JSONResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUser400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response DeleteUser400JSONResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUser404JSONResponse ErrorResponse
+
+func (response DeleteUser404JSONResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteUser500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response DeleteUser500JSONResponse) VisitDeleteUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Get all code systems
@@ -2410,6 +2560,15 @@ type StrictServerInterface interface {
 	// Get project permission for a specific user
 	// (GET /projects/{project_id}/permissions/{user_id})
 	GetPermission(ctx context.Context, request GetPermissionRequestObject) (GetPermissionResponseObject, error)
+	// Get all users
+	// (GET /users)
+	GetAllUsers(ctx context.Context, request GetAllUsersRequestObject) (GetAllUsersResponseObject, error)
+	// Updates user-database with information from Access-Token
+	// (GET /users/login)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
+	// Delete a user
+	// (DELETE /users/{user_id})
+	DeleteUser(ctx context.Context, request DeleteUserRequestObject) (DeleteUserResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -3230,68 +3389,147 @@ func (sh *strictHandler) GetPermission(ctx *gin.Context, projectId ProjectId, us
 	}
 }
 
+// GetAllUsers operation middleware
+func (sh *strictHandler) GetAllUsers(ctx *gin.Context) {
+	var request GetAllUsersRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAllUsers(ctx, request.(GetAllUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAllUsers")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetAllUsersResponseObject); ok {
+		if err := validResponse.VisitGetAllUsersResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Login operation middleware
+func (sh *strictHandler) Login(ctx *gin.Context) {
+	var request LoginRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx, request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		if err := validResponse.VisitLoginResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteUser operation middleware
+func (sh *strictHandler) DeleteUser(ctx *gin.Context, userId UserId) {
+	var request DeleteUserRequestObject
+
+	request.UserId = userId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteUser(ctx, request.(DeleteUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteUser")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteUserResponseObject); ok {
+		if err := validResponse.VisitDeleteUserResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

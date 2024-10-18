@@ -4,8 +4,8 @@ import "github.com/google/uuid"
 
 type User struct {
 	Id                 uuid.UUID
+	FullName           string
 	UserName           string
-	LogName            string
-	Affiliation        string
+	Email              string
 	ProjectPermissions []ProjectPermission
 }

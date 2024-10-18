@@ -6,34 +6,37 @@ import (
 )
 
 type EnvConfig struct {
-	Port          string
-	DBUser        string
-	DBName        string
-	DBHost        string
-	DBPort        string
-	DBPassword    string
-	KeycloakHost  string
-	KeycloakRealm string
+	Port             string
+	DBUser           string
+	DBName           string
+	DBHost           string
+	DBPort           string
+	DBPassword       string
+	KeycloakHost     string
+	KeycloakRealm    string
+	KeycloakClientId string
 }
 
 var DefaultConfig = EnvConfig{
-	Port:          "8080",
-	DBUser:        "postgres",
-	DBName:        "postgres",
-	DBHost:        "localhost",
-	DBPort:        "5432",
-	DBPassword:    "postgres",
-	KeycloakHost:  "keycloak:8080",
-	KeycloakRealm: "master",
+	Port:             "8080",
+	DBUser:           "miracum_user",
+	DBName:           "miracum_db",
+	DBHost:           "localhost",
+	DBPort:           "5432",
+	DBPassword:       "miracum_password",
+	KeycloakHost:     "http://localhost:8081", //  keycloak:8080
+	KeycloakRealm:    "master",
+	KeycloakClientId: "miracum-mapper",
 }
 
 var EnvKeys = EnvConfig{
-	DBUser:        "DB_USER",
-	DBName:        "DB_NAME",
-	DBHost:        "DB_HOST",
-	DBPassword:    "DB_PASSWORD",
-	KeycloakHost:  "KEYCLOAK_URL",
-	KeycloakRealm: "KEYCLOAK_REALM",
+	DBUser:           "DB_USER",
+	DBName:           "DB_NAME",
+	DBHost:           "DB_HOST",
+	DBPassword:       "DB_PASSWORD",
+	KeycloakHost:     "KEYCLOAK_URL",
+	KeycloakRealm:    "KEYCLOAK_REALM",
+	KeycloakClientId: "KEYCLOAK_CLIENT_ID",
 }
 
 func NewEnvConfig() *EnvConfig {

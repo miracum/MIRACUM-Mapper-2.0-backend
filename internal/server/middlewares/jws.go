@@ -1,6 +1,10 @@
 package middlewares
 
 import (
+	"fmt"
+	"miracummapper/internal/config"
+	"time"
+
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 )
@@ -19,13 +23,15 @@ import (
 // s9SlG/8hjB2Hz42v4p3haKWv3uS1C6ahCQ==
 // -----END EC PRIVATE KEY-----`
 
-const HardCodedKeyID = `xah9Ht7EMFI0WfaLRIdJsVLLH2BzRdHT2qzowq8PkH4`
-const HardCodedIssuer = "http://localhost:8081/realms/master"
+// const HardCodedKeyID = `xah9Ht7EMFI0WfaLRIdJsVLLH2BzRdHT2qzowq8PkH4`
+
 const HardCodedAudience = "account"
-const PermissionsClaim = "perm"
+const PermissionsClaim = "resource_access"
+
+var ClientID string
+var Issuer string
 
 type Authenticator struct {
-	// PrivateKey *ecdsa.PrivateKey
 	KeySet jwk.Set
 }
 
@@ -33,7 +39,10 @@ var _ JWSValidator = (*Authenticator)(nil)
 
 // NewAuthenticator creates an authenticator example which uses a hard coded
 // ECDSA key to validate JWT's that it has signed itself.
-func NewFakeAuthenticator(keySet jwk.Set) (*Authenticator, error) {
+func NewAuthenticator(keySet jwk.Set, config *config.Config) (*Authenticator, error) {
+	ClientID = config.Env.KeycloakClientId
+	// String with Hostname and realm
+	Issuer = config.Env.KeycloakHost + "/realms/" + config.Env.KeycloakRealm
 	// privKey, err := ecdsafile.LoadEcdsaPrivateKey([]byte(PrivateKey))
 	// if err != nil {
 	// 	return nil, fmt.Errorf("loading PEM private key: %w", err)
@@ -66,8 +75,25 @@ func NewFakeAuthenticator(keySet jwk.Set) (*Authenticator, error) {
 // ValidateJWS ensures that the critical JWT claims needed to ensure that we
 // trust the JWT are present and with the correct values.
 func (f *Authenticator) ValidateJWS(jwsString string) (jwt.Token, error) {
-	return jwt.Parse([]byte(jwsString), jwt.WithKeySet(f.KeySet),
-		jwt.WithAudience(HardCodedAudience), jwt.WithIssuer(HardCodedIssuer))
+	// return jwt.Parse([]byte(jwsString), jwt.WithKeySet(f.KeySet),
+	// 	jwt.WithAudience(HardCodedAudience), jwt.WithIssuer(Issuer))
+
+	token, err := jwt.Parse([]byte(jwsString), jwt.WithKeySet(f.KeySet),
+		jwt.WithAudience(HardCodedAudience), jwt.WithIssuer(Issuer))
+	if err != nil {
+		return nil, fmt.Errorf("parsing JWT: %w", err)
+	}
+
+	// Check if the token is expired
+	if err := jwt.Validate(token, jwt.WithClock(jwt.ClockFunc(time.Now))); err != nil {
+		// check error for message exp not satisfied
+		if err.Error() == "exp not satisfied" {
+			return nil, ErrorTokenExpired
+		}
+		return nil, fmt.Errorf("validating JWT: %w", err)
+	}
+
+	return token, nil
 }
 
 // SignToken takes a JWT and signs it with our private key, returning a JWS.

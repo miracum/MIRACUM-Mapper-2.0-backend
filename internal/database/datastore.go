@@ -33,6 +33,11 @@ type Datastore interface {
 	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error
 	DeleteMappingQuery(mapping *models.Mapping) error
 
+	// User
+	GetAllUsersQuery(users *[]models.User) error
+	DeleteUserQuery(user *models.User, userId uuid.UUID) error
+	CreateOrUpdateUserQuery(user *models.User) error
+
 	// CodeSystem
 	GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error
 	CreateCodeSystemQuery(codeSystem *models.CodeSystem) error

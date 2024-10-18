@@ -24,10 +24,10 @@ func main() {
 	db := database.NewGormConnection(config)
 
 	// connect to keycloak and get public certs
-	// keySet, err := middlewares.FetchKeycloakCerts(config)
-	// if err != nil {
-	// 	log.Fatalf("Failed to fetch Keycloak certs: %v", err)
-	// }
+	keySet, err := middlewares.FetchKeycloakCerts(config)
+	if err != nil {
+		log.Fatalf("Failed to fetch Keycloak certs: %v", err)
+	}
 
 	// r := routes.SetupRouter()
 
@@ -36,14 +36,14 @@ func main() {
 
 	r := gin.Default()
 
-	fa, err := middlewares.NewFakeAuthenticator(nil) // keySet
+	auth, err := middlewares.NewAuthenticator(keySet, config) // keySet
 	if err != nil {
 		log.Fatalln("error creating authenticator:", err)
 	}
 
 	// Create middleware for validating tokens.
 	// mw, err := server.CreateStrictMiddleware(fa)
-	mw, err := server.CreateMiddleware(fa)
+	mw, err := server.CreateMiddleware(auth)
 	if err != nil {
 		log.Fatalln("error creating middleware:", err)
 	}
@@ -52,7 +52,7 @@ func main() {
 
 	// svr := server.CreateServer(db, config)
 	// svr := server.CreateStrictServer(Db, config)
-	svr := server.CreateServerWithGormDB(db, config)
+	svr := server.CreateServer(db, config, auth)
 
 	strictHandler := api.NewStrictHandler(svr, nil)
 
