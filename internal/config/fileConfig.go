@@ -19,16 +19,22 @@ type FileConfig struct {
 		Sleep int `yaml:"sleep"`
 	} `yaml:"database"`
 
-	RateLimitConfig struct {
-		// Enabled is a flag to enable or disable rate limiting
-		Enabled bool `yaml:"enabled"`
+	// RateLimitConfig struct {
+	// 	// Enabled is a flag to enable or disable rate limiting
+	// 	Enabled bool `yaml:"enabled"`
 
-		// Limit is the maximum number of requests to allow per second
-		Limit int `yaml:"limit"`
+	// 	// Limit is the maximum number of requests to allow per second
+	// 	Limit int `yaml:"limit"`
 
-		// Burst is the maximum number of requests to allow in a burst
-		Burst int `yaml:"burst"`
-	} `yaml:"rate_limit"`
+	// 	// Burst is the maximum number of requests to allow in a burst
+	// 	Burst int `yaml:"burst"`
+	// } `yaml:"rate_limit"`
+	CorsConfig struct {
+		// AllowedOrigins is a list of origins a cross-domain request can be executed from
+		// If the special "*" value is present in the list, all origins will be allowed.
+		// An origin may contain a wildcard (*) to replace 0 or more characters (i.e.: http://*.domain.com).
+		AllowedOrigins []string `yaml:"allowed_origins"`
+	} `yaml:"cors"`
 }
 
 func NewFileConfig() *FileConfig {

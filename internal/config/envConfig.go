@@ -24,7 +24,7 @@ var DefaultConfig = EnvConfig{
 	DBHost:           "localhost",
 	DBPort:           "5432",
 	DBPassword:       "miracum_password",
-	KeycloakHost:     "http://localhost:8081", //  keycloak:8080
+	KeycloakHost:     "http://keycloak:8080", //  localhost:8081
 	KeycloakRealm:    "master",
 	KeycloakClientId: "miracum-mapper",
 }

@@ -9,13 +9,13 @@ This project is currently in the development phase and not reliably functioning.
 ## Features
 
 - Projects can be created to group mappings together which map codes from a specific set of codeSystems to another set of codeSystems. The access to projects for users can be managed with projectPermissions
-- CodeSystems and their corrrespondiong Codes can be imported in different formats (e.g CSV)
-- The User Management is handled by Keycloak and the backend is able to authenticate users against it
-- Effecient Querying of the codes from the codeSystems is possible with the use of filters
+- CodeSystems and their corresponding Codes can be imported in different formats (e.g CSV)
+- The User Management is handled by KeyCloak and the backend is able to authenticate users against it
+- Efficient Querying of the codes from the codeSystems is possible with the use of filters
 
 ## Architecture
 
-The backend is a RESTful API that provides endpoints for the frontend to interact with the database. The service is written in [Go](https://go.dev) and uses the [Gin](https://gin-gonic.com) framework to handle HTTP requests. It is packaged as a Docker Container for easy deployment. The API is sepcified using the [OpenAPI Specification](https://swagger.io/resources/open-api/). Boilerplate Go server code for e.g. validation query and path parameters, the request and response objects as well as defining the Gin router handlers is autmatically generated using the [oapi-codegen](https://github.com/oapi-codegen/oapi-codegen) code generation tool. The services uses a a [PostgreSQL](https://www.postgresql.org) database for storing data which is accessed using the [GORM](https://gorm.io) ORM. User authentication is handled by integrating [Keycloak](https://www.keycloak.org).
+The backend is a RESTful API that provides endpoints for the frontend to interact with the database. The service is written in [Go](https://go.dev) and uses the [Gin](https://gin-gonic.com) framework to handle HTTP requests. It is packaged as a Docker Container for easy deployment. The API is specified using the [OpenAPI Specification](https://swagger.io/resources/open-api/). Boilerplate Go server code for e.g. validation query and path parameters, the request and response objects as well as defining the Gin router handlers is automatically generated using the [oapi-codegen](https://github.com/oapi-codegen/oapi-codegen) code generation tool. The services uses a a [PostgreSQL](https://www.postgresql.org) database for storing data which is accessed using the [GORM](https://gorm.io) ORM. User authentication is handled by integrating [Keycloak](https://www.keycloak.org).
 
 ## Quick Start
 
@@ -39,18 +39,17 @@ database:
   retry: 30
   # How long should the service sleep between each try to connect to the database
   sleep: 5
-rate_limit:
-  # enables the rate limiting of the service
-  enabled: true
-  limit: 100
-  burst: 10
+cors:
+  # Allowed origins for the CORS policy
+  allowed_origins:
+    - "*"
 ```
 
 ## Code System Import
 
 The service is able to import codeSystems and their corresponding codes from a `CSV` file. The `CSV` file should have the two columns `code` and `meaning`. The UI doesn't feature an import yet so the `CSV` file has to be uploaded to the `/codesystems/{codesystem_id}/import` endpoint directly (For more information, see the [swagger file](api/openapi.yaml)). In order to create a new CodeSystem, follow these steps:
 
-1. Create a new CodeSystem using the POST `/codesystems` endpointß
+1. Create a new CodeSystem using the POST `/codesystems` endpoint
 2. Prepare a `CSV` file for import. To achieve it, [this python script](tools/codesystem-import/parser/README.md) can be used.
 3. Upload the `CSV` file to the `/codesystems/{codesystem_id}/import` endpoint. This upload can be done once per code system. If the code system already has codes, the import will fail so it is not possible via the API to update codes within a codesystem after they were created
 

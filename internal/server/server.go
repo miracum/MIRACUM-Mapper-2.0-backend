@@ -55,7 +55,7 @@ func CreateServer(database *gorm.DB, config *config.Config, authenticator *middl
 // 	return strictMiddlewareFuncs, nil
 // }
 
-func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
+func CreateMiddleware(v middlewares.JWSValidator, config *config.Config) ([]gin.HandlerFunc, error) {
 	spec, err := api.GetSwagger()
 	if err != nil {
 		return nil, fmt.Errorf("loading spec: %w", err)
@@ -70,15 +70,24 @@ func CreateMiddleware(v middlewares.JWSValidator) ([]gin.HandlerFunc, error) {
 		})
 
 	// TODO: make this configurable through config file
-	allowedOrigins := []string{
-		"http://localhost:5173",
-		"http://127.0.0.1:5173",
-		"http://localhost:8080",
-		"http://localhost:80",
-		"http://localhost",
-		"http://127.0.0.1",
-		"http://localhost:443",
-		"http://localhost:18512",
+	// allowedOrigins := []string{
+	// 	"http://localhost:5173",
+	// 	"http://127.0.0.1:5173",
+	// 	"http://localhost:8080",
+	// 	"http://localhost:80",
+	// 	"http://localhost",
+	// 	"http://127.0.0.1",
+	// 	"https://localhost",
+	// 	"http://localhost:18512",
+	// }
+	allowedOrigins := config.File.CorsConfig.AllowedOrigins
+
+	// warning if cors is set to allow all origins (contains "*")
+	for _, origin := range allowedOrigins {
+		if origin == "*" {
+			fmt.Println("Warning: CORS is set to allow all origins. This is a security risk!")
+			break
+		}
 	}
 
 	cors := middlewares.SetupCORS(allowedOrigins)

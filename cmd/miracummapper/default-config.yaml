@@ -5,7 +5,10 @@ database:
     sleep: 5
     # migration:
     #   enabled: false
-rate_limit:
-  enabled: true
-  limit: 100
-  burst: 10
+# rate_limit:
+#   enabled: true
+#   limit: 100
+#   burst: 10
+cors:
+    allowed_origins:
+        - "*"

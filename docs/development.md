@@ -83,6 +83,10 @@ Also the docker image can be build locally using the following command:
 docker build -t miracummapper .
 ```
 
+# Dev Container
+
+A Dev Container is provided to run the project in a containerized environment and make development easy as it has all prerequisites installed. To use it, you need to have Docker installed on your machine. The Dev Container Extension for VSCode is also recommended. Please refer to the [Dev Container Documentation](https://code.visualstudio.com/docs/remote/containers) for more information.
+
 # CI/CD Pipeline (GitHub Actions)
 
 The project uses GitHub Actions as a CI/CD pipeline. The workflow is defined in the `.github/workflows` directory. Actions from the Miracum Project [.github](https://github.com/miracum/.github) repository are integrated to the workflow. The pipeline is divided into the jobs:
