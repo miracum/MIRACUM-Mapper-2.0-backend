@@ -8,7 +8,6 @@ import (
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
-	"miracummapper/internal/utilities"
 	"strings"
 )
 
@@ -86,7 +85,7 @@ var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32
 func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsRequestObject) (api.GetAllMappingsResponseObject, error) {
 
 	pageSize := *request.Params.PageSize
-	offset := utilities.GetOffset(*request.Params.Page, pageSize)
+	offset := GetOffset(*request.Params.Page, pageSize)
 	sortBy := mappingSortColumns[*request.Params.SortBy]
 	sortOrder := mappingSortOrders[*request.Params.SortOrder]
 

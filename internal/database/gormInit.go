@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func NewGormConnection(config *config.Config) *gorm.DB {
@@ -263,7 +264,9 @@ func createGormConnection(config *config.Config) (*gorm.DB, error) {
 
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{
 		DSN: DSN,
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info), // TODO remove for production. Maybe toggle this with debug flag
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GORM database connection: %v", err)
 	}

@@ -125,6 +125,8 @@ paths:
                 $ref: "#/components/schemas/ProjectDetails" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "422":
           description: Validation Exception
           content:
@@ -157,6 +159,10 @@ paths:
                 "$ref": "#/components/schemas/Project"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project not found
           content:
@@ -189,6 +195,10 @@ paths:
                 "$ref": "#/components/schemas/ProjectDetails" # project id optional, permissions required
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project not found
           content:
@@ -214,6 +224,8 @@ paths:
                 "$ref": "#/components/schemas/Project"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: Project not found
           content:
@@ -245,6 +257,10 @@ paths:
                   "$ref": "#/components/schemas/ProjectPermission"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project not found
           content:
@@ -276,6 +292,10 @@ paths:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or user not found
           content:
@@ -313,6 +333,10 @@ paths:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or user not found
           content:
@@ -346,6 +370,10 @@ paths:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or user not found
           content:
@@ -372,6 +400,10 @@ paths:
                 "$ref": "#/components/schemas/ProjectPermission"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or user not found
           content:
@@ -1339,11 +1371,18 @@ components:
           schema:
             type: string
     UnauthorizedError:
-      description: Unauthorized
+      description: Unauthorized (missing or invalid credentials)
       content:
         application/json:
           schema:
             type: string
+    ForbiddenError:
+      description: Forbidden (insufficient permissions)
+      content:
+        application/json:
+          schema:
+            type: string
+
   securitySchemes:
     OAuth2:
       type: oauth2

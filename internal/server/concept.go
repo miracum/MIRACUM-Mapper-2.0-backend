@@ -8,7 +8,6 @@ import (
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
-	"miracummapper/internal/utilities"
 )
 
 var (
@@ -28,7 +27,7 @@ var (
 // GetAllConcepts implements api.StrictServerInterface.
 func (s *Server) GetAllConcepts(ctx context.Context, request api.GetAllConceptsRequestObject) (api.GetAllConceptsResponseObject, error) {
 	pageSize := *request.Params.PageSize
-	offset := utilities.GetOffset(*request.Params.Page, pageSize)
+	offset := GetOffset(*request.Params.Page, pageSize)
 	sortBy := conceptSortColumns[*request.Params.SortBy]
 	sortOrder := conceptSortOrders[*request.Params.SortOrder]
 

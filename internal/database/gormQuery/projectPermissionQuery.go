@@ -85,7 +85,7 @@ func (gq *GormQuery) GetProjectPermissionQuery(projectPermission *models.Project
 				var project models.Project
 				if err := tx.First(&project, projectId).Error; err != nil {
 					if errors.Is(err, gorm.ErrRecordNotFound) {
-						return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
+						return database.NewDBErrorWithTable(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId), database.ProjectTable)
 					}
 					return err
 				} else {

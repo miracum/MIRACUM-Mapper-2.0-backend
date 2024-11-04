@@ -10,9 +10,9 @@ import (
 type ProjectPermissionRole string
 
 const (
-	AdminRole ProjectPermissionRole = "reviewer"
-	UserRole  ProjectPermissionRole = "project_owner"
-	GuestRole ProjectPermissionRole = "editor"
+	ReviewerRole     ProjectPermissionRole = "reviewer"
+	ProjectOwnerRole ProjectPermissionRole = "project_owner"
+	EditorRole       ProjectPermissionRole = "editor"
 )
 
 func (e *ProjectPermissionRole) Scan(value interface{}) error {

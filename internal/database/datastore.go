@@ -8,7 +8,7 @@ import (
 
 type Datastore interface {
 	// Project
-	GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error
+	GetAllProjectsQuery(projects *[]models.Project, userID *uuid.UUID, roles *[]models.ProjectPermissionRole, pageSize int, offset int, sortBy string, sortOrder string) error
 	CreateProjectQuery(project *models.Project) error
 	GetProjectQuery(project *models.Project, projectId int32) error
 	UpdateProjectQuery(project *models.Project, checkFunc func(oldProject, newProject *models.Project) error) error
@@ -59,10 +59,17 @@ const (
 	ClientError         ErrorType = iota
 )
 
+type Table int
+
+const (
+	ProjectTable Table = iota
+)
+
 // The ID allows for tracing the error in the logs. In the future it could be possible to additionally set a value if the code should be printed as an api response and in the Error() function a check could be made to only return the message if the value is not set.
 type DatabaseError struct {
 	ID      uuid.UUID
 	Type    ErrorType
+	Table   Table
 	Message string
 }
 
@@ -71,6 +78,16 @@ func NewDBError(t ErrorType, message string) *DatabaseError {
 		ID:      uuid.New(),
 		Type:    t,
 		Message: message,
+		Table:   -1,
+	}
+}
+
+func NewDBErrorWithTable(t ErrorType, message string, table Table) *DatabaseError {
+	return &DatabaseError{
+		ID:      uuid.New(),
+		Type:    t,
+		Message: message,
+		Table:   table,
 	}
 }
 
@@ -91,10 +108,18 @@ func (e DatabaseError) Is(target error) bool {
 	if !ok {
 		return false
 	}
-	return e.Type == t.Type
+	if e.Table == -1 || t.Table == -1 {
+		return e.Type == t.Type
+	} else {
+		return e.Type == t.Type && e.Table == t.Table
+	}
 }
 
 var (
+	ErrProjectNotFound = DatabaseError{
+		Type:  NotFound,
+		Table: ProjectTable,
+	}
 	ErrNotFound = DatabaseError{
 		Type: NotFound,
 	}

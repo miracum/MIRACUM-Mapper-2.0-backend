@@ -369,6 +369,9 @@ type UserId = string
 // BadRequestError defines model for BadRequestError.
 type BadRequestError = string
 
+// ForbiddenError defines model for ForbiddenError.
+type ForbiddenError = string
+
 // InternalServerError defines model for InternalServerError.
 type InternalServerError = string
 

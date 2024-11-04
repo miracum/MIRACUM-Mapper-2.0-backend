@@ -14,8 +14,22 @@ import (
 // GetAllPermissions implements api.StrictServerInterface.
 func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermissionsRequestObject) (api.GetAllPermissionsResponseObject, error) {
 	projectId := request.ProjectId
-	var permissions []models.ProjectPermission = []models.ProjectPermission{}
 
+	// check permissions for endpoint
+	permissionsCheck, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllPermissions404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetAllPermissions500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectViewPermission, permissionsCheck) {
+		return api.GetAllPermissions403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get all permissions of project with ID %d", projectId))}, nil
+	}
+
+	var permissions []models.ProjectPermission = []models.ProjectPermission{}
 	if err := s.Database.GetAllProjectPermissionsQuery(&permissions, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
@@ -34,6 +48,20 @@ func (s *Server) GetAllPermissions(ctx context.Context, request api.GetAllPermis
 func (s *Server) CreatePermission(ctx context.Context, request api.CreatePermissionRequestObject) (api.CreatePermissionResponseObject, error) {
 	projectId := request.ProjectId
 	permission := request.Body
+
+	// check permissions for endpoint
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.CreatePermission404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.CreatePermission500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectUpdatePermission, permissions) {
+		return api.CreatePermission403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to create a permission for project with ID %d", projectId))}, nil
+	}
 
 	dbPermission, err := transform.ApiSendProjectPermissionToGormProjectPermission(permission, projectId)
 	if err != nil {
@@ -59,6 +87,20 @@ func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermiss
 	projectId := request.ProjectId
 	permission := request.Body
 
+	// check permissions for endpoint
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.UpdatePermission404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.UpdatePermission500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectUpdatePermission, permissions) {
+		return api.UpdatePermission403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to edit permission of project with ID %d", projectId))}, nil
+	}
+
 	dbPermission, err := transform.ApiSendProjectPermissionToGormProjectPermission(permission, projectId)
 	if err != nil {
 		return api.UpdatePermission422JSONResponse(err.Error()), nil
@@ -80,6 +122,21 @@ func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermiss
 // GetPermission implements api.StrictServerInterface.
 func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionRequestObject) (api.GetPermissionResponseObject, error) {
 	projectId := request.ProjectId
+
+	// check permissions for endpoint
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetPermission404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetPermission500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectViewPermission, permissions) {
+		return api.GetPermission403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to delete permission of project with ID %d", projectId))}, nil
+	}
+
 	userUuid, err := utilities.ParseUUID(request.UserId)
 	if err != nil {
 		// TODO return 422 instead of 400
@@ -104,6 +161,21 @@ func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionReq
 // DeletePermission implements api.StrictServerInterface.
 func (s *Server) DeletePermission(ctx context.Context, request api.DeletePermissionRequestObject) (api.DeletePermissionResponseObject, error) {
 	projectId := request.ProjectId
+
+	// check permissions for endpoint
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.DeletePermission404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.DeletePermission500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectUpdatePermission, permissions) {
+		return api.DeletePermission403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to delete permission of project with ID %d", projectId))}, nil
+	}
+
 	userUuid, err := utilities.ParseUUID(request.UserId)
 	if err != nil {
 		// TODO return 422 instead of 400

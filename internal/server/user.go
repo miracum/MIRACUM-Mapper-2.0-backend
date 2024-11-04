@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
@@ -63,11 +62,11 @@ func (s *Server) Login(ctx context.Context, request api.LoginRequestObject) (api
 	// get required values from jwt for user
 	id := jwt.Subject()
 
-	userName, _ := getValueFromToken(jwt, "preferred_username", false)
+	userName, _ := utilities.GetValueFromToken(jwt, "preferred_username", false)
 
-	fullName, _ := getValueFromToken(jwt, "name", false)
+	fullName, _ := utilities.GetValueFromToken(jwt, "name", false)
 
-	email, _ := getValueFromToken(jwt, "email", false)
+	email, _ := utilities.GetValueFromToken(jwt, "email", false)
 
 	// create user object
 	apiUser := api.User{
@@ -87,22 +86,4 @@ func (s *Server) Login(ctx context.Context, request api.LoginRequestObject) (api
 
 	return api.Login200JSONResponse(apiUser), nil
 
-}
-
-func getValueFromToken(token jwt.Token, key string, required bool) (string, error) {
-	id, found := token.Get(key)
-	if !found {
-		if required {
-			return "", fmt.Errorf("key not found")
-		}
-		return "", nil
-	}
-	idString, ok := id.(string)
-	if !ok {
-		if required {
-			return "", fmt.Errorf("value is not a string")
-		}
-		return "", nil
-	}
-	return idString, nil
 }

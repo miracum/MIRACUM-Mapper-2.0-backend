@@ -6,11 +6,25 @@ import (
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, pageSize int, offset int, sortBy string, sortOrder string) error {
-	db := gq.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&projects)
+// filterProjectsByRoles filters projects based on the specified roles and user ID.
+func filterProjectsByRoles(db *gorm.DB, userID uuid.UUID, roles []models.ProjectPermissionRole) *gorm.DB {
+	return db.Joins("JOIN project_permissions ON project_permissions.project_id = projects.id").
+		Where("project_permissions.user_id = ? AND project_permissions.role IN ?", userID, roles)
+}
+
+// if userID is nil, all projects are returned. roles defines a set of roles where the user has to have at least one of them to get the project
+func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, userID *uuid.UUID, roles *[]models.ProjectPermissionRole, pageSize int, offset int, sortBy string, sortOrder string) error {
+	db := gq.Database.Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize)
+
+	if userID != nil && roles != nil && len(*roles) > 0 {
+		db = filterProjectsByRoles(db, *userID, *roles)
+	}
+
+	db = db.Find(&projects)
 	return db.Error
 }
 
