@@ -90,6 +90,20 @@ func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsR
 	sortOrder := mappingSortOrders[*request.Params.SortOrder]
 
 	projectId := int(request.ProjectId)
+
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetAllMappings404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetAllMappings500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MappingViewPermission, permissions) {
+		return api.GetAllMappings403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to view mappings in the project with ID %d", projectId))}, nil
+	}
+
 	var mappings []models.Mapping = []models.Mapping{}
 
 	if err := s.Database.GetAllMappingsQuery(&mappings, projectId, pageSize, offset, sortBy, sortOrder); err != nil {
@@ -115,6 +129,19 @@ func (s *Server) CreateMapping(ctx context.Context, request api.CreateMappingReq
 	projectId := request.ProjectId
 	createMapping := request.Body
 
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.CreateMapping404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.CreateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MappingCreatePermission, permissions) {
+		return api.CreateMapping403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to create mappings in the project with ID %d", projectId))}, nil
+	}
+
 	mapping := transform.ApiCreateMappingToGormMapping(*createMapping, projectId)
 
 	if err := s.Database.CreateMappingQuery(&mapping, checkFunc); err != nil {
@@ -131,10 +158,23 @@ func (s *Server) CreateMapping(ctx context.Context, request api.CreateMappingReq
 	return api.CreateMapping200JSONResponse(transform.GormMappingToApiMapping(mapping)), nil
 }
 
-// UpdateMapping implements api.StrictServerInterface.
+// UpdateMapping implements api.StrictServerInterface. TODO: reviewer can edit comment, status and equivalence
 func (s *Server) UpdateMapping(ctx context.Context, request api.UpdateMappingRequestObject) (api.UpdateMappingResponseObject, error) {
 	projectId := request.ProjectId
 	updateMapping := *request.Body
+
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.UpdateMapping404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.UpdateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MappingUpdatePermission, permissions) {
+		return api.UpdateMapping403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to update mappings in the project with ID %d", projectId))}, nil
+	}
 
 	dbMapping := transform.ApiUpdateMappingToGormMapping(updateMapping, projectId)
 
@@ -152,10 +192,23 @@ func (s *Server) UpdateMapping(ctx context.Context, request api.UpdateMappingReq
 	return api.UpdateMapping200JSONResponse(transform.GormMappingToApiMapping(dbMapping)), nil
 }
 
-// PatchMapping implements api.StrictServerInterface.
+// PatchMapping implements api.StrictServerInterface. TODO: reviewer can edit comment, status and equivalence
 func (s *Server) PatchMapping(ctx context.Context, request api.PatchMappingRequestObject) (api.PatchMappingResponseObject, error) {
 	projectId := request.ProjectId
 	updateMapping := *request.Body
+
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.PatchMapping404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.PatchMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MappingUpdatePermission, permissions) {
+		return api.PatchMapping403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to update mappings in the project with ID %d", projectId))}, nil
+	}
 
 	dbMapping := transform.ApiUpdateMappingToGormMapping(updateMapping, projectId)
 
@@ -179,6 +232,19 @@ func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestOb
 	projectId := int(request.ProjectId)
 	mappingId := request.MappingId
 
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetMapping404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MappingViewPermission, permissions) {
+		return api.GetMapping403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get a mapping in the project with ID %d", projectId))}, nil
+	}
+
 	mapping := models.Mapping{}
 
 	if err := s.Database.GetMappingQuery(&mapping, projectId, mappingId); err != nil {
@@ -198,6 +264,19 @@ func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingReq
 
 	projectId := int(request.ProjectId)
 	mappingId := request.MappingId
+
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.DeleteMapping404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.DeleteMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MappingDeletePermission, permissions) {
+		return api.DeleteMapping403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to delete a mapping in the project with ID %d", projectId))}, nil
+	}
 
 	mapping := models.Mapping{
 		ModelBigId: models.ModelBigId{

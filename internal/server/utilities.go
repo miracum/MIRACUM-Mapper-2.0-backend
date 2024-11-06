@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"miracummapper/internal/config"
 	"miracummapper/internal/server/middlewares"
 
 	"github.com/google/uuid"
@@ -38,6 +39,6 @@ func IsAdminFromContext(ctx context.Context) bool {
 	if err != nil {
 		return false
 	}
-	err = middlewares.CheckTokenClaims([]string{"abc"}, jwt) // config.KeycloakAdminScope
+	err = middlewares.CheckTokenClaims([]string{config.KeycloakAdminScope}, jwt)
 	return err == nil
 }

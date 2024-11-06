@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
@@ -12,8 +13,21 @@ import (
 // GetAllCodeSystemRoles implements api.StrictServerInterface.
 func (s *Server) GetAllCodeSystemRoles(ctx context.Context, request api.GetAllCodeSystemRolesRequestObject) (api.GetAllCodeSystemRolesResponseObject, error) {
 	projectId := request.ProjectId
-	var codeSystemRoles []models.CodeSystemRole = []models.CodeSystemRole{}
 
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetAllCodeSystemRoles404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetAllCodeSystemRoles500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectViewPermission, permissions) {
+		return api.GetAllCodeSystemRoles403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to view code system roles in the project with ID %d", projectId))}, nil
+	}
+
+	var codeSystemRoles []models.CodeSystemRole = []models.CodeSystemRole{}
 	if err := s.Database.GetAllCodeSystemRolesQuery(&codeSystemRoles, projectId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
@@ -32,6 +46,20 @@ func (s *Server) GetAllCodeSystemRoles(ctx context.Context, request api.GetAllCo
 // GetCodeSystemRole implements api.StrictServerInterface.
 func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSystemRoleRequestObject) (api.GetCodeSystemRoleResponseObject, error) {
 	projectId := request.ProjectId
+
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetCodeSystemRole404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetCodeSystemRole500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectViewPermission, permissions) {
+		return api.GetCodeSystemRole403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to view a code system role in the project with ID %d", projectId))}, nil
+	}
+
 	codeSystemRoleId := request.CodesystemRoleId
 	var codeSystemRole models.CodeSystemRole = models.CodeSystemRole{}
 
@@ -52,6 +80,20 @@ func (s *Server) GetCodeSystemRole(ctx context.Context, request api.GetCodeSyste
 // UpdateCodeSystemRole implements api.StrictServerInterface.
 func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCodeSystemRoleRequestObject) (api.UpdateCodeSystemRoleResponseObject, error) {
 	projectId := request.ProjectId
+
+	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.UpdateCodeSystemRole404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.UpdateCodeSystemRole500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectUpdatePermission, permissions) {
+		return api.UpdateCodeSystemRole403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to update a code system role in the project with ID %d", projectId))}, nil
+	}
+
 	codeSystemRole := request.Body
 
 	db_codeSystemRole := transform.ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole, &projectId)

@@ -432,6 +432,10 @@ paths:
                   "$ref": "#/components/schemas/CodeSystemRole"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project not found
           content:
@@ -463,6 +467,10 @@ paths:
                 "$ref": "#/components/schemas/CodeSystemRole" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or codesystem-role not found
           content:
@@ -498,6 +506,10 @@ paths:
                 "$ref": "#/components/schemas/CodeSystemRole" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or codesystem-role not found
           content:
@@ -537,6 +549,10 @@ paths:
                   "$ref": "#/components/schemas/Mapping" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Page not found (e.g., page number too high)
           content:
@@ -568,6 +584,10 @@ paths:
                 "$ref": "#/components/schemas/Mapping" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project not found
           content:
@@ -605,6 +625,10 @@ paths:
                 "$ref": "#/components/schemas/Mapping" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or Mapping not found
           content:
@@ -642,6 +666,10 @@ paths:
                 "$ref": "#/components/schemas/Mapping"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or Mapping not found
           content:
@@ -675,6 +703,10 @@ paths:
                 "$ref": "#/components/schemas/Mapping" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or Mapping not found
           content:
@@ -701,6 +733,10 @@ paths:
                 "$ref": "#/components/schemas/Mapping" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
         "404":
           description: Project or Mapping not found
           content:
@@ -727,6 +763,8 @@ paths:
                   "$ref": "#/components/schemas/User"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "500":
           "$ref": "#/components/responses/InternalServerError"
   /users/{user_id}:
@@ -747,6 +785,8 @@ paths:
                 "$ref": "#/components/schemas/User"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: User not found
           content:
@@ -773,6 +813,8 @@ paths:
                 "$ref": "#/components/schemas/User"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "500":
           "$ref": "#/components/responses/InternalServerError"
   /codesystems:
@@ -793,6 +835,8 @@ paths:
                   "$ref": "#/components/schemas/CodeSystem"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "500":
           "$ref": "#/components/responses/InternalServerError"
     post:
@@ -816,6 +860,8 @@ paths:
                 "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: CodeSystem not found
           content:
@@ -854,6 +900,8 @@ paths:
                 "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: Codesystem not found
           content:
@@ -889,6 +937,8 @@ paths:
                 "$ref": "#/components/schemas/CodeSystem" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: CodeSystem not found
           content:
@@ -914,6 +964,8 @@ paths:
                 "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: Codesystem not found
           content:
@@ -955,6 +1007,8 @@ paths:
                 example: "CSV is in the correct format. Start importing concepts now"
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: CodeSystem not found
           content:
@@ -1009,6 +1063,8 @@ paths:
                   "$ref": "#/components/schemas/Concept" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "404":
           description: CodeSystem not found
           content:
@@ -1175,19 +1231,19 @@ components:
           enum: [reviewer, project_owner, editor]
     ProjectPermission:
       allOf:
-      - $ref: "#/components/schemas/SendProjectPermission"
-      - type: object
-        required:
-          - user_name
-        properties:
-          user_name:
-            type: string
+        - $ref: "#/components/schemas/SendProjectPermission"
+        - type: object
+          required:
+            - user_name
+          properties:
+            user_name:
+              type: string
     CreateCodeSystemRole:
       type: object
       required:
-       - name
-       - system
-       - type
+        - name
+        - system
+        - type
       properties:
         name:
           type: string
@@ -1198,20 +1254,20 @@ components:
           type: string
           enum: [source, target]
     UpdateCodeSystemRole:
-        type: object
-        required:
-          - id
-          - name
-          - type
-        properties:
-          id:
-            type: integer
-            format: int32
-          name:
-            type: string
-          type:
-            type: string
-            enum: [source, target]
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        type:
+          type: string
+          enum: [source, target]
     CodeSystemRole:
       allOf:
         - $ref: "#/components/schemas/UpdateCodeSystemRole"
@@ -1232,7 +1288,7 @@ components:
                 name:
                   type: string
                 version:
-                  type: string     
+                  type: string
     CreateMapping:
       type: object
       # required:
@@ -1240,7 +1296,14 @@ components:
       properties:
         equivalence:
           type: string
-          enum: [related-to, equivalent, source-is-narrower-than-target, source-is-broader-than-target, not-related]
+          enum:
+            [
+              related-to,
+              equivalent,
+              source-is-narrower-than-target,
+              source-is-broader-than-target,
+              not-related,
+            ]
         status:
           type: string
           enum: [active, inactive, pending]
@@ -1264,7 +1327,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/UpdateMapping"
         - type: object
-          required: 
+          required:
             - modified
             - created
             - elements
@@ -1352,12 +1415,12 @@ components:
     ErrorResponse:
       type: string
   responses:
-  #   UnauthorizedError:
-  #     description: Unauthorized
-  #     content:
-  #       application/json:
-  #         schema:
-  #           $ref: "#/components/schemas/Error"
+    #   UnauthorizedError:
+    #     description: Unauthorized
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: "#/components/schemas/Error"
     BadRequestError:
       description: Invalid Request (e.g., negative id supplied, invalid body (e.g. missing field) or query parameters)
       content:
