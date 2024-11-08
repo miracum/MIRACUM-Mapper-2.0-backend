@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -62,6 +63,17 @@ func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSy
 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
 			default:
 				return err
+			}
+		}
+
+		codeSystemRoles := []models.CodeSystemRole{}
+		if err := tx.Find(&codeSystemRoles, "code_system_id = ?", codeSystemId).Error; err == nil {
+			if len(codeSystemRoles) > 0 {
+				projectIds := []string{}
+				for _, role := range codeSystemRoles {
+					projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
+				}
+				return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystem cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
 			}
 		}
 

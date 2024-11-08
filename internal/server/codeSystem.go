@@ -100,6 +100,8 @@ func (s *Server) DeleteCodeSystem(ctx context.Context, request api.DeleteCodeSys
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.DeleteCodeSystem404JSONResponse(err.Error()), nil
+		case errors.Is(err, database.ErrClientError):
+			return api.DeleteCodeSystem400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		default:
 			return api.DeleteCodeSystem500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to delete the CodeSystem"}, nil
 			// TODO or: return api.DeleteCodeSystem500JSONResponse{InternalServerErrorJSONResponse: err.Error()}, nil
