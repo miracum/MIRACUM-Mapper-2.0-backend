@@ -2,5 +2,5 @@ package config
 
 const (
 	KeycloakAdminScope = "admin"
-	KeycloakUserScope  = "user"
+	KeycloakUserScope  = "normal"
 )

@@ -26,13 +26,6 @@ var (
 // an admin has all permissions
 var adminRoles = &[]models.ProjectPermissionRole{models.EditorRole, models.ProjectOwnerRole, models.ReviewerRole}
 
-type PermissionType int
-
-const (
-	ProjectPermission PermissionType = iota
-	MappingPermission PermissionType = iota
-)
-
 // return the user id or nil if the user has admin rights
 func getUserToCheckPermission(ctx context.Context) (*uuid.UUID, error) {
 	if !IsAdminFromContext(ctx) {

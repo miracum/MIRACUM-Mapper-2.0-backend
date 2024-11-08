@@ -187,6 +187,11 @@ func (s *Server) ImportCodeSystem(ctx context.Context, request api.ImportCodeSys
 		}
 	}
 
+	// if there already is a concept, exit with error
+	if concept.ID != 0 {
+		return api.ImportCodeSystem400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("CodeSystem already contains concepts")}, nil
+	}
+
 	// Read the entire CSV content into a buffer
 	file := request.Body
 	buf := new(bytes.Buffer)
