@@ -15,10 +15,16 @@ func GormProjectPermissionsToApiProjectPermissions(projectPermissions *[]models.
 }
 
 func GormProjectPermissionToApiProjectPermission(projectPermission *models.ProjectPermission) *api.ProjectPermission {
+	user := api.User{
+		Id:       projectPermission.UserID.String(),
+		Username: projectPermission.User.UserName,
+		Fullname: &projectPermission.User.FullName,
+		Email:    &projectPermission.User.Email,
+	}
+
 	return &api.ProjectPermission{
-		Role:     api.ProjectPermissionRole(projectPermission.Role),
-		UserId:   projectPermission.UserID.String(),
-		UserName: projectPermission.User.UserName,
+		Role: api.Role(projectPermission.Role),
+		User: user,
 	}
 }
 
@@ -39,7 +45,7 @@ func convertToGormProjectPermission(userId string, role models.ProjectPermission
 }
 
 func ApiProjectPermissionToGormProjectPermission(projectPermission *api.ProjectPermission, projectId int32) (*models.ProjectPermission, error) {
-	return convertToGormProjectPermission(projectPermission.UserId, models.ProjectPermissionRole(projectPermission.Role), projectId)
+	return convertToGormProjectPermission(projectPermission.User.Id, models.ProjectPermissionRole(projectPermission.Role), projectId)
 }
 
 func ApiSendProjectPermissionToGormProjectPermission(projectPermission *api.SendProjectPermission, projectId int32) (*models.ProjectPermission, error) {

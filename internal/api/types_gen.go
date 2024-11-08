@@ -52,18 +52,11 @@ const (
 	MappingStatusPending  MappingStatus = "pending"
 )
 
-// Defines values for ProjectPermissionRole.
+// Defines values for Role.
 const (
-	ProjectPermissionRoleEditor       ProjectPermissionRole = "editor"
-	ProjectPermissionRoleProjectOwner ProjectPermissionRole = "project_owner"
-	ProjectPermissionRoleReviewer     ProjectPermissionRole = "reviewer"
-)
-
-// Defines values for SendProjectPermissionRole.
-const (
-	SendProjectPermissionRoleEditor       SendProjectPermissionRole = "editor"
-	SendProjectPermissionRoleProjectOwner SendProjectPermissionRole = "project_owner"
-	SendProjectPermissionRoleReviewer     SendProjectPermissionRole = "reviewer"
+	Editor       Role = "editor"
+	ProjectOwner Role = "project_owner"
+	Reviewer     Role = "reviewer"
 )
 
 // Defines values for UpdateCodeSystemRoleType.
@@ -282,22 +275,18 @@ type ProjectDetails struct {
 
 // ProjectPermission defines model for ProjectPermission.
 type ProjectPermission struct {
-	Role     ProjectPermissionRole `json:"role"`
-	UserId   string                `json:"user_id"`
-	UserName string                `json:"user_name"`
+	Role Role `json:"role"`
+	User User `json:"user"`
 }
 
-// ProjectPermissionRole defines model for ProjectPermission.Role.
-type ProjectPermissionRole string
+// Role defines model for Role.
+type Role string
 
 // SendProjectPermission defines model for SendProjectPermission.
 type SendProjectPermission struct {
-	Role   SendProjectPermissionRole `json:"role"`
-	UserId string                    `json:"user_id"`
+	Role   Role   `json:"role"`
+	UserId string `json:"user_id"`
 }
-
-// SendProjectPermissionRole defines model for SendProjectPermission.Role.
-type SendProjectPermissionRole string
 
 // UpdateCodeSystemRole defines model for UpdateCodeSystemRole.
 type UpdateCodeSystemRole struct {

@@ -62,7 +62,6 @@ paths:
                     type: string
                     example: "pong"
       security: []
-  # /login:
   /projects:
     get:
       tags:
@@ -799,7 +798,7 @@ paths:
         - OAuth2: [admin]
         - BearerAuth: [admin]
   /users/login:
-    get:
+    post:
       tags:
         - user
       summary: Updates user-database with information from Access-Token
@@ -1218,6 +1217,9 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/CodeSystemRole"
+    Role:
+      type: string
+      enum: [reviewer, project_owner, editor]
     SendProjectPermission:
       type: object
       required:
@@ -1227,17 +1229,17 @@ components:
         user_id:
           type: string # uuid
         role:
-          type: string
-          enum: [reviewer, project_owner, editor]
+          $ref: "#/components/schemas/Role"
     ProjectPermission:
-      allOf:
-        - $ref: "#/components/schemas/SendProjectPermission"
-        - type: object
-          required:
-            - user_name
-          properties:
-            user_name:
-              type: string
+      type: object
+      required:
+        - user
+        - role
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        role:
+          $ref: "#/components/schemas/Role"
     CreateCodeSystemRole:
       type: object
       required:
