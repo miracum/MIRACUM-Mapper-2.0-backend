@@ -2,7 +2,7 @@
 
 The following sections will provide information on how to develop the project locally, how to run tests, how to run and debug the app locally and how the code is structured.
 
-# Code Structure Overview
+# Code structure overview
 
 The `api` folder contains the OpenAPI specification file which documents the api and is also used to generate the server boilerplate code.
 
@@ -16,7 +16,7 @@ The `test` folder contains the integration tests for the application.
 
 The `internal` folder contains the main application code.
 
-## Implementstion Go Code
+## Implementstion go code
 
 The `iternal` folder is further subdivided into the following packages:
 
@@ -30,7 +30,7 @@ The `iternal` folder is further subdivided into the following packages:
 
 - `database`: The directory contains all database related operations. `datastore.go` defines the `Datastore` interface as well as `DatabaseErrors`. The interface capsulates all database logic so the defined functions can be called from the endpoints. The folder `gormQuery` is an implementation of the `Datastore` interface using GORM asn an ORM. Inside the `models` folder the GORM models are defined which specify the database tables and relations between them. `gormInit` is used to create a connection to the database and autoMigrate these models. In the `transform` directory the transformation between the API models and database models are defined at one central place.
 
-# Tools and Code Generation
+# Tools and code generation
 
 The `tools` directory contains tools and code generation scripts that are used to generate code for the project. In order to use these tools, just run this command:
 
@@ -38,6 +38,8 @@ The `tools` directory contains tools and code generation scripts that are used t
 cd tools
 go generate -tags tools
 ```
+
+Python scripts for importing Code Systems or converting SQL database dumps into importable csv files for the mapper can be found in the [codesystem-import](../tools/codesystem-import/) directory.
 
 ## oapi-codegen
 
@@ -51,7 +53,7 @@ The following section describes how to develop code for the project.
 
 `Go 1.22` is used to develop the project so it has to be installed. `Make` has to be available to use the Makefiles for building the Application. Docker is necessary to run the application in an containerized environment and start the postgres database. In order to make the development process easiert in the future, a Dev Container will be provided which contains all necessary tools and dependencies so the project can be developed in a consistent environment.
 
-## Running the Application
+## Running the application
 
 The application can be run locally using the following command:
 
@@ -83,7 +85,13 @@ Also the docker image can be build locally using the following command:
 docker build -t miracummapper .
 ```
 
-# Dev Container
+## Other tools for development
+
+For testing the API Endpoints many tools are suitable but a very simple way to do it is using the [Swagger Viewer](https://marketplace.visualstudio.com/items?itemName=Arjun.swagger-viewer) VSCode Extension which is preinstalled when using the DevContainer setup for development.
+
+For visualizing the database structure the tool [DrawSQL](https://drawsql.app) was used.
+
+# DevContainer
 
 A Dev Container is provided to run the project in a containerized environment and make development easy as it has all prerequisites installed. To use it, you need to have Docker installed on your machine. The Dev Container Extension for VSCode is also recommended. Please refer to the [Dev Container Documentation](https://code.visualstudio.com/docs/remote/containers) for more information.
 

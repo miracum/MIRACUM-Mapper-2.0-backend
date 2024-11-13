@@ -1,5 +1,7 @@
 package middlewares
 
+// CODE COPIED FROM OFFICIAL DOCUMENTATION AND MODIFIED
+
 import (
 	"fmt"
 	"miracummapper/internal/config"
@@ -8,22 +10,6 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 )
-
-// PrivateKey is an ECDSA private key which was generated with the following
-// command:
-//
-//	openssl ecparam -name prime256v1 -genkey -noout -out ecprivatekey.pem
-//
-// We are using a hard coded key here in this example, but in real applications,
-// you would never do this. Your JWT signing key must never be in your application,
-// only the public key.
-// const PrivateKey = `-----BEGIN EC PRIVATE KEY-----
-// MHcCAQEEIN2dALnjdcZaIZg4QuA6Dw+kxiSW502kJfmBN3priIhPoAoGCCqGSM49
-// AwEHoUQDQgAE4pPyvrB9ghqkT1Llk0A42lixkugFd/TBdOp6wf69O9Nndnp4+HcR
-// s9SlG/8hjB2Hz42v4p3haKWv3uS1C6ahCQ==
-// -----END EC PRIVATE KEY-----`
-
-// const HardCodedKeyID = `xah9Ht7EMFI0WfaLRIdJsVLLH2BzRdHT2qzowq8PkH4`
 
 const HardCodedAudience = "account"
 const PermissionsClaim = "resource_access"
@@ -38,45 +24,16 @@ type Authenticator struct {
 var _ JWSValidator = (*Authenticator)(nil)
 
 // NewAuthenticator creates an authenticator example which uses a hard coded
-// ECDSA key to validate JWT's that it has signed itself.
 func NewAuthenticator(keySet jwk.Set, config *config.Config) (*Authenticator, error) {
 	ClientID = config.Env.KeycloakClientId
 	// String with Hostname and realm
 	Issuer = config.Env.KeycloakHost + "/realms/" + config.Env.KeycloakRealm
-	// privKey, err := ecdsafile.LoadEcdsaPrivateKey([]byte(PrivateKey))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("loading PEM private key: %w", err)
-	// }
-
-	// set := jwk.NewSet()
-	// pubKey := jwk.NewECDSAPublicKey()
-
-	// err = pubKey.FromRaw(&privKey.PublicKey)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("parsing jwk key: %w", err)
-	// }
-
-	// err = pubKey.Set(jwk.AlgorithmKey, jwa.ES256)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("setting key algorithm: %w", err)
-	// }
-
-	// err = pubKey.Set(jwk.KeyIDKey, KeyID)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("setting key ID: %w", err)
-	// }
-
-	// set.Add(pubKey)
-
-	// return &FakeAuthenticator{PrivateKey: privKey, KeySet: set}, nil
 	return &Authenticator{KeySet: keySet}, nil
 }
 
 // ValidateJWS ensures that the critical JWT claims needed to ensure that we
 // trust the JWT are present and with the correct values.
 func (f *Authenticator) ValidateJWS(jwsString string) (jwt.Token, error) {
-	// return jwt.Parse([]byte(jwsString), jwt.WithKeySet(f.KeySet),
-	// 	jwt.WithAudience(HardCodedAudience), jwt.WithIssuer(Issuer))
 
 	token, err := jwt.Parse([]byte(jwsString), jwt.WithKeySet(f.KeySet),
 		jwt.WithAudience(HardCodedAudience), jwt.WithIssuer(Issuer))
@@ -95,6 +52,8 @@ func (f *Authenticator) ValidateJWS(jwsString string) (jwt.Token, error) {
 
 	return token, nil
 }
+
+// This code can be used to create own JWTs to authenticate against the api. Currently, only ones provided by KeyCloak are accepted
 
 // SignToken takes a JWT and signs it with our private key, returning a JWS.
 // func (f *Authenticator) SignToken(t jwt.Token) ([]byte, error) {

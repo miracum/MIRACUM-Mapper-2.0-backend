@@ -1,5 +1,7 @@
 package middlewares
 
+// CODE COPIED FROM OFFICIAL DOCUMENTATION AND MODIFIED
+
 import (
 	"context"
 	"errors"

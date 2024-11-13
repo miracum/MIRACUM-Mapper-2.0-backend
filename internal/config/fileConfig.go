@@ -19,15 +19,14 @@ type FileConfig struct {
 		Sleep int `yaml:"sleep"`
 	} `yaml:"database"`
 
-	// RateLimitConfig struct {
-	// 	// Enabled is a flag to enable or disable rate limiting
-	// 	Enabled bool `yaml:"enabled"`
+	KeyCloakConfig struct {
+		// Defines how often to retry to connect to keycloak
+		Retry int `yaml:"retry"`
 
-	// 	// Limit is the maximum number of requests to allow per second
-	// 	Limit int `yaml:"limit"`
+		// Sleep is the amount of time to wait between retries
+		Sleep int `yaml:"sleep"`
+	} `yaml:"keycloak"`
 
-	// 	// Burst is the maximum number of requests to allow in a burst
-	// 	Burst int `yaml:"burst"`
 	// } `yaml:"rate_limit"`
 	CorsConfig struct {
 		// AllowedOrigins is a list of origins a cross-domain request can be executed from

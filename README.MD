@@ -39,6 +39,11 @@ database:
   retry: 30
   # How long should the service sleep between each try to connect to the database
   sleep: 5
+keycloak:
+  # How many times should the service try to connect to the database when starting
+  retry: 30
+  # How long should the service sleep between each try to connect to the database
+  sleep: 5
 cors:
   # Allowed origins for the CORS policy
   allowed_origins:

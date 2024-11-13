@@ -36,7 +36,6 @@ func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSyste
 
 func (gq *GormQuery) UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		// TODO check fields that are not allowed to change
 		if err := tx.First(&models.CodeSystem{}, codeSystem.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):

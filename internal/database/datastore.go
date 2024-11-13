@@ -95,10 +95,6 @@ const (
 	InternalServerErrorMessage = "An internal server error occurred"
 )
 
-// func NewGenericDDBError() *DatabaseError {
-// 	return NewDBError(InternalServerError, InternalServerErrorMessage)
-// }
-
 func (e DatabaseError) Error() string {
 	return e.Message
 }
@@ -130,8 +126,3 @@ var (
 		Type: ClientError,
 	}
 )
-
-// var (
-// 	ErrRecordNotFound = errors.New("record not found")
-// 	// Define other errors here...
-// )

@@ -72,7 +72,7 @@ func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
 	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
 		return db.Order("Position ASC") // TODO maybe sort at the end is also possible
-	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId) // TODO & is not necessary here
+	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId)
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
 		if db.Error.Error() == "record not found" {
@@ -109,11 +109,6 @@ func (gq *GormQuery) UpdateProjectQuery(project *models.Project, checkFunc func(
 		if err := checkFunc(&project_old, project); err != nil {
 			return err
 		}
-
-		// // TODO avoid checking these fields in this function, move to endpoint logic
-		// if project_old.StatusRequired != project.StatusRequired || project_old.EquivalenceRequired != project.EquivalenceRequired {
-		// 	return database.NewDBError(database.ClientError, "StatusRequired and EquivalenceRequired cannot be updated")
-		// }
 
 		// won't create new record because tx.First already checked that a project with that ID exists
 		if err := tx.Save(&project).Error; err != nil {

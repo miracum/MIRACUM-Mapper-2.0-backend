@@ -22,7 +22,7 @@ func (e *Equivalence) Scan(value interface{}) error {
 	case string:
 		*e = Equivalence([]byte(v))
 	default:
-		return errors.New("Invalid type for Equivalence")
+		return errors.New("invalid type for Equivalence")
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func (e *Status) Scan(value interface{}) error {
 	case string:
 		*e = Status([]byte(v))
 	default:
-		return errors.New("Invalid type for Status")
+		return errors.New("invalid type for Status")
 	}
 	return nil
 }

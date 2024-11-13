@@ -38,7 +38,6 @@ func (gq *GormQuery) GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRol
 	if db.Error != nil {
 		switch {
 		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-			// TODO This check to determine if the Project or the CodeSystemRole is not found is bad
 			var project models.Project
 			if err := gq.Database.First(&project, projectId).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {

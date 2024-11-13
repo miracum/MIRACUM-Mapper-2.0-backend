@@ -11,10 +11,14 @@ CREATE TABLE "Project"(
 ALTER TABLE
     "Project" ADD PRIMARY KEY("id");
 CREATE TABLE "element"(
-    "mapping" BIGINT NOT NULL,
-    "code_system_role" INTEGER NOT NULL,
-    "concept" BIGINT NULL
+    "mappingId" BIGINT NOT NULL,
+    "codeSystemRoleId" INTEGER NOT NULL,
+    "conceptId" BIGINT NULL
 );
+ALTER TABLE
+    "element" ADD PRIMARY KEY("mappingId");
+ALTER TABLE
+    "element" ADD PRIMARY KEY("codeSystemRoleId");
 CREATE TABLE "CodeSystem"(
     "id" SERIAL NOT NULL,
     "uri" TEXT NOT NULL,
@@ -22,7 +26,9 @@ CREATE TABLE "CodeSystem"(
     "name" TEXT NOT NULL,
     "title" TEXT NULL,
     "description" TEXT NULL,
-    "author" TEXT NULL
+    "author" TEXT NULL,
+    "created" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "modified" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 ALTER TABLE
     "CodeSystem" ADD PRIMARY KEY("id");
@@ -34,15 +40,18 @@ ON COLUMN
     "CodeSystem"."title" IS 'human friendly';
 CREATE TABLE "Concept"(
     "id" bigserial NOT NULL,
-    "system" INTEGER NOT NULL,
+    "codeSystemId" INTEGER NOT NULL,
     "code" TEXT NOT NULL,
-    "display" TEXT NOT NULL
+    "display" TEXT NOT NULL,
+    "displaySearchVector" TEXT NOT NULL
 );
 ALTER TABLE
     "Concept" ADD PRIMARY KEY("id");
+CREATE INDEX "concept_codesystemid_index" ON
+    "Concept"("codeSystemId");
 CREATE TABLE "Mapping"(
     "id" bigserial NOT NULL,
-    "project" INTEGER NOT NULL,
+    "projectId" INTEGER NOT NULL,
     "equivalence" VARCHAR(255) CHECK
         (
             "equivalence" IN(
@@ -62,6 +71,8 @@ CREATE TABLE "Mapping"(
 );
 ALTER TABLE
     "Mapping" ADD PRIMARY KEY("id");
+CREATE INDEX "mapping_projectid_index" ON
+    "Mapping"("projectId");
 CREATE TABLE "project_permission"(
     "user" UUID NOT NULL,
     "project" INTEGER NOT NULL,
@@ -75,14 +86,14 @@ CREATE TABLE "project_permission"(
         ) NOT NULL
 );
 ALTER TABLE
-    "project_permission" ADD CONSTRAINT "project_permission_user_unique" UNIQUE("user");
+    "project_permission" ADD PRIMARY KEY("user");
 ALTER TABLE
-    "project_permission" ADD CONSTRAINT "project_permission_project_unique" UNIQUE("project");
+    "project_permission" ADD PRIMARY KEY("project");
 CREATE TABLE "User"(
     "id" UUID NOT NULL,
-    "user_name" TEXT NOT NULL,
-    "log_name" TEXT NOT NULL,
-    "affiliation" TEXT NOT NULL
+    "userName" TEXT NOT NULL,
+    "fullName" TEXT NOT NULL,
+    "email" TEXT NOT NULL
 );
 ALTER TABLE
     "User" ADD PRIMARY KEY("id");
@@ -90,13 +101,15 @@ CREATE TABLE "code_system_role"(
     "id" SERIAL NOT NULL,
     "type" VARCHAR(255) CHECK
         ("type" IN('source', 'target')) NOT NULL,
-        "project" INTEGER NOT NULL,
-        "system" INTEGER NOT NULL,
+        "projectId" INTEGER NOT NULL,
+        "codeSystemId" INTEGER NOT NULL,
         "name" TEXT NOT NULL,
         "position" INTEGER NOT NULL
 );
 ALTER TABLE
     "code_system_role" ADD PRIMARY KEY("id");
+CREATE INDEX "code_system_role_projectid_index" ON
+    "code_system_role"("projectId");
 COMMENT
 ON COLUMN
     "code_system_role"."id" IS 'id braucht man, um von element aus einfacher zu referenzierten';
@@ -104,20 +117,20 @@ COMMENT
 ON COLUMN
     "code_system_role"."type" IS 'soll Type auch primary Schlüssel sein? Falls ja, kann concept sowohl als source als auch als target im gleichen mapping vorkommen kann';
 ALTER TABLE
-    "Mapping" ADD CONSTRAINT "mapping_project_foreign" FOREIGN KEY("project") REFERENCES "Project"("id");
+    "Mapping" ADD CONSTRAINT "mapping_projectid_foreign" FOREIGN KEY("projectId") REFERENCES "Project"("id");
 ALTER TABLE
-    "element" ADD CONSTRAINT "element_code_system_role_foreign" FOREIGN KEY("code_system_role") REFERENCES "code_system_role"("id");
+    "code_system_role" ADD CONSTRAINT "code_system_role_id_foreign" FOREIGN KEY("id") REFERENCES "element"("codeSystemRoleId");
 ALTER TABLE
-    "code_system_role" ADD CONSTRAINT "code_system_role_project_foreign" FOREIGN KEY("project") REFERENCES "Project"("id");
+    "code_system_role" ADD CONSTRAINT "code_system_role_projectid_foreign" FOREIGN KEY("projectId") REFERENCES "Project"("id");
 ALTER TABLE
-    "project_permission" ADD CONSTRAINT "project_permission_user_foreign" FOREIGN KEY("user") REFERENCES "User"("id");
+    "User" ADD CONSTRAINT "user_id_foreign" FOREIGN KEY("id") REFERENCES "project_permission"("user");
 ALTER TABLE
-    "element" ADD CONSTRAINT "element_mapping_foreign" FOREIGN KEY("mapping") REFERENCES "Mapping"("id");
+    "Mapping" ADD CONSTRAINT "mapping_id_foreign" FOREIGN KEY("id") REFERENCES "element"("mappingId");
 ALTER TABLE
-    "Concept" ADD CONSTRAINT "concept_system_foreign" FOREIGN KEY("system") REFERENCES "CodeSystem"("id");
+    "Concept" ADD CONSTRAINT "concept_codesystemid_foreign" FOREIGN KEY("codeSystemId") REFERENCES "CodeSystem"("id");
 ALTER TABLE
-    "code_system_role" ADD CONSTRAINT "code_system_role_system_foreign" FOREIGN KEY("system") REFERENCES "CodeSystem"("id");
+    "code_system_role" ADD CONSTRAINT "code_system_role_codesystemid_foreign" FOREIGN KEY("codeSystemId") REFERENCES "CodeSystem"("id");
 ALTER TABLE
-    "element" ADD CONSTRAINT "element_concept_foreign" FOREIGN KEY("concept") REFERENCES "Concept"("id");
+    "element" ADD CONSTRAINT "element_conceptid_foreign" FOREIGN KEY("conceptId") REFERENCES "Concept"("id");
 ALTER TABLE
-    "project_permission" ADD CONSTRAINT "project_permission_project_foreign" FOREIGN KEY("project") REFERENCES "Project"("id");
+    "Project" ADD CONSTRAINT "project_id_foreign" FOREIGN KEY("id") REFERENCES "project_permission"("project");

@@ -47,7 +47,6 @@ func (gq *GormQuery) CreateProjectPermissionQuery(projectPermission *models.Proj
 						return err
 					}
 					return database.NewDBError(database.ClientError, fmt.Sprintf("User with id %s specified in permissions does not exist", userID))
-				// TODO add error code (testen)
 				case "fk_project_project_permissions":
 					projectID, err := extractIDFromErrorDetail(pgErr.Detail, "project_id")
 					if err != nil {
@@ -81,7 +80,6 @@ func (gq *GormQuery) GetProjectPermissionQuery(projectPermission *models.Project
 		if err := tx.Where("project_id = ? AND user_id = ?", projectId, userId).Preload("User").First(projectPermission).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
-				// TODO This check to determine if the Project or the CodeSystemRole is not found is bad
 				var project models.Project
 				if err := tx.First(&project, projectId).Error; err != nil {
 					if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -109,7 +107,6 @@ func (gq *GormQuery) UpdateProjectPermissionQuery(projectPermission *models.Proj
 		if err := tx.Where("project_id = ? AND user_id = ?", projectId, userId).Preload("User").First(&oldProjectPermission).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
-				// TODO This check to determine if the Project or the User is not found is bad
 				var project models.Project
 				if err := tx.First(&project, projectId).Error; err != nil {
 					if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -137,7 +134,6 @@ func (gq *GormQuery) DeleteProjectPermissionQuery(projectPermission *models.Proj
 		if err := tx.Where("project_id = ? AND user_id = ?", projectId, userId).Preload("User").First(projectPermission).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
-				// TODO This check to determine if the Project or the CodeSystemRole is not found is bad
 				var project models.Project
 				if err := tx.First(&project, projectId).Error; err != nil {
 					if errors.Is(err, gorm.ErrRecordNotFound) {

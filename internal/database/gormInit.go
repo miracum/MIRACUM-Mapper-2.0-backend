@@ -85,6 +85,8 @@ func initEnums(db *gorm.DB) error {
 	return nil
 }
 
+// TODO cleanup
+
 func setupFullTextSearch(db *gorm.DB) error {
 	sqlStatements := []string{
 		"CREATE EXTENSION IF NOT EXISTS pg_trgm;",
