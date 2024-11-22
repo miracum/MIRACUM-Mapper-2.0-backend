@@ -13,7 +13,7 @@ info:
     name: GPL-3.0 License
     # identifier: GPL-3.0-or-later
     url: "https://www.gnu.org/licenses/gpl-3.0.html"
-  version: "0.1.0"
+  version: "1.0.0"
 # servers:
 #   - url: http://localhost:8080
 #     description: Development server

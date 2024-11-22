@@ -1,6 +1,6 @@
 # MIRACUM Mapper Backend
 
-This is the backend repository for the Miracum Mapper project. It provides a RESTful API to allow mappings from different codeSystems like `Snomed` and `Loinc` to be associated in `n:m` relationships with each other.
+This is the backend repository for the Miracum Mapper project. It provides a RESTful API to allow mappings from different codeSystems like `Snomed` and `Loinc` to be associated in `n:m` relationships with each other. The corresponding frontend repository can be found [here](https://github.com/miracum/MIRACUM-Mapper-2.0-frontend)
 
 ## Disclaimer - Not ready for use yet
 
@@ -58,6 +58,13 @@ The service is able to import codeSystems and their corresponding codes from a `
 2. Prepare a `CSV` file for import. To achieve it, [this python script](tools/codesystem-import/parser/README.md) can be used.
 3. Upload the `CSV` file to the `/codesystems/{codesystem_id}/import` endpoint. This upload can be done once per code system. If the code system already has codes, the import will fail so it is not possible via the API to update codes within a codesystem after they were created
 
+## Test System
+
+Currently the code is deployed on a Test System which can be found at [https://131.188.43.66](https://131.188.43.66). The backend and the database work together with the frontend, a own keycloak instance for authentication as well as a nginx reverse proxy to provide SSL encryption. All service are running in docker containers. An overview of the current deployment can be seen in the graphic below:
+
+![Deployment Test System](docs/images/ArchitectureTestSystem-dark.svg#gh-dark-mode-only)
+![Deployment Test System](docs/images/ArchitectureTestSystem-light.svg#gh-light-mode-only)
+
 ## Further Resources
 
-More Information about the development can be found in the [Development Guide](./docs/development.md). There is also a [Database Documentation](./docs/database.md) available which describes the structure of the database. The api is defined in the [OpenAPI Specification](./api/openapi.yaml) file. More information about why the api was designed as it is can be read in the [API Readme](./api/README.md).
+More Information about the development can be found in the [Development Guide](./docs/development.md). There is also a [Database Documentation](./docs/database.md) available which describes the structure of the database. The api is defined in the [OpenAPI Specification](./api/openapi.yaml) file. More information about why the api was designed as it is can be read in the [API Readme](./api/README.md). More information about the features of the project like the roles and permissions can be found in the [Features Documentation](./docs/features.md). How the deployment process takes place can be read in the [Deployment Documentation](./docs/deployment.md).

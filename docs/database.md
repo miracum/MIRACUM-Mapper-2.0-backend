@@ -28,7 +28,7 @@ The `Concepts` table contains a huge amount of elements as CodeSystems like Loin
 query.Where("LOWER(code) ILIKE ?", strings.ToLower(code)+"%")
 ```
 
-For searching the `meaning`, the `pg_trgm` extension is used. The implementation can be found in the `setupFullTextSearch` function in the [gormInit.go](../internal/database/gormInit.go) file. he search is implemented in go as follows (see [conceptQuery.go](../internal/database/gormQuery/conceptQuery.go)):
+For searching the `meaning`, the `pg_trgm` extension is used. The implementation can be found in the `setupFullTextSearch` function in the [gormInit.go](../internal/database/gormInit.go) file. The search is implemented in go as follows (see [conceptQuery.go](../internal/database/gormQuery/conceptQuery.go)):
 
 ```go
 formattedMeaning := strings.Join(strings.Fields(meaning), ":* & ") + ":*" // Adjust for partial matches
