@@ -991,11 +991,11 @@ paths:
           text/csv:
             schema:
               type: string
-              # type: object
-              # properties:
-              #   file:
-              #     type: string
-              #     format: binary
+              example: |
+                code,meaning
+                123,test meaning 1
+                456,another meaning
+                789,third meaning
       responses:
         "202":
           description: Success
