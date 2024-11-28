@@ -30,6 +30,7 @@ var DefaultConfig = EnvConfig{
 }
 
 var EnvKeys = EnvConfig{
+	Port:             "PORT",
 	DBUser:           "DB_USER",
 	DBName:           "DB_NAME",
 	DBHost:           "DB_HOST",

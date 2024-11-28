@@ -8,28 +8,19 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - MIRACUM_MAPPER_KEYCLOAK_ENDPOINT=http://keycloak:8080/auth
-      - MIRACUM_MAPPER_KEYCLOAK_REALM=mapper
-      - MIRACUM_MAPPER_KEYCLOAK_CLIENT_ID=mapper
-      - MIRACUM_MAPPER_KEYCLOAK_CLIENT_SECRET=secret
-      - MIRACUM_MAPPER_SKIP_SSL_CHECK=true
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=master
+      - KEYCLOAK_CLIENT_ID=miracum-mapper
       - DB_HOST=miracum-postgres
       - DB_NAME=miracum_db
       - DB_USER=miracum_user
       - DB_PASSWORD=miracum_password
-    # healthcheck:
-    #   test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:8080/health"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
     depends_on:
       - keycloak
       - miracum-postgres
     networks:
       - public_network
       - miracum_network_internal
-    #   - shared_network
-    #   - keycloak_network_internal
 
   miracum-postgres:
     image: postgres:12
@@ -48,10 +39,10 @@ services:
       - public_network
 
   keycloak:
-    image: keycloak/keycloak:latest
+    image: keycloak/keycloak:26.0
     container_name: keycloak
     environment:
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: localhost # https://localhost/keycloak
       KC_HOSTNAME_PORT: 8081
       KC_HOSTNAME_STRICT_BACKCHANNEL: false
       KC_HTTP_ENABLED: true
@@ -71,7 +62,6 @@ services:
     networks:
       - public_network
       - keycloak_network_internal
-    #   - shared_network
 
   keycloak-postgres:
     image: postgres:12
@@ -98,11 +88,9 @@ volumes:
 networks:
   public_network:
     driver: bridge
+    # external: true
   miracum_network_internal:
     driver: bridge
     internal: true
   keycloak_network_internal:
     driver: bridge
-    internal: true
-#   shared_network:
-#     external: true

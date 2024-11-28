@@ -61,19 +61,19 @@ The application can be run locally using the following command:
 go run cmd/miracummapper/main.go
 ```
 
-When the applications starts, it waits until the database is reachable. The easiest way to create the postgres database is in an dockerized environment using the provided `docker-compose.yaml` file:
+When the applications starts, it waits until the database and keycloak are reachable. The easiest way to create all services in a dockerized environment, use the `docker-compose.yaml` file. Further configuration of keycloak is documented in the Quick Start section of the Readme in this repository.
 
 ```bash
-docker-compose up -d postgres
+docker-compose up -d
 ```
 
-To remove the database an its associated volume use the following command:
+To stop all services, use following command:
 
 ```bash
-docker-compose down -v
+docker-compose down
 ```
 
-There is also a `Makefile` defined to create the binary for a linux environment using the following command:
+There is also a `Makefile` defined to create the binary for a linux environment using the following command (This makefile is also used in the build stage of the docker container to build the binary):
 
 ```bash
 make
@@ -84,6 +84,14 @@ Also the docker image can be build locally using the following command:
 ```bash
 docker build -t miracummapper .
 ```
+
+When you want to debug the `miracum-mapper`, first you have to start all other services normally:
+
+```bash
+docker compose up -d miracum-postgres keycloak keycloak-postgres
+```
+
+Afterwards, the binary can be debugged by using the `./vscode/launch.json` file. Just click on `Run and Debug` and select `Launch Miracum Mapper`.
 
 ## Other tools for development
 
@@ -106,3 +114,7 @@ The project uses GitHub Actions as a CI/CD pipeline. The workflow is defined in 
 - TODO: `integration-test` will be added to test the application as a whole.
 
 - In the `build` job the docker image is build, scanned and pushed to the GitHub Container Registry.
+
+```
+
+```

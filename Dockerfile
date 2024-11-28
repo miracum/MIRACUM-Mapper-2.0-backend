@@ -35,13 +35,13 @@ COPY --from=builder /app/miracummapper /app/miracummapper
 
 # Copy files needed for the application
 COPY cmd/miracummapper/default-config.yaml /app/default-config.yaml
-COPY db/migrations /app/migrations
+# COPY db/migrations /app/migrations
 
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
 # Command to run the executable
-CMD ["./miracummapper"] 
+CMD ["./miracummapper"]
 
 # # alpine enables to use curl for healthcheck
 # FROM alpine:latest

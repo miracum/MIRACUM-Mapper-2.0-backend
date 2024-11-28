@@ -19,13 +19,15 @@ The backend is a RESTful API that provides endpoints for the frontend to interac
 
 ## Quick Start
 
-The application can be build and run using Docker. The following command will build the Docker image and run the container next to a postgres database container:
+The application can be build and run using Docker. The following command will build the Docker image and run the container next to a postgres database container. An Keycloak instance with the corresponding postgres database is also started. The Keycloak instances need to persist data, thats why two volumes have to be created in advance.
 
 ```bash
+docker volume create miracum_postgres_data
+docker volume create keycloak-postgres
 docker-compose up --build
 ```
 
-The Docker container will be available at `http://localhost:8080`.
+At this point, the backend api should be available which can be tested by accessing `http://localhost:8080/ping`. But most endpoints require authentication so Keycloak has to be configured in the next step. Keycloak should now be available under `http://localhost:8081`. Please login using `admin` as the username and `admin` as the password. Afterwards, import the miracum-mapper client by clicking on `Client` and then `Import Client`. Select the file which can be found [here](tools/setup/keycloak-client-miracum-mapper.json). Afterward, roles need to be created in the section `Roles` within the newly created `miracum-mapper` client. Two roles should be created, called `admin` and `normal`. These roles need to be assign to either the admin user or a newly created user in oder for them to access the miracum mapper. A new user can be created by clicking on `Users`, `Add User` and following the dialog. Afterwards, click on the user, then on `Role Mapping`, `Assign Role`, in the search bar search for either `admin` or `normal`, select the role and click on `assign`. Afterwards, when hosting the frontend, you should be able to login to the frontend and then copy the access token for the api in the `Profile` section. A guide on how to host the frontend can be seen in the [Frontend Readme](https://github.com/miracum/MIRACUM-Mapper-2.0-frontend). Any client like [Insomnia](https://insomnia.rest), the VS Code Extension [Swagger Preview](https://marketplace.visualstudio.com/items?itemName=Arjun.swagger-viewer),... can be used to access the api. For more information to get strated with the development and e.g. debug the miracum-mapper, have a look at [development.md](./docs/deployment.md).
 
 ## Configuration
 

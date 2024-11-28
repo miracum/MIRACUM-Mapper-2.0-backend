@@ -4,7 +4,7 @@ All services are containerized and can be deployed using Docker. A `Dockerfile` 
 
 ## Backend Configuration
 
-The Backend can be configured using a `config.yaml` (see `README.md`)file and environment variables.The following environment variables can be used:
+The Backend can be configured using a `config.yaml` (see `README.md`) file and environment variables. The following environment variables can be used:
 
 ```yaml
 environment:
