@@ -23,7 +23,7 @@ The application can be build and run using Docker. The following command will bu
 
 ```bash
 docker volume create miracum_postgres_data
-docker volume create keycloak-postgres
+docker volume create keycloak_postgres_data
 docker-compose up --build
 ```
 
