@@ -60,6 +60,8 @@ The service is able to import codeSystems and their corresponding codes from a `
 2. Prepare a `CSV` file for import. To achieve it, [this python script](tools/codesystem-import/parser/README.md) can be used.
 3. Upload the `CSV` file to the `/codesystems/{codesystem_id}/import` endpoint. This upload can be done once per code system. If the code system already has codes, the import will fail so it is not possible via the API to update codes within a codesystem after they were created
 
+Important: Only one input is allowed to run at a time for a codeSystem. When two imports are triggered simultaneously for one codeSystem, this can lead to potentially duplicated codes.
+
 ## Test System
 
 Currently the code is deployed on a Test System which can be found at [https://131.188.43.66](https://131.188.43.66). The backend and the database work together with the frontend, a own keycloak instance for authentication as well as a nginx reverse proxy to provide SSL encryption. All service are running in docker containers. An overview of the current deployment can be seen in the graphic below:
