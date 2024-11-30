@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"fmt"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/utilities"
@@ -51,11 +52,20 @@ func ApiCreateProjectDetailsToGormProject(projectDetails *api.CreateProjectDetai
 	project.CodeSystemRoles = *ApiCreateCodeSystemRolesToGormCodeSystemRoles(&projectDetails.CodeSystemRoles)
 
 	// Append the ProjectPermissions
+	userPermissionsMap := make(map[string]bool)
+
 	for _, permission := range projectDetails.ProjectPermissions {
 		userID, err := utilities.ParseUUID(permission.UserId)
 		if err != nil {
 			return nil, err
 		}
+
+		if _, exists := userPermissionsMap[permission.UserId]; exists {
+			return nil, fmt.Errorf("duplicate permission found for user ID: %s", permission.UserId)
+		}
+
+		userPermissionsMap[permission.UserId] = true
+
 		project.Permissions = append(project.Permissions, models.ProjectPermission{
 			Role:   models.ProjectPermissionRole(permission.Role),
 			UserID: userID,
