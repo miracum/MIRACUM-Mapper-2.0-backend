@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"miracummapper/internal/database/models"
 
+	"math/rand"
+
 	"github.com/google/uuid"
-	"golang.org/x/exp/rand"
 	"gorm.io/gorm"
 )
 

@@ -42,6 +42,9 @@ EXPOSE 8080
 # Command to run the executable
 CMD ["./miracummapper"]
 
+# There could be problems with the scratch image when communicating with https as it does not have certificates
+# in this case, either manually copy the certificates over or use a different base image like alpine (see blow):
+
 # # alpine enables to use curl for healthcheck
 # FROM alpine:latest
 

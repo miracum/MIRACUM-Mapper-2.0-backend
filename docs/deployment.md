@@ -18,6 +18,8 @@ environment:
   - DB_PASSWORD=miracum_password
 ```
 
+There could be problems with the scratch image when communicating over https with other services as it does not have certificates. In this case, either manually copy the certificates over or use a different base image like Alpine.
+
 ## Frontend Configuration
 
 The Frontend can be configured using a `.env` file. The following environment variables can be used:

@@ -19,7 +19,7 @@ The backend is a RESTful API that provides endpoints for the frontend to interac
 
 ## Quick Start
 
-The application can be build and run using Docker. The following command will build the Docker image and run the container next to a postgres database container. An Keycloak instance with the corresponding postgres database is also started. The Keycloak instances need to persist data, thats why two volumes have to be created in advance.
+The application can be build and run using Docker. The following command will build the Docker image and run the container next to a postgres database container. An Keycloak instance with the corresponding postgres database is also started. The Keycloak instances need to persist data, thats why two volumes have to be created in advance. The docker compose.yaml file by default pulls the image `ghcr.io/miracum/miracum-mapper-2.0-backend:1.0.0` form the GitHub Container registry (In the docker compose, the image section can be replaced with the build section which is currently commented out to build the image locally).
 
 ```bash
 docker volume create miracum_postgres_data
