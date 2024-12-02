@@ -50,6 +50,8 @@ cors:
   # Allowed origins for the CORS policy
   allowed_origins:
     - "*"
+# Debug is a flag to enable debug mode (e.g. more verbose logging)
+debug: true
 ```
 
 ## Code System Import
