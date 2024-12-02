@@ -34,6 +34,9 @@ type FileConfig struct {
 		// An origin may contain a wildcard (*) to replace 0 or more characters (i.e.: http://*.domain.com).
 		AllowedOrigins []string `yaml:"allowed_origins"`
 	} `yaml:"cors"`
+
+	// Debug is a flag to enable debug mode
+	Debug bool `yaml:"debug"`
 }
 
 func NewFileConfig() *FileConfig {

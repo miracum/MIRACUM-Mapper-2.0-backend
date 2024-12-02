@@ -71,7 +71,7 @@ func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 
 func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
 	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
-		return db.Order("Position ASC") // TODO maybe sort at the end is also possible
+		return db.Order("Position ASC")
 	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId)
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)

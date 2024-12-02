@@ -78,10 +78,7 @@ func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectReq
 			return api.CreateProject500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to create the project"}, nil
 		}
 	}
-	// Create the project in the database
-	// id := int32(project.Model.ID)
-	// projectDetails.Id = &id
-	// TODO check that project contains id etc
+
 	return api.CreateProject200JSONResponse(transform.GormProjectToApiProjectDetails(project)), nil
 }
 

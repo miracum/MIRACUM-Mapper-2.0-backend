@@ -77,7 +77,6 @@ func (s *Server) CreatePermission(ctx context.Context, request api.CreatePermiss
 		}
 	}
 
-	// TODO test if dbPermission contains all the information
 	return api.CreatePermission200JSONResponse(*transform.GormProjectPermissionToApiProjectPermission(dbPermission)), nil
 	// TODO return api.CreatePermission201JSONResponse{}, nil
 }
@@ -115,7 +114,6 @@ func (s *Server) UpdatePermission(ctx context.Context, request api.UpdatePermiss
 		}
 	}
 
-	// TODO test that dbPermission contains all the information
 	return api.UpdatePermission200JSONResponse(*transform.GormProjectPermissionToApiProjectPermission(dbPermission)), nil
 }
 
@@ -150,7 +148,6 @@ func (s *Server) GetPermission(ctx context.Context, request api.GetPermissionReq
 		case errors.Is(err, database.ErrNotFound):
 			return api.GetPermission404JSONResponse(err.Error()), nil
 		default:
-			// TODO returns empty body?
 			return api.GetPermission500JSONResponse{}, nil
 		}
 	}

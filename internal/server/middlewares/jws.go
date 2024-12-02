@@ -1,6 +1,9 @@
 package middlewares
 
+////////////////////////////////////////////////////////////////
 // CODE COPIED FROM OFFICIAL DOCUMENTATION AND MODIFIED
+// see: https://github.com/oapi-codegen/oapi-codegen/tree/main/examples/authenticated-api
+////////////////////////////////////////////////////////////////
 
 import (
 	"fmt"
@@ -29,6 +32,20 @@ func NewAuthenticator(keySet jwk.Set, config *config.Config) (*Authenticator, er
 	// String with Hostname and realm
 	Issuer = config.Env.KeycloakHost + "/realms/" + config.Env.KeycloakRealm
 	return &Authenticator{KeySet: keySet}, nil
+
+	// Could be used to create own access tokens without using keycloak
+	// normalJWS, err := fa.CreateJWSWithClaims([]string{"normal"})
+	// if err != nil {
+	// 	log.Fatalln("error creating normal JWS:", err)
+	// }
+
+	// adminJWS, err := fa.CreateJWSWithClaims([]string{"admin"})
+	// if err != nil {
+	// 	log.Fatalln("error creating admin JWS:", err)
+	// }
+
+	// log.Println("Normal token", string(normalJWS))
+	// log.Println("Admin token", string(adminJWS))
 }
 
 // ValidateJWS ensures that the critical JWT claims needed to ensure that we
@@ -53,7 +70,7 @@ func (f *Authenticator) ValidateJWS(jwsString string) (jwt.Token, error) {
 	return token, nil
 }
 
-// This code can be used to create own JWTs to authenticate against the api. Currently, only ones provided by KeyCloak are accepted
+// This code can be used to create own JWTs to authenticate against the api. Currently, only ones provided by Keycloak are accepted
 
 // SignToken takes a JWT and signs it with our private key, returning a JWS.
 // func (f *Authenticator) SignToken(t jwt.Token) ([]byte, error) {

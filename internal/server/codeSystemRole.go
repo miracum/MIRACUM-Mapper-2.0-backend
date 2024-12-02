@@ -102,7 +102,6 @@ func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCod
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.UpdateCodeSystemRole404JSONResponse(api.BadRequestErrorJSONResponse(err.Error())), nil
-		// TODO
 		case errors.Is(err, database.ErrClientError):
 			return api.UpdateCodeSystemRole400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 		// case errors.Is(err, database.???) error for trying to update status-/equivalenceRequired
@@ -111,6 +110,5 @@ func (s *Server) UpdateCodeSystemRole(ctx context.Context, request api.UpdateCod
 		}
 	}
 
-	// TODO test if gorm returns full object after update and so everything is returned correctly
 	return api.UpdateCodeSystemRole200JSONResponse(*transform.GormCodeSystemRoleToApiCodeSystemRole(db_codeSystemRole)), nil
 }

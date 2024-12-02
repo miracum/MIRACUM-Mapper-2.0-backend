@@ -1,6 +1,9 @@
 package middlewares
 
+////////////////////////////////////////////////////////////////
 // CODE COPIED FROM OFFICIAL DOCUMENTATION AND MODIFIED
+// see: https://github.com/oapi-codegen/oapi-codegen/tree/main/examples/authenticated-api
+////////////////////////////////////////////////////////////////
 
 import (
 	"context"

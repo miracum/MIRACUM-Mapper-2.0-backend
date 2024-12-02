@@ -9,3 +9,4 @@ keycloak:
 cors:
     allowed_origins:
         - "*"
+debug: true

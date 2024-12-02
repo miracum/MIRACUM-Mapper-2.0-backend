@@ -8,8 +8,6 @@ import (
 	"miracummapper/internal/server/middlewares"
 
 	"miracummapper/internal/server"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -24,7 +22,7 @@ func main() {
 		log.Fatalf("Failed to fetch Keycloak certs: %v", err)
 	}
 
-	r := gin.Default()
+	r := server.CreateGin(config)
 
 	auth, err := middlewares.NewAuthenticator(keySet, config) // keySet
 	if err != nil {
@@ -32,7 +30,6 @@ func main() {
 	}
 
 	// Create middleware for validating tokens.
-	// mw, err := server.CreateStrictMiddleware(fa)
 	mw, err := server.CreateMiddleware(auth, config)
 	if err != nil {
 		log.Fatalln("error creating middleware:", err)
@@ -44,23 +41,6 @@ func main() {
 	strictHandler := api.NewStrictHandler(svr, nil)
 
 	api.RegisterHandlers(r, strictHandler)
-
-	// r.Use(mw...)
-
-	// api.RegisterHandlers(r, svr)
-
-	// normalJWS, err := fa.CreateJWSWithClaims([]string{"normal"})
-	// if err != nil {
-	// 	log.Fatalln("error creating normal JWS:", err)
-	// }
-
-	// adminJWS, err := fa.CreateJWSWithClaims([]string{"admin"})
-	// if err != nil {
-	// 	log.Fatalln("error creating admin JWS:", err)
-	// }
-
-	// log.Println("Normal token", string(normalJWS))
-	// log.Println("Admin token", string(adminJWS))
 
 	r.Run(":" + config.Env.Port)
 }

@@ -26,35 +26,6 @@ func CreateServer(database *gorm.DB, config *config.Config, authenticator *middl
 	return &Server{Database: &gormQuery.GormQuery{Database: database}, Config: config, Authenticator: authenticator}
 }
 
-// func CreateStrictMiddleware(v middlewares.JWSValidator) ([]api.StrictMiddlewareFunc, error) {
-// 	spec, err := api.GetSwagger()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("loading spec: %w", err)
-// 	}
-
-// 	validator := middleware.OapiRequestValidatorWithOptions(spec,
-// 		&middleware.Options{
-// 			Options: openapi3filter.Options{
-// 				AuthenticationFunc: middlewares.NewAuthenticator(v),
-// 			},
-// 		})
-
-// 	strictMiddlewareFuncs := make([]strictgin.StrictGinMiddlewareFunc, 0)
-// 	for _, handler := range []gin.HandlerFunc{validator} {
-// 		strictMiddlewareFuncs = append(strictMiddlewareFuncs, func(strictHandler strictgin.StrictGinHandlerFunc, operationID string) strictgin.StrictGinHandlerFunc {
-// 			return func(c *gin.Context, request interface{}) (response interface{}, err error) {
-// 				handler(c)
-// 				// if c.IsAborted() {
-// 				// 	return nil, nil
-// 				// }
-// 				return strictHandler(c, request)
-// 			}
-// 		})
-// 	}
-
-// 	return strictMiddlewareFuncs, nil
-// }
-
 func CreateMiddleware(v middlewares.JWSValidator, config *config.Config) ([]gin.HandlerFunc, error) {
 	spec, err := api.GetSwagger()
 	if err != nil {
@@ -69,19 +40,7 @@ func CreateMiddleware(v middlewares.JWSValidator, config *config.Config) ([]gin.
 			ErrorHandler: CustomErrorHandler,
 		})
 
-	// TODO: make this configurable through config file
-	// allowedOrigins := []string{
-	// 	"http://localhost:5173",
-	// 	"http://127.0.0.1:5173",
-	// 	"http://localhost:8080",
-	// 	"http://localhost:80",
-	// 	"http://localhost",
-	// 	"http://127.0.0.1",
-	// 	"https://localhost",
-	// 	"http://localhost:18512",
-	// }
 	allowedOrigins := config.File.CorsConfig.AllowedOrigins
-
 	// warning if cors is set to allow all origins (contains "*")
 	for _, origin := range allowedOrigins {
 		if origin == "*" {

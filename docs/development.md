@@ -114,7 +114,3 @@ The project uses GitHub Actions as a CI/CD pipeline. The workflow is defined in 
 - TODO: `integration-test` will be added to test the application as a whole.
 
 - In the `build` job the docker image is build, scanned and pushed to the GitHub Container Registry.
-
-```
-
-```

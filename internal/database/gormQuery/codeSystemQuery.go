@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
@@ -133,7 +132,7 @@ func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {
 			batch := (*concepts)[i:end]
 
 			// The log level is set to silent as the batch create can create a huge amount of logs slowing down the create process significantly for huge code systems
-			if err := tx.Session(&gorm.Session{Logger: tx.Logger.LogMode(logger.Silent)}).Create(&batch).Error; err != nil {
+			if err := tx.Create(&batch).Error; err != nil { // this results in a extremely huge log(in debug mode), consider using this: .Session(&gorm.Session{Logger: tx.Logger.LogMode(logger.Silent)})
 				return err
 			}
 		}
