@@ -12,7 +12,7 @@ import (
 )
 
 func FetchKeycloakCerts(config *config.Config) (jwk.Set, error) {
-	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/certs", config.Env.KeycloakHost, config.Env.KeycloakRealm)
+	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/certs", config.Env.KeycloakUrl, config.Env.KeycloakRealm)
 
 	for i := 0; i < config.File.KeyCloakConfig.Retry; i++ {
 		log.Printf("Fetching Keycloak certs from %s", url)

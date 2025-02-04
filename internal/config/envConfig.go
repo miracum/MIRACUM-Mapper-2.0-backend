@@ -12,7 +12,7 @@ type EnvConfig struct {
 	DBHost           string
 	DBPort           string
 	DBPassword       string
-	KeycloakHost     string
+	KeycloakUrl      string
 	KeycloakRealm    string
 	KeycloakClientId string
 }
@@ -24,7 +24,7 @@ var DefaultConfig = EnvConfig{
 	DBHost:           "localhost",
 	DBPort:           "5432",
 	DBPassword:       "miracum_password",
-	KeycloakHost:     "http://localhost:8081",
+	KeycloakUrl:      "http://localhost:8081",
 	KeycloakRealm:    "master",
 	KeycloakClientId: "miracum-mapper",
 }
@@ -35,7 +35,7 @@ var EnvKeys = EnvConfig{
 	DBName:           "DB_NAME",
 	DBHost:           "DB_HOST",
 	DBPassword:       "DB_PASSWORD",
-	KeycloakHost:     "KEYCLOAK_URL",
+	KeycloakUrl:      "KEYCLOAK_URL",
 	KeycloakRealm:    "KEYCLOAK_REALM",
 	KeycloakClientId: "KEYCLOAK_CLIENT_ID",
 }

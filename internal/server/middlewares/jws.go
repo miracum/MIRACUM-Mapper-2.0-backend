@@ -30,7 +30,7 @@ var _ JWSValidator = (*Authenticator)(nil)
 func NewAuthenticator(keySet jwk.Set, config *config.Config) (*Authenticator, error) {
 	ClientID = config.Env.KeycloakClientId
 	// String with Hostname and realm
-	Issuer = config.Env.KeycloakHost + "/realms/" + config.Env.KeycloakRealm
+	Issuer = config.Env.KeycloakUrl + "/realms/" + config.Env.KeycloakRealm
 	return &Authenticator{KeySet: keySet}, nil
 
 	// Could be used to create own access tokens without using keycloak

@@ -5,11 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Miracum Mapper",
+            "name": "Launch Miracum Mapper Local",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/miracummapper"
-        }
+            "program": "${workspaceFolder}/cmd/miracummapper",
+        },
+        {
+            "name": "Launch Miracum Mapper Docker",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/miracummapper",
+            "env": {
+                "DB_HOST": "host.docker.internal",
+                "KEYCLOAK_URL": "http://host.docker.internal:8081",
+            },
+        },
     ]
 }
