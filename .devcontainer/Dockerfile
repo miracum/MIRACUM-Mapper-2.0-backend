@@ -9,6 +9,8 @@ WORKDIR /workspace
 
 # Install Go tools
 RUN go install golang.org/x/tools/gopls@latest
+# Install Delve for debugging
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 # Set up a non-root user for VS Code
 # RUN adduser -D vscode

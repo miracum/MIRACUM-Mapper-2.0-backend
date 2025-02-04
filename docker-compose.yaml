@@ -81,10 +81,8 @@ services:
 
 volumes:
   miracum_postgres_data:
-    external: true
     name: miracum_postgres_data
   keycloak_postgres_data:
-    external: true
     name: keycloak_postgres_data
 networks:
   public_network:
