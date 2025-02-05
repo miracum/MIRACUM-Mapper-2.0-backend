@@ -5,4 +5,5 @@ type Element struct {
 	CodeSystemRoleID uint32 `gorm:"primaryKey"`
 	ConceptID        *uint64
 	Concept          Concept
+	NextConceptID    *uint64
 }

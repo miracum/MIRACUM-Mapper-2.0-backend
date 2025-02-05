@@ -65,7 +65,7 @@ func ApiCreateMappingToGormMapping(mapping api.CreateMapping, projectId int32) m
 	dbMapping := models.Mapping{
 		Comment:     mapping.Comment,
 		Equivalence: (*models.Equivalence)(mapping.Equivalence),
-		Status:      (*models.Status)(mapping.Status),
+		Status:      (*models.MappingStatus)(mapping.Status),
 		Elements:    elements,
 		ProjectID:   uint32(projectId),
 	}
@@ -90,7 +90,7 @@ func ApiUpdateMappingToGormMapping(mapping api.UpdateMapping, projectId int32) m
 		},
 		Comment:     mapping.Comment,
 		Equivalence: (*models.Equivalence)(mapping.Equivalence),
-		Status:      (*models.Status)(mapping.Status),
+		Status:      (*models.MappingStatus)(mapping.Status),
 		Elements:    elements,
 		ProjectID:   uint32(projectId),
 	}

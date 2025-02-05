@@ -30,8 +30,8 @@ func createTestData(gormDB *gorm.DB) {
 
 	description := "Example Code System 1"
 	codeSystem := models.CodeSystem{
-		Uri:             "http://example.com/codesystem",
-		Version:         "1.0",
+		Uri: "http://example.com/codesystem",
+		//Version:         "1.0",
 		Name:            "Example Code System",
 		Description:     &description,
 		Author:          nil,

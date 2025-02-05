@@ -31,35 +31,35 @@ func (e Equivalence) Value() (driver.Value, error) {
 	return string(e), nil
 }
 
-type Status string
+type MappingStatus string
 
 const (
-	Active   Status = "active"
-	Inactive Status = "inactive"
-	Pending  Status = "pending"
+	ActiveMapping MappingStatus = "active"
+	Inactive      MappingStatus = "inactive"
+	Pending       MappingStatus = "pending"
 )
 
-func (e *Status) Scan(value interface{}) error {
+func (e *MappingStatus) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case []byte:
-		*e = Status(v)
+		*e = MappingStatus(v)
 	case string:
-		*e = Status([]byte(v))
+		*e = MappingStatus([]byte(v))
 	default:
 		return errors.New("invalid type for Status")
 	}
 	return nil
 }
 
-func (e Status) Value() (driver.Value, error) {
+func (e MappingStatus) Value() (driver.Value, error) {
 	return string(e), nil
 }
 
 type Mapping struct {
 	ModelBigId
-	ProjectID   uint32       `gorm:"index"`
-	Equivalence *Equivalence `gorm:"type:Equivalence"`
-	Status      *Status      `gorm:"type:Status"`
+	ProjectID   uint32         `gorm:"index"`
+	Equivalence *Equivalence   `gorm:"type:Equivalence"`
+	Status      *MappingStatus `gorm:"type:MappingStatus"`
 	Comment     *string
 	Elements    []Element `gorm:"constraint:OnDelete:CASCADE"`
 }
