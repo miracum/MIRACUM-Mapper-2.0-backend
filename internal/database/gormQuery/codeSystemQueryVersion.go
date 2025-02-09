@@ -10,41 +10,41 @@ import (
 	"gorm.io/gorm"
 )
 
-func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
-	db := gq.Database.Preload("CodeSystemVersions").Find(&codeSystems)
-	return db.Error
+// func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
+// 	db := gq.Database.Find(&codeSystems)
+// 	return db.Error
+// }
+
+func (gq *GormQuery) CreateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error {
+	return gq.Database.Create(&codeSystemVersion).Error
 }
 
-func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error {
-	return gq.Database.Create(&codeSystem).Error
-}
+// func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
+// 	db := gq.Database.First(&codeSystem, codeSystemId)
+// 	if db.Error != nil {
+// 		switch {
+// 		case errors.Is(db.Error, gorm.ErrRecordNotFound):
+// 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+// 		default:
+// 			return db.Error
+// 		}
+// 	} else {
+// 		return nil
+// 	}
+// }
 
-func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
-	db := gq.Database.First(&codeSystem, codeSystemId).Preload("CodeSystemVersions")
-	if db.Error != nil {
-		switch {
-		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
-		default:
-			return db.Error
-		}
-	} else {
-		return nil
-	}
-}
-
-func (gq *GormQuery) UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error {
+func (gq *GormQuery) UpdateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&models.CodeSystem{}, codeSystem.ID).Error; err != nil {
+		if err := tx.First(&models.CodeSystemVersion{}, codeSystemVersion.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
-				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystem.ID))
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersion.ID))
 			default:
 				return err
 			}
 		}
 
-		if err := tx.Save(&codeSystem).Error; err != nil {
+		if err := tx.Save(&codeSystemVersion).Error; err != nil {
 			return err
 		}
 		return nil
@@ -52,35 +52,36 @@ func (gq *GormQuery) UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error 
 	return err
 }
 
-func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
+func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		// get codeSystem so it can be returned in the api and then delete it
-		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
+		if err := tx.First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
-				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersionId))
 			default:
 				return err
 			}
 		}
 
 		codeSystemRoles := []models.CodeSystemRole{}
-		if err := tx.Find(&codeSystemRoles, "code_system_id = ?", codeSystemId).Error; err == nil {
+		// if err := tx.Where(&models.CodeSystemRole{CodeSystemVersionID: uint32(codeSystemVersionId)}).Or(&models.CodeSystemRole{NextCodeSystemVersionID: uint32(codeSystemVersionId)}).Find(&codeSystemRoles).Error; err == nil {
+		if err := tx.Find(&codeSystemRoles, "code_system_version_id = ? OR next_code_system_version_id = ?", codeSystemVersionId, codeSystemVersionId).Error; err == nil {
 			if len(codeSystemRoles) > 0 {
 				projectIds := []string{}
 				for _, role := range codeSystemRoles {
 					projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
 				}
-				return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystem cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
+				return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
 			}
 		}
 
-		db := tx.Delete(&codeSystem, codeSystemId)
+		db := tx.Delete(&codeSystemVersion, codeSystemVersionId)
 		if db.Error != nil {
 			return db.Error
 		} else {
 			if db.RowsAffected == 0 {
-				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersionId))
 			}
 			return nil
 		}

@@ -5,6 +5,7 @@ import (
 	"miracummapper/internal/database/models"
 )
 
+// TODO löschen
 func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSystem {
 	return &api.CodeSystem{
 		Id:          int32(codeSystem.ID),
@@ -18,6 +19,18 @@ func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSyste
 	}
 }
 
+func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem) *api.GetCodeSystem {
+	return &api.GetCodeSystem{
+		Id:          int32(codeSystem.ID),
+		Author:      codeSystem.Author,
+		Description: codeSystem.Description,
+		Uri:         codeSystem.Uri,
+		Name:        codeSystem.Name,
+		Title:       codeSystem.Title,
+		Versions:    *GormCodeSystemVersionsToApiCodeSystemVersions(&codeSystem.CodeSystemVersions),
+	}
+}
+
 func ApiCodeSystemToGormCodeSystem(codeSystem *api.CodeSystem) *models.CodeSystem {
 	return &models.CodeSystem{
 		Model: models.Model{
@@ -26,9 +39,8 @@ func ApiCodeSystemToGormCodeSystem(codeSystem *api.CodeSystem) *models.CodeSyste
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
-		//Version:     codeSystem.Version,
-		Name:  codeSystem.Name,
-		Title: codeSystem.Title,
+		Name:        codeSystem.Name,
+		Title:       codeSystem.Title,
 	}
 }
 
@@ -37,8 +49,7 @@ func ApiCreateCodeSystemToGormCodeSystem(codeSystem *api.CreateCodeSystem) *mode
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
-		//Version:     codeSystem.Version,
-		Name:  codeSystem.Name,
-		Title: codeSystem.Title,
+		Name:        codeSystem.Name,
+		Title:       codeSystem.Title,
 	}
 }

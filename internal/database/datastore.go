@@ -44,11 +44,16 @@ type Datastore interface {
 	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error
-	GetFirstElementCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error
+	// GetFirstElementCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error
+
+	// CodeSystemVersion
+	CreateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
+	UpdateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
+	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error
 
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
-	CreateConceptsQuery(concepts *[]models.Concept) error
+	// CreateConceptsQuery(concepts *[]models.Concept) error
 }
 
 type ErrorType int

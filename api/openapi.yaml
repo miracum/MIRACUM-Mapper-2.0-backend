@@ -40,6 +40,8 @@ tags:
     description: Operations about users
   - name: code-system
     description: Operations about code systems
+  - name: code-system-version
+    description: Operations about code system versions
   - name: concept
     description: Operations about concepts
 paths:
@@ -831,7 +833,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/CodeSystem"
+                  "$ref": "#/components/schemas/GetCodeSystem"
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -856,7 +858,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/CodeSystem" # id optional
+                "$ref": "#/components/schemas/GetCodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -896,7 +898,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/CodeSystem" # id optional
+                "$ref": "#/components/schemas/GetCodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -933,7 +935,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/CodeSystem" # id required
+                "$ref": "#/components/schemas/GetCodeSystem" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -960,7 +962,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/CodeSystem" # id optional
+                "$ref": "#/components/schemas/GetCodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -976,15 +978,133 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /codesystems/{codesystem_id}/import:
+  /codesystems/{codesystem_id}/versions:
     post:
       tags:
-        - code-system
-      summary: Import concepts for a code system by ID
-      description: Import concepts for a code system by ID. The concepts are imported from a CSV file. The format of the CSV must be "code,meaning"
+        - code-system-version
+      summary: Create a new version for a code system by ID
+      description: Create a new version for a code system by ID. Only admins can create code system versions.
       parameters:
         - $ref: "#/components/parameters/codesystem_id"
-      operationId: importCodeSystem
+      operationId: createCodeSystemVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/BaseCodeSystemVersion"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemVersion"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+    put:
+      tags:
+        - code-system-version
+      summary: Update a code system version by ID
+      description: Update a code system version by ID. Only admins can update code system versions.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+      operationId: updateCodeSystemVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CodeSystemVersion"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemVersion"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}:
+    delete:
+      tags:
+        - code-system-version
+      summary: Delete a code system version by ID
+      description: Delete a code system version by ID. Only admins can delete code system versions.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: deleteCodeSystemVersion
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemVersion"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem or CodeSystemVersion not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a code system version by ID
+      description: Import concepts for a code system version by ID. The concepts are imported from a CSV file. The format of the CSV must be "code,meaning"
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersion
       requestBody:
         required: true
         content:
@@ -1113,6 +1233,15 @@ components:
       in: path
       required: true
       description: The ID of the Codesystem
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+    codesystem-version_id:
+      name: codesystem-version_id
+      in: path
+      required: true
+      description: The ID of the Codesystem Version
       schema:
         type: integer
         format: int32
@@ -1385,16 +1514,13 @@ components:
           type: string
         meaning:
           type: string
-    CreateCodeSystem:
+    BaseCodeSystem:
       type: object
       required:
         - uri
-        - version
         - name
       properties:
         uri:
-          type: string
-        version:
           type: string
         name:
           type: string
@@ -1404,6 +1530,9 @@ components:
           type: string
         author:
           type: string
+    CreateCodeSystem:
+      allOf:
+        - $ref: "#/components/schemas/BaseCodeSystem"
     CodeSystem:
       allOf:
         - $ref: "#/components/schemas/CreateCodeSystem"
@@ -1414,6 +1543,39 @@ components:
             id:
               type: integer
               format: int32
+    GetCodeSystem:
+      allOf:
+        - $ref: "#/components/schemas/CodeSystem"
+        - type: object
+          required:
+            - versions
+          properties:
+            versions:
+              type: array
+              items:
+                $ref: "#/components/schemas/CodeSystemVersion"
+    BaseCodeSystemVersion:
+      type: object
+      required:
+        - version_name
+        - release_date
+      properties:
+        version_name:
+          type: string
+        release_date:
+          type: string
+          format: date
+    CodeSystemVersion:
+      allOf:
+        - $ref: "#/components/schemas/BaseCodeSystemVersion"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int32
+              minimum: 1
     ErrorResponse:
       type: string
   responses:
