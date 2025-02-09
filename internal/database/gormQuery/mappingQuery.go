@@ -70,7 +70,7 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 				}
 			} else {
 				elements := []models.Element{}
-				if err := tx.Where("mapping_id = ? AND code_system_role_id IN (?)", mapping.ID, unusedCodeSystemRoleIds).Preload("Concept").Find(&elements).Error; err != nil {
+				if err := tx.Where("mapping_id = ? AND code_system_role_id IN (?)", mapping.ID, unusedCodeSystemRoleIds).Preload("Concept").Preload("NextConcept").Find(&elements).Error; err != nil {
 					return err
 				}
 				mapping.Elements = append(mapping.Elements, elements...)

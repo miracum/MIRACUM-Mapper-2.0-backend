@@ -18,13 +18,15 @@ func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole
 		Id:   int32(codeSystemRole.ID),
 		Name: codeSystemRole.Name,
 		System: struct {
-			Id      int32  `json:"id"`
-			Name    string `json:"name"`
-			Version string `json:"version"`
+			Id          int32   `json:"id"`
+			Name        string  `json:"name"`
+			NextVersion *string `json:"nextVersion,omitempty"`
+			Version     string  `json:"version"`
 		}{
-			Id:      int32(codeSystemRole.CodeSystemID),
-			Name:    codeSystemRole.CodeSystem.Name,
-			Version: "TODO", // TODO codeSystemRole.CodeSystem.Version,
+			Id:          int32(codeSystemRole.CodeSystemID),
+			Name:        codeSystemRole.CodeSystem.Name,
+			NextVersion: &codeSystemRole.NextCodeSystemVersion.VersionName, // TODO check if this is correct
+			Version:     codeSystemRole.CodeSystemVersion.VersionName,
 		},
 		Type: api.CodeSystemRoleType(codeSystemRole.Type),
 	}
@@ -41,9 +43,10 @@ func ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.UpdateCodeS
 
 func ApiCreateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.CreateCodeSystemRole) *models.CodeSystemRole {
 	return &models.CodeSystemRole{
-		Type:         models.CodeSystemRoleType(codeSystemRole.Type),
-		Name:         codeSystemRole.Name,
-		CodeSystemID: uint32(codeSystemRole.System),
+		Type:                models.CodeSystemRoleType(codeSystemRole.Type),
+		Name:                codeSystemRole.Name,
+		CodeSystemID:        uint32(codeSystemRole.System),
+		CodeSystemVersionID: uint32(codeSystemRole.Version),
 	}
 }
 

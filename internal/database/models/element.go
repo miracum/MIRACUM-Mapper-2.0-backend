@@ -6,4 +6,5 @@ type Element struct {
 	ConceptID        *uint64
 	Concept          Concept
 	NextConceptID    *uint64
+	NextConcept      Concept
 }

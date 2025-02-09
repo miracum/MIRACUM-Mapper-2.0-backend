@@ -10,7 +10,7 @@ import (
 )
 
 func (gq *GormQuery) GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error {
-	db := gq.Database.Preload("CodeSystem").Where("project_id = ?", projectId).Find(&codeSystemRoles)
+	db := gq.Database.Preload("CodeSystem").Preload("CodeSystemVersion").Preload("NextCodeSystemVersion").Where("project_id = ?", projectId).Find(&codeSystemRoles)
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
 		if !ok {
@@ -32,7 +32,7 @@ func (gq *GormQuery) GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSy
 }
 
 func (gq *GormQuery) GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error {
-	db := gq.Database.Preload("CodeSystem").
+	db := gq.Database.Preload("CodeSystem").Preload("CodeSystemVersion").Preload("NextCodeSystemVersion").
 		Where("project_id = ?", projectId).
 		First(&codeSystemRole, codeSystemRoleId)
 	if db.Error != nil {

@@ -38,5 +38,7 @@ type CodeSystemRole struct {
 	Elements                []Element `gorm:"constraint:OnDelete:CASCADE"`
 	CodeSystem              CodeSystem
 	CodeSystemVersionID     uint32
+	CodeSystemVersion       CodeSystemVersion
 	NextCodeSystemVersionID *uint32
+	NextCodeSystemVersion   CodeSystemVersion
 }

@@ -18,6 +18,14 @@ const (
 	CodeSystemRoleTypeTarget CodeSystemRoleType = "target"
 )
 
+// Defines values for ConceptStatus.
+const (
+	ConceptStatusActive      ConceptStatus = "active"
+	ConceptStatusDeprecated  ConceptStatus = "deprecated"
+	ConceptStatusDiscouraged ConceptStatus = "discouraged"
+	ConceptStatusTrial       ConceptStatus = "trial"
+)
+
 // Defines values for CreateCodeSystemRoleType.
 const (
 	CreateCodeSystemRoleTypeSource CreateCodeSystemRoleType = "source"
@@ -80,9 +88,9 @@ const (
 
 // Defines values for UpdateMappingStatus.
 const (
-	Active   UpdateMappingStatus = "active"
-	Inactive UpdateMappingStatus = "inactive"
-	Pending  UpdateMappingStatus = "pending"
+	UpdateMappingStatusActive   UpdateMappingStatus = "active"
+	UpdateMappingStatusInactive UpdateMappingStatus = "inactive"
+	UpdateMappingStatusPending  UpdateMappingStatus = "pending"
 )
 
 // Defines values for SortOrder.
@@ -93,14 +101,26 @@ const (
 
 // Defines values for GetAllConceptsParamsSortBy.
 const (
-	Code    GetAllConceptsParamsSortBy = "code"
-	Meaning GetAllConceptsParamsSortBy = "meaning"
+	GetAllConceptsParamsSortByCode    GetAllConceptsParamsSortBy = "code"
+	GetAllConceptsParamsSortByMeaning GetAllConceptsParamsSortBy = "meaning"
 )
 
 // Defines values for GetAllConceptsParamsSortOrder.
 const (
 	GetAllConceptsParamsSortOrderAsc  GetAllConceptsParamsSortOrder = "asc"
 	GetAllConceptsParamsSortOrderDesc GetAllConceptsParamsSortOrder = "desc"
+)
+
+// Defines values for GetAllConceptsByVersionParamsSortBy.
+const (
+	GetAllConceptsByVersionParamsSortByCode    GetAllConceptsByVersionParamsSortBy = "code"
+	GetAllConceptsByVersionParamsSortByMeaning GetAllConceptsByVersionParamsSortBy = "meaning"
+)
+
+// Defines values for GetAllConceptsByVersionParamsSortOrder.
+const (
+	GetAllConceptsByVersionParamsSortOrderAsc  GetAllConceptsByVersionParamsSortOrder = "asc"
+	GetAllConceptsByVersionParamsSortOrderDesc GetAllConceptsByVersionParamsSortOrder = "desc"
 )
 
 // Defines values for GetAllProjectsParamsSortBy.
@@ -128,8 +148,8 @@ const (
 
 // Defines values for GetAllMappingsParamsSortOrder.
 const (
-	GetAllMappingsParamsSortOrderAsc  GetAllMappingsParamsSortOrder = "asc"
-	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
+	Asc  GetAllMappingsParamsSortOrder = "asc"
+	Desc GetAllMappingsParamsSortOrder = "desc"
 )
 
 // BaseCodeSystem defines model for BaseCodeSystem.
@@ -171,9 +191,10 @@ type CodeSystemRole struct {
 	Id     int32  `json:"id"`
 	Name   string `json:"name"`
 	System struct {
-		Id      int32  `json:"id"`
-		Name    string `json:"name"`
-		Version string `json:"version"`
+		Id          int32   `json:"id"`
+		Name        string  `json:"name"`
+		NextVersion *string `json:"nextVersion,omitempty"`
+		Version     string  `json:"version"`
 	} `json:"system"`
 	Type CodeSystemRoleType `json:"type"`
 }
@@ -190,19 +211,25 @@ type CodeSystemVersion struct {
 
 // Concept defines model for Concept.
 type Concept struct {
-	Code    string `json:"code"`
-	Id      int64  `json:"id"`
-	Meaning string `json:"meaning"`
+	Code        string        `json:"code"`
+	Description *string       `json:"description,omitempty"`
+	Id          int64         `json:"id"`
+	Meaning     string        `json:"meaning"`
+	Status      ConceptStatus `json:"status"`
 }
+
+// ConceptStatus defines model for Concept.Status.
+type ConceptStatus string
 
 // CreateCodeSystem defines model for CreateCodeSystem.
 type CreateCodeSystem = BaseCodeSystem
 
 // CreateCodeSystemRole defines model for CreateCodeSystemRole.
 type CreateCodeSystemRole struct {
-	Name   string                   `json:"name"`
-	System int32                    `json:"system"`
-	Type   CreateCodeSystemRoleType `json:"type"`
+	Name    string                   `json:"name"`
+	System  int32                    `json:"system"`
+	Type    CreateCodeSystemRoleType `json:"type"`
+	Version int32                    `json:"version"`
 }
 
 // CreateCodeSystemRoleType defines model for CreateCodeSystemRole.Type.
@@ -246,6 +273,7 @@ type ErrorResponse = string
 type FullElement struct {
 	CodeSystemRole *int32   `json:"codeSystemRole,omitempty"`
 	Concept        *Concept `json:"concept,omitempty"`
+	NextConcept    *Concept `json:"nextConcept,omitempty"`
 }
 
 // GetCodeSystem defines model for GetCodeSystem.
@@ -425,6 +453,33 @@ type GetAllConceptsParamsSortBy string
 
 // GetAllConceptsParamsSortOrder defines parameters for GetAllConcepts.
 type GetAllConceptsParamsSortOrder string
+
+// GetAllConceptsByVersionParams defines parameters for GetAllConceptsByVersion.
+type GetAllConceptsByVersionParams struct {
+	// Page Page number (must be a positive integer)
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize Number of items per page (minimum 1, maximum 100)
+	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// SortBy Field to sort sortBy
+	SortBy *GetAllConceptsByVersionParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Order of sorting (asc or desc)
+	SortOrder *GetAllConceptsByVersionParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// CodeSearch search for the code
+	CodeSearch *string `form:"codeSearch,omitempty" json:"codeSearch,omitempty"`
+
+	// MeaningSearch search for meaning
+	MeaningSearch *string `form:"meaningSearch,omitempty" json:"meaningSearch,omitempty"`
+}
+
+// GetAllConceptsByVersionParamsSortBy defines parameters for GetAllConceptsByVersion.
+type GetAllConceptsByVersionParamsSortBy string
+
+// GetAllConceptsByVersionParamsSortOrder defines parameters for GetAllConceptsByVersion.
+type GetAllConceptsByVersionParamsSortOrder string
 
 // GetAllProjectsParams defines parameters for GetAllProjects.
 type GetAllProjectsParams struct {

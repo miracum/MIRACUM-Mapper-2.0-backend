@@ -1192,6 +1192,60 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/concepts:
+    get:
+      tags:
+        - concept
+      summary: Get all concepts for a code system version by ID
+      description: Get all concepts for a code system version by ID. Paging and sorting can be specified by query parameters.
+      operationId: getAllConceptsByVersion
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - name: sortBy
+          in: query
+          description: Field to sort sortBy
+          required: false
+          schema:
+            type: string
+            default: code
+            enum: [code, meaning]
+        - $ref: "#/components/parameters/sortOrder"
+        - name: codeSearch
+          in: query
+          description: search for the code
+          required: false
+          schema:
+            type: string
+        - name: meaningSearch
+          in: query
+          description: search for meaning
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Concept" # id optional
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
 components:
   parameters:
     project_id:
@@ -1374,11 +1428,15 @@ components:
       required:
         - name
         - system
+        - version
         - type
       properties:
         name:
           type: string
         system:
+          type: integer
+          format: int32
+        version:
           type: integer
           format: int32
         type:
@@ -1419,6 +1477,8 @@ components:
                 name:
                   type: string
                 version:
+                  type: string
+                nextVersion:
                   type: string
     CreateMapping:
       type: object
@@ -1486,6 +1546,8 @@ components:
           properties:
             concept:
               $ref: "#/components/schemas/Concept"
+            nextConcept:
+              $ref: "#/components/schemas/Concept"
     User:
       type: object
       required:
@@ -1506,6 +1568,7 @@ components:
         - id
         - code
         - meaning
+        - status
       properties:
         id:
           type: integer
@@ -1514,6 +1577,11 @@ components:
           type: string
         meaning:
           type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, trial, deprecated, discouraged]
     BaseCodeSystem:
       type: object
       required:

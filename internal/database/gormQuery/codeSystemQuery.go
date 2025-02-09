@@ -20,7 +20,7 @@ func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error 
 }
 
 func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
-	db := gq.Database.First(&codeSystem, codeSystemId).Preload("CodeSystemVersions")
+	db := gq.Database.Preload("CodeSystemVersions").First(&codeSystem, codeSystemId)
 	if db.Error != nil {
 		switch {
 		case errors.Is(db.Error, gorm.ErrRecordNotFound):

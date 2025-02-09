@@ -47,6 +47,11 @@ func GormElementToApiFullElement(element *models.Element) api.FullElement {
 			Code:    element.Concept.Code,
 			Meaning: element.Concept.Display,
 		},
+		NextConcept: &api.Concept{
+			Id:      int64(*element.NextConceptID),
+			Code:    element.NextConcept.Code,
+			Meaning: element.NextConcept.Display,
+		},
 	}
 	return apiFullElement
 }
