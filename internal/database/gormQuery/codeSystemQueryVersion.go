@@ -152,7 +152,54 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 	return err
 }
 
-// func (gq *GormQuery) GetFirstElementCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error {
+func (gq *GormQuery) CheckHasNoConceptsQuery(codeSystemId int32, codeSystemVersionId int32) error {
+	var codeSystem models.CodeSystem
+	var codeSystemVersion models.CodeSystemVersion
+	var concept models.Concept
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			default:
+				return err
+			}
+		}
+		if err := tx.Where("code_system_id = ?", codeSystemId).First(&codeSystemVersion).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found for CodeSystem with ID %d.", codeSystemVersionId, codeSystemId))
+			default:
+				return err
+			}
+		}
+
+		query := tx.
+			Preload("ValidFromVersion").
+			Preload("ValidToVersion").
+			Model(&models.Concept{}).
+			Joins("JOIN code_system_versions AS valid_from_version ON valid_from_version.id = concepts.valid_from_version_id").
+			Joins("JOIN code_system_versions AS valid_to_version ON valid_to_version.id = concepts.valid_to_version_id").
+			Where("concepts.code_system_id = ?", codeSystemId).
+			Where("valid_from_version.version_id <= ? AND valid_to_version.version_id >= ?", codeSystemVersionId, codeSystemVersionId).
+			First(&concept)
+
+		if err := query.Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				// Good case, no concepts found
+				return nil
+			default:
+				return err
+			}
+		}
+		// Bad case, concepts found
+		return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystem with ID %d has concepts.", codeSystemId))
+	})
+	return err
+}
+
+// func (gq *GormQuery) GetFirstElementCodeSystemVersionQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error {
 // 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 // 		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
 // 			switch {
