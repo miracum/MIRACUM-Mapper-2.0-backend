@@ -6,25 +6,88 @@ import (
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
 
-// func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
-// 	db := gq.Database.Find(&codeSystems)
-// 	return db.Error
-// }
-
 func (gq *GormQuery) CreateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error {
-	return gq.Database.Create(&codeSystemVersion).Error
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := gq.Database.First(&models.CodeSystem{}, codeSystemVersion.CodeSystemID).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemVersion.CodeSystemID))
+			default:
+				return err
+			}
+		}
+
+		if exists, err := gq.checkReleaseDateExists(codeSystemVersion.CodeSystemID, codeSystemVersion.ReleaseDate); err != nil {
+			return err
+		} else if exists {
+			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion with release date %s already exists for CodeSystem with ID %d.", codeSystemVersion.ReleaseDate, codeSystemVersion.CodeSystemID))
+		}
+
+		if nextVersionId, newerCodeSystemVersions, err := gq.getNextVersionIdAndNewerCodeSystemVersions(codeSystemVersion.CodeSystemID, codeSystemVersion.ReleaseDate); err != nil {
+			return err
+		} else {
+			if len(newerCodeSystemVersions) > 0 {
+				for _, newerCodeSystemVersion := range newerCodeSystemVersions {
+					newerCodeSystemVersion.VersionID++
+					if err := gq.Database.Save(&newerCodeSystemVersion).Error; err != nil { //Model(&models.CodeSystemVersion{}).Where("id = ?", newerCodeSystemVersion.ID).Update("version_id", newerCodeSystemVersion.VersionID).Error; err != nil {
+						return err
+					}
+				}
+			}
+			codeSystemVersion.VersionID = nextVersionId
+		}
+
+		if err := gq.Database.Create(&codeSystemVersion).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
 }
 
-// func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
-// 	db := gq.Database.First(&codeSystem, codeSystemId)
+func (gq *GormQuery) checkReleaseDateExists(codeSystemID uint32, releaseDate time.Time) (bool, error) {
+	var codeSystemVersion models.CodeSystemVersion
+	query := gq.Database.First(&codeSystemVersion, "code_system_id = ? AND release_date = ?", codeSystemID, releaseDate)
+	if err := query.Error; err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+func (gq *GormQuery) getNextVersionIdAndNewerCodeSystemVersions(codeSystemID uint32, releaseDate time.Time) (uint32, []models.CodeSystemVersion, error) {
+	var newerCodeSystemVersions []models.CodeSystemVersion
+	query := gq.Database.Order("release_date DESC").Find(&newerCodeSystemVersions, "code_system_id = ? AND release_date > ?", codeSystemID, releaseDate)
+	if err := query.Error; err != nil {
+		return 0, nil, err
+	}
+	if len(newerCodeSystemVersions) > 0 {
+		return newerCodeSystemVersions[len(newerCodeSystemVersions)-1].VersionID, newerCodeSystemVersions, nil
+	} else {
+		var lastCodeSystemVersion models.CodeSystemVersion
+		if err := gq.Database.Order("version_id DESC").Limit(1).First(&lastCodeSystemVersion, "code_system_id = ?", codeSystemID).Error; err != nil {
+			return 0, nil, err
+		} else {
+			return lastCodeSystemVersion.VersionID + 1, nil, nil
+		}
+	}
+}
+
+// func (gq *GormQuery) GetCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error {
+// 	db := gq.Database.First(&codeSystemVersion, codeSystemVersionId)
 // 	if db.Error != nil {
 // 		switch {
 // 		case errors.Is(db.Error, gorm.ErrRecordNotFound):
-// 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+// 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersionId))
 // 		default:
 // 			return db.Error
 // 		}
