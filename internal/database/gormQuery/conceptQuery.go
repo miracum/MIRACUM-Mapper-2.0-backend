@@ -12,6 +12,8 @@ import (
 func (gq *GormQuery) GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		query := tx.
+			Preload("ValidFromVersion").
+			Preload("ValidToVersion").
 			Model(&models.Concept{}).
 			Where("code_system_id = ?", codeSystemId)
 

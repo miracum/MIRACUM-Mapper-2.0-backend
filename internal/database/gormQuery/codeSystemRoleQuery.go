@@ -57,7 +57,7 @@ func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystem
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		oldCodeSystemRole := models.CodeSystemRole{}
 
-		if err := tx.Preload("CodeSystem").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRole.ID).Error; err != nil {
+		if err := tx.Preload("CodeSystem").Preload("CodeSystemVersion").Preload("NextCodeSystemVersion").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRole.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				var project models.Project
