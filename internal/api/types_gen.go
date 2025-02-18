@@ -12,6 +12,18 @@ const (
 	OAuth2Scopes     = "OAuth2.Scopes"
 )
 
+// Defines values for BaseCodeSystemType.
+const (
+	BaseCodeSystemTypeGENERIC BaseCodeSystemType = "GENERIC"
+	BaseCodeSystemTypeLOINC   BaseCodeSystemType = "LOINC"
+)
+
+// Defines values for CodeSystemType.
+const (
+	CodeSystemTypeGENERIC CodeSystemType = "GENERIC"
+	CodeSystemTypeLOINC   CodeSystemType = "LOINC"
+)
+
 // Defines values for CodeSystemRoleType.
 const (
 	CodeSystemRoleTypeSource CodeSystemRoleType = "source"
@@ -46,6 +58,12 @@ const (
 	CreateMappingStatusActive   CreateMappingStatus = "active"
 	CreateMappingStatusInactive CreateMappingStatus = "inactive"
 	CreateMappingStatusPending  CreateMappingStatus = "pending"
+)
+
+// Defines values for GetCodeSystemType.
+const (
+	GENERIC GetCodeSystemType = "GENERIC"
+	LOINC   GetCodeSystemType = "LOINC"
 )
 
 // Defines values for MappingEquivalence.
@@ -154,12 +172,16 @@ const (
 
 // BaseCodeSystem defines model for BaseCodeSystem.
 type BaseCodeSystem struct {
-	Author      *string `json:"author,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Name        string  `json:"name"`
-	Title       *string `json:"title,omitempty"`
-	Uri         string  `json:"uri"`
+	Author      *string            `json:"author,omitempty"`
+	Description *string            `json:"description,omitempty"`
+	Name        string             `json:"name"`
+	Title       *string            `json:"title,omitempty"`
+	Type        BaseCodeSystemType `json:"type"`
+	Uri         string             `json:"uri"`
 }
+
+// BaseCodeSystemType defines model for BaseCodeSystem.Type.
+type BaseCodeSystemType string
 
 // BaseCodeSystemVersion defines model for BaseCodeSystemVersion.
 type BaseCodeSystemVersion struct {
@@ -178,13 +200,17 @@ type BaseProject struct {
 
 // CodeSystem defines model for CodeSystem.
 type CodeSystem struct {
-	Author      *string `json:"author,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Id          int32   `json:"id"`
-	Name        string  `json:"name"`
-	Title       *string `json:"title,omitempty"`
-	Uri         string  `json:"uri"`
+	Author      *string        `json:"author,omitempty"`
+	Description *string        `json:"description,omitempty"`
+	Id          int32          `json:"id"`
+	Name        string         `json:"name"`
+	Title       *string        `json:"title,omitempty"`
+	Type        CodeSystemType `json:"type"`
+	Uri         string         `json:"uri"`
 }
+
+// CodeSystemType defines model for CodeSystem.Type.
+type CodeSystemType string
 
 // CodeSystemRole defines model for CodeSystemRole.
 type CodeSystemRole struct {
@@ -283,9 +309,13 @@ type GetCodeSystem struct {
 	Id          int32               `json:"id"`
 	Name        string              `json:"name"`
 	Title       *string             `json:"title,omitempty"`
+	Type        GetCodeSystemType   `json:"type"`
 	Uri         string              `json:"uri"`
 	Versions    []CodeSystemVersion `json:"versions"`
 }
+
+// GetCodeSystemType defines model for GetCodeSystem.Type.
+type GetCodeSystemType string
 
 // Mapping defines model for Mapping.
 type Mapping struct {

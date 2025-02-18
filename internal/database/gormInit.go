@@ -78,6 +78,7 @@ func initEnums(db *gorm.DB) error {
 		"CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');",
 		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'project_owner', 'editor');",
 		"CREATE TYPE ConceptStatus AS ENUM ('active', 'trial', 'deprecated', 'discouraged');",
+		"CREATE TYPE CodeSystemType AS ENUM ('GENERIC', 'LOINC');",
 	}
 
 	if err := executeSQLWithExceptionHandling(db, enumStatements); err != nil {

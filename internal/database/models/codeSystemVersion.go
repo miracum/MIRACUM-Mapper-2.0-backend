@@ -5,9 +5,10 @@ import "time"
 type CodeSystemVersion struct {
 	ID           uint32 `gorm:"primarykey"`
 	CodeSystemID uint32
-	VersionID    uint32 `gorm:"unique"`
+	VersionID    uint32
 	VersionName  string
 	ReleaseDate  time.Time
+	Imported     bool `gorm:"default:false"`
 	// CodeSystemRoles     []CodeSystemRole `gorm:"foreignKey:CodeSystemVersionID"`
 	// NextCodeSystemRoles []CodeSystemRole `gorm:"foreignKey:NextCodeSystemVersionID"`
 	// ValidFromConcepts   []Concept        `gorm:"foreignKey:ValidFromVersionID"`

@@ -12,6 +12,7 @@ func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSyste
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Name:        codeSystem.Name,
+		Type:        api.CodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 		Uri:         codeSystem.Uri,
 		//Versions:    codeSystem.CodeSystemVersions,
@@ -26,6 +27,7 @@ func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem) *api.GetCod
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
 		Name:        codeSystem.Name,
+		Type:        api.GetCodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 		Versions:    *GormCodeSystemVersionsToApiCodeSystemVersions(&codeSystem.CodeSystemVersions),
 	}
@@ -40,6 +42,7 @@ func ApiCodeSystemToGormCodeSystem(codeSystem *api.CodeSystem) *models.CodeSyste
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
 		Name:        codeSystem.Name,
+		Type:        models.CodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 	}
 }
@@ -50,6 +53,7 @@ func ApiCreateCodeSystemToGormCodeSystem(codeSystem *api.CreateCodeSystem) *mode
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
 		Name:        codeSystem.Name,
+		Type:        models.CodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 	}
 }

@@ -1587,11 +1587,15 @@ components:
       required:
         - uri
         - name
+        - type
       properties:
         uri:
           type: string
         name:
           type: string
+        type:
+          type: string
+          enum: [GENERIC, LOINC]
         title:
           type: string
         description:
