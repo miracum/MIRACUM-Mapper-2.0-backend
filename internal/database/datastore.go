@@ -44,19 +44,40 @@ type Datastore interface {
 	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error
-	CheckHasNoConceptsQuery(codeSystemId int32, codeSystemVersionId int32) error
+	//CheckHasNoConceptsQuery(codeSystemId int32, codeSystemVersionId int32) error
 	// GetFirstElementCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error
 
 	// CodeSystemVersion
 	CreateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
-	//GetCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error
+	GetCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
 	UpdateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
 	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error
+	SetCodeSystemVersionImported(codeSystemVersionId int32, imported bool) error
 
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
+	GetNeighborConceptsQuery(code string, codeSystemId int32, codeSystemVersionId int32) (NeighborConcepts, error)
 	// CreateConceptsQuery(concepts *[]models.Concept) error
+	CreateConceptQuery(concept *models.Concept) error
+	UpdateConceptQuery(concept *models.Concept) error
+}
+
+type NeighborConceptsType int
+
+const (
+	NeighborConceptsTypeBefore NeighborConceptsType = iota
+	NeighborConceptsTypeAfter
+	NeighborConceptsTypeBeforeAndAfter
+	NeighborConceptsTypeSurrounding
+	NeighborConceptsTypeNone
+)
+
+type NeighborConcepts struct {
+	BeforeConcept      *models.Concept
+	AfterConcept       *models.Concept
+	SurroundingConcept *models.Concept
+	NeighborType       NeighborConceptsType
 }
 
 type ErrorType int
