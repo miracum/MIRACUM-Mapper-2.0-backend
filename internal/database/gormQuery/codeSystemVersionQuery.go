@@ -34,7 +34,7 @@ func (gq *GormQuery) CreateCodeSystemVersionQuery(codeSystemVersion *models.Code
 			if len(newerCodeSystemVersions) > 0 {
 				for _, newerCodeSystemVersion := range newerCodeSystemVersions {
 					newerCodeSystemVersion.VersionID++
-					if err := gq.Database.Save(&newerCodeSystemVersion).Error; err != nil { //Model(&models.CodeSystemVersion{}).Where("id = ?", newerCodeSystemVersion.ID).Update("version_id", newerCodeSystemVersion.VersionID).Error; err != nil {
+					if err := gq.Database.Save(&newerCodeSystemVersion).Error; err != nil {
 						return err
 					}
 				}
@@ -121,7 +121,6 @@ func (gq *GormQuery) UpdateCodeSystemVersionQuery(codeSystemVersion *models.Code
 
 func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		// get codeSystem so it can be returned in the api and then delete it
 		if err := tx.First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
@@ -132,7 +131,6 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 		}
 
 		codeSystemRoles := []models.CodeSystemRole{}
-		// if err := tx.Where(&models.CodeSystemRole{CodeSystemVersionID: uint32(codeSystemVersionId)}).Or(&models.CodeSystemRole{NextCodeSystemVersionID: uint32(codeSystemVersionId)}).Find(&codeSystemRoles).Error; err == nil {
 		if err := tx.Find(&codeSystemRoles, "code_system_version_id = ? OR next_code_system_version_id = ?", codeSystemVersionId, codeSystemVersionId).Error; err == nil {
 			if len(codeSystemRoles) > 0 {
 				projectIds := []string{}
@@ -155,156 +153,6 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 	})
 	return err
 }
-
-func (gq *GormQuery) SetCodeSystemVersionImported(codeSystemVersionId int32, imported bool) error {
-	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		var codeSystemVersion models.CodeSystemVersion
-		if err := tx.First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
-			switch {
-			case errors.Is(err, gorm.ErrRecordNotFound):
-				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersionId))
-			default:
-				return err
-			}
-		}
-
-		codeSystemVersion.Imported = imported
-		if err := tx.Save(&codeSystemVersion).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-	return err
-}
-
-// func (gq *GormQuery) CheckHasNoConceptsQuery(codeSystemId int32, codeSystemVersionId int32) error {
-// 	var codeSystem models.CodeSystem
-// 	var codeSystemVersion models.CodeSystemVersion
-// 	var concept models.Concept
-// 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-// 		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
-// 			switch {
-// 			case errors.Is(err, gorm.ErrRecordNotFound):
-// 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
-// 			default:
-// 				return err
-// 			}
-// 		}
-// 		if err := tx.Where("code_system_id = ?", codeSystemId).First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
-// 			switch {
-// 			case errors.Is(err, gorm.ErrRecordNotFound):
-// 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found for CodeSystem with ID %d.", codeSystemVersionId, codeSystemId))
-// 			default:
-// 				return err
-// 			}
-// 		}
-
-// 		query := tx.
-// 			Preload("ValidFromVersion").
-// 			Preload("ValidToVersion").
-// 			Model(&models.Concept{}).
-// 			Joins("JOIN code_system_versions AS valid_from_version ON valid_from_version.id = concepts.valid_from_version_id").
-// 			Joins("JOIN code_system_versions AS valid_to_version ON valid_to_version.id = concepts.valid_to_version_id").
-// 			Where("concepts.code_system_id = ?", codeSystemId).
-// 			Where("valid_from_version.version_id <= ? AND valid_to_version.version_id >= ?", codeSystemVersion.VersionID, codeSystemVersion.VersionID).
-// 			First(&concept)
-
-// 		if err := query.Error; err != nil {
-// 			switch {
-// 			case errors.Is(err, gorm.ErrRecordNotFound):
-// 				// Good case, no concepts found
-// 				return nil
-// 			default:
-// 				return err
-// 			}
-// 		}
-// 		// Bad case, concepts found
-// 		return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion with ID %d has concepts.", codeSystemVersionId))
-// 	})
-// 	return err
-// }
-
-func (gq *GormQuery) GetImportedNeighborVersionIdsQuery(codeSystemId int32, codeSystemVersionId int32) (*uint32, *uint32, error) {
-	var codeSystemVersion models.CodeSystemVersion
-	if err := gq.GetCodeSystemVersionQuery(&codeSystemVersion, codeSystemId, codeSystemVersionId); err != nil {
-		return nil, nil, err
-	}
-
-	var beforeVersionId *uint32
-	beforeVersionId = nil
-	var afterVersionId *uint32
-	afterVersionId = nil
-
-	var beforeCodeSystemVersions []models.CodeSystemVersion
-	if err := gq.Database.Where("code_system_id = ? AND version_id < ?", codeSystemId, codeSystemVersion.VersionID).Order("version_id DESC").Find(&beforeCodeSystemVersions).Error; err != nil {
-		return nil, nil, err
-	}
-
-	if len(beforeCodeSystemVersions) > 0 {
-		for _, beforeCodeSystemVersion := range beforeCodeSystemVersions {
-			if beforeCodeSystemVersion.Imported {
-				beforeVersionId = &beforeCodeSystemVersion.VersionID
-				break
-			}
-			// if err := gq.CheckHasNoConceptsQuery(codeSystemId, int32(beforeCodeSystemVersion.ID)); err != nil {
-			// 	if errors.Is(err, database.ErrClientError) {
-			// 		beforeVersionId = &beforeCodeSystemVersion.VersionID
-			// 		break
-			// 	} else {
-			// 		return nil, nil, err
-			// 	}
-			// }
-		}
-	}
-
-	var afterCodeSystemVersions []models.CodeSystemVersion
-	if err := gq.Database.Where("code_system_id = ? AND version_id > ?", codeSystemId, codeSystemVersion.VersionID).Order("version_id ASC").Find(&afterCodeSystemVersions).Error; err != nil {
-		return nil, nil, err
-	}
-
-	if len(afterCodeSystemVersions) > 0 {
-		for _, afterCodeSystemVersion := range afterCodeSystemVersions {
-			if afterCodeSystemVersion.Imported {
-				afterVersionId = &afterCodeSystemVersion.VersionID
-				break
-			}
-			// if err := gq.CheckHasNoConceptsQuery(codeSystemId, int32(afterCodeSystemVersion.ID)); err != nil {
-			// 	if errors.Is(err, database.ErrClientError) {
-			// 		afterVersionId = &afterCodeSystemVersion.VersionID
-			// 	} else {
-			// 		return nil, nil, err
-			// 	}
-			// }
-		}
-	}
-
-	return beforeVersionId, afterVersionId, nil
-}
-
-// func (gq *GormQuery) GetFirstElementCodeSystemVersionQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error {
-// 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-// 		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
-// 			switch {
-// 			case errors.Is(err, gorm.ErrRecordNotFound):
-// 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystem.ID))
-// 			default:
-// 				return err
-// 			}
-// 		}
-// 		if err := tx.Where("code_system_id", codeSystemId).First(&concept).Error; err != nil {
-// 			switch {
-// 			case errors.Is(err, gorm.ErrRecordNotFound):
-// 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d has no elements.", codeSystem.ID))
-// 			default:
-// 				return err
-// 			}
-// 		}
-
-// 		return nil
-// 	})
-
-// 	return err
-// }
 
 // func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {
 // 	if len(*concepts) == 0 {
