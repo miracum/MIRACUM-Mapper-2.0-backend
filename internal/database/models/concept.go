@@ -34,7 +34,7 @@ func (e ConceptStatus) Value() (driver.Value, error) {
 
 type Concept struct {
 	ID           uint64 `gorm:"primarykey"`
-	Code         string
+	Code         string `gorm:"index"`
 	Display      string
 	CodeSystemID uint32 `gorm:"index"`
 	//Elements            []Element
@@ -43,9 +43,9 @@ type Concept struct {
 	//NextElements        []Element `gorm:"foreignKey:NextConceptID"`
 	Description        *string
 	Status             ConceptStatus `gorm:"type:ConceptStatus"`
-	ValidFromVersionID uint32
+	ValidFromVersionID uint32        `gorm:"index"`
 	ValidFromVersion   CodeSystemVersion
-	ValidToVersionID   uint32
+	ValidToVersionID   uint32 `gorm:"index"`
 	ValidToVersion     CodeSystemVersion
 }
 

@@ -181,8 +181,14 @@ func processCSVRows(reader *csv.Reader, codeSystemId int32, codeSystemVersionId 
 }
 
 func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]ConceptImport, db database.Datastore) {
+	versionId, beforeVersionId, afterVersionId, err := db.GetImportedNeighborVersionIds(codeSystemId, codeSystemVersionId)
+	if err != nil {
+		log.Printf("Error getting neighbor version IDs: %v", err)
+		return
+	}
+
 	for _, concept := range *concepts {
-		neighborConcepts, err := db.GetNeighborConceptsQuery(concept.Code, codeSystemId, codeSystemVersionId)
+		neighborConcepts, err := db.GetNeighborConceptsQuery(concept.Code, codeSystemId, versionId, beforeVersionId, afterVersionId)
 		if err != nil {
 			log.Printf("Error getting neighbor concepts: %v", err)
 			return
