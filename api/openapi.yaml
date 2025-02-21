@@ -1108,14 +1108,21 @@ paths:
       requestBody:
         required: true
         content:
-          text/csv:
+          multipart/form-data:
             schema:
-              type: string
-              example: |
-                code,meaning
-                123,test meaning 1
-                456,another meaning
-                789,third meaning
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The CSV file to import
+                  example: |
+                    code,meaning
+                    123,test meaning 1
+                    456,another meaning
+                    789,third meaning
       responses:
         "202":
           description: Success

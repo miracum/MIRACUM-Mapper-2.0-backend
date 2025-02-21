@@ -96,7 +96,11 @@ func (s *Server) ImportCodeSystemVersion(ctx context.Context, request api.Import
 		return api.ImportCodeSystemVersion400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("CodeSystemVersion is already imported")}, nil
 	}
 
-	file := request.Body
+	// file is part of the request body multipart form
+	file, err := request.Body.NextPart()
+	if err != nil {
+		return api.ImportCodeSystemVersion400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("Error reading the file")}, nil
+	}
 	codeSystemType := codeSystem.Type
 	return processFile(file, codeSystemId, codeSystemVersionId, codeSystemType, s.Database)
 }

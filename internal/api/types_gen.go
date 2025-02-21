@@ -511,6 +511,12 @@ type GetAllConceptsByVersionParamsSortBy string
 // GetAllConceptsByVersionParamsSortOrder defines parameters for GetAllConceptsByVersion.
 type GetAllConceptsByVersionParamsSortOrder string
 
+// ImportCodeSystemVersionMultipartBody defines parameters for ImportCodeSystemVersion.
+type ImportCodeSystemVersionMultipartBody struct {
+	// File The CSV file to import
+	File openapi_types.File `json:"file"`
+}
+
 // GetAllProjectsParams defines parameters for GetAllProjects.
 type GetAllProjectsParams struct {
 	// Page Page number (must be a positive integer)
@@ -564,6 +570,9 @@ type CreateCodeSystemVersionJSONRequestBody = BaseCodeSystemVersion
 
 // UpdateCodeSystemVersionJSONRequestBody defines body for UpdateCodeSystemVersion for application/json ContentType.
 type UpdateCodeSystemVersionJSONRequestBody = CodeSystemVersion
+
+// ImportCodeSystemVersionMultipartRequestBody defines body for ImportCodeSystemVersion for multipart/form-data ContentType.
+type ImportCodeSystemVersionMultipartRequestBody ImportCodeSystemVersionMultipartBody
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
 type CreateProjectJSONRequestBody = CreateProjectDetails
