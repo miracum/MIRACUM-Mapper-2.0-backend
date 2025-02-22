@@ -858,7 +858,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/GetCodeSystem" # id optional
+                "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -898,7 +898,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/GetCodeSystem" # id optional
+                "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -962,7 +962,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/GetCodeSystem" # id optional
+                "$ref": "#/components/schemas/CodeSystem" # id optional
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":

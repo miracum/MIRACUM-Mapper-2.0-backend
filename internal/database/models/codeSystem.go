@@ -15,7 +15,7 @@ type CodeSystem struct {
 	Title              *string
 	Description        *string
 	Author             *string
-	Concepts           []Concept `gorm:"constraint:OnDelete:CASCADE"`
-	CodeSystemRoles    []CodeSystemRole
+	Concepts           []Concept           `gorm:"constraint:OnDelete:CASCADE"` // not preloaded on get
+	CodeSystemRoles    []CodeSystemRole    // not preloaded on get
 	CodeSystemVersions []CodeSystemVersion `gorm:"constraint:OnDelete:CASCADE"`
 }

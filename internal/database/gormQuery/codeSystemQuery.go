@@ -11,8 +11,7 @@ import (
 )
 
 func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
-	db := gq.Database.Preload("CodeSystemVersions").Find(&codeSystems)
-	return db.Error
+	return gq.Database.Preload("CodeSystemVersions").Find(&codeSystems).Error
 }
 
 func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error {
@@ -20,13 +19,12 @@ func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error 
 }
 
 func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
-	db := gq.Database.Preload("CodeSystemVersions").First(&codeSystem, codeSystemId)
-	if db.Error != nil {
+	if err := gq.Database.Preload("CodeSystemVersions").First(&codeSystem, codeSystemId).Error; err != nil {
 		switch {
-		case errors.Is(db.Error, gorm.ErrRecordNotFound):
+		case errors.Is(err, gorm.ErrRecordNotFound):
 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
 		default:
-			return db.Error
+			return err
 		}
 	} else {
 		return nil
@@ -55,7 +53,7 @@ func (gq *GormQuery) UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error 
 func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		// get codeSystem so it can be returned in the api and then delete it
-		if err := tx.First(&codeSystem, codeSystemId).Error; err != nil {
+		if err := tx.Preload("CodeSystemRoles").First(&codeSystem, codeSystemId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
@@ -64,26 +62,19 @@ func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSy
 			}
 		}
 
-		codeSystemRoles := []models.CodeSystemRole{}
-		if err := tx.Find(&codeSystemRoles, "code_system_id = ?", codeSystemId).Error; err == nil {
-			if len(codeSystemRoles) > 0 {
-				projectIds := []string{}
-				for _, role := range codeSystemRoles {
-					projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
-				}
-				return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystem cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
+		// check if codeSystem is used in any projects
+		if len(codeSystem.CodeSystemRoles) > 0 {
+			projectIds := []string{}
+			for _, role := range codeSystem.CodeSystemRoles {
+				projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
 			}
+			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystem cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
 		}
 
-		db := tx.Delete(&codeSystem, codeSystemId)
-		if db.Error != nil {
-			return db.Error
-		} else {
-			if db.RowsAffected == 0 {
-				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
-			}
-			return nil
+		if err := tx.Delete(&codeSystem, codeSystemId).Error; err != nil {
+			return err
 		}
+		return nil
 	})
 	return err
 }
