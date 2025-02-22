@@ -35,7 +35,7 @@ func (s *Server) UpdateCodeSystemVersion(ctx context.Context, request api.Update
 	codeSystemId := request.CodesystemId
 	codeSystemVersion := request.Body
 
-	db_codeSystemVersion := *transform.ApiCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion, codeSystemId)
+	db_codeSystemVersion := *transform.ApiUpdateCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion, codeSystemId)
 	if err := s.Database.UpdateCodeSystemVersionQuery(&db_codeSystemVersion); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
@@ -96,7 +96,6 @@ func (s *Server) ImportCodeSystemVersion(ctx context.Context, request api.Import
 		return api.ImportCodeSystemVersion400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("CodeSystemVersion is already imported")}, nil
 	}
 
-	// file is part of the request body multipart form
 	file, err := request.Body.NextPart()
 	if err != nil {
 		return api.ImportCodeSystemVersion400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("Error reading the file")}, nil

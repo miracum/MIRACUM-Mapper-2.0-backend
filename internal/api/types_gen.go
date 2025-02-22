@@ -385,6 +385,12 @@ type UpdateCodeSystemRole struct {
 // UpdateCodeSystemRoleType defines model for UpdateCodeSystemRole.Type.
 type UpdateCodeSystemRoleType string
 
+// UpdateCodeSystemVersion defines model for UpdateCodeSystemVersion.
+type UpdateCodeSystemVersion struct {
+	Id          int32  `json:"id"`
+	VersionName string `json:"version_name"`
+}
+
 // UpdateMapping defines model for UpdateMapping.
 type UpdateMapping struct {
 	Comment     *string                   `json:"comment,omitempty"`
@@ -569,7 +575,7 @@ type UpdateCodeSystemJSONRequestBody = CodeSystem
 type CreateCodeSystemVersionJSONRequestBody = BaseCodeSystemVersion
 
 // UpdateCodeSystemVersionJSONRequestBody defines body for UpdateCodeSystemVersion for application/json ContentType.
-type UpdateCodeSystemVersionJSONRequestBody = CodeSystemVersion
+type UpdateCodeSystemVersionJSONRequestBody = UpdateCodeSystemVersion
 
 // ImportCodeSystemVersionMultipartRequestBody defines body for ImportCodeSystemVersion for multipart/form-data ContentType.
 type ImportCodeSystemVersionMultipartRequestBody ImportCodeSystemVersionMultipartBody

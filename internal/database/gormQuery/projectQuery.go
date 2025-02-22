@@ -30,7 +30,7 @@ func (gq *GormQuery) GetAllProjectsQuery(projects *[]models.Project, userID *uui
 
 func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&project).Error
+		err := tx.Preload("CodeSystemRoles.CodeSystemVersion").Preload("CodeSystemRoles.NextCodeSystemVersion").Create(&project).Error
 		if err != nil {
 			// cast error to postgres error
 			pgErr, ok := handlePgError(err)

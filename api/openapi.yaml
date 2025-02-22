@@ -1034,7 +1034,7 @@ paths:
         content:
           application/json:
             schema:
-              "$ref": "#/components/schemas/CodeSystemVersion"
+              "$ref": "#/components/schemas/UpdateCodeSystemVersion"
       responses:
         "200":
           description: Success
@@ -1639,6 +1639,17 @@ components:
         release_date:
           type: string
           format: date
+    UpdateCodeSystemVersion:
+      type: object
+      required:
+        - version_name
+        - id
+      properties:
+        version_name:
+          type: string
+        id:
+          type: integer
+          format: int32
     CodeSystemVersion:
       allOf:
         - $ref: "#/components/schemas/BaseCodeSystemVersion"
@@ -1649,7 +1660,6 @@ components:
             id:
               type: integer
               format: int32
-              minimum: 1
     ErrorResponse:
       type: string
   responses:

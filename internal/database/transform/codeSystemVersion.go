@@ -39,3 +39,11 @@ func ApiCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion *api.CodeSyst
 		ReleaseDate:  codeSystemVersion.ReleaseDate.Time,
 	}
 }
+
+func ApiUpdateCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion *api.UpdateCodeSystemVersion, codeSystemId int32) *models.CodeSystemVersion {
+	return &models.CodeSystemVersion{
+		ID:           codeSystemVersion.Id,
+		CodeSystemID: codeSystemId,
+		VersionName:  codeSystemVersion.VersionName,
+	}
+}

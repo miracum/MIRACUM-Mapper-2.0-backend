@@ -42,10 +42,7 @@ func (gq *GormQuery) UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error 
 			}
 		}
 
-		if err := tx.Save(&codeSystem).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Save(&codeSystem).Error
 	})
 	return err
 }
@@ -71,10 +68,7 @@ func (gq *GormQuery) DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSy
 			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystem cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
 		}
 
-		if err := tx.Delete(&codeSystem, codeSystemId).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Delete(&codeSystem, codeSystemId).Error
 	})
 	return err
 }
