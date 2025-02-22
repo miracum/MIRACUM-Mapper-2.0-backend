@@ -36,7 +36,7 @@ func (gq *GormQuery) SetCodeSystemVersionImported(codeSystemVersionId int32, imp
 	return err
 }
 
-func (gq *GormQuery) GetImportedNeighborVersionIds(codeSystemId int32, codeSystemVersionId int32) (uint32, *uint32, *uint32, error) {
+func (gq *GormQuery) GetImportedNeighborVersionIds(codeSystemId int32, codeSystemVersionId int32) (int32, *int32, *int32, error) {
 	var codeSystemVersion models.CodeSystemVersion
 	if err := gq.GetCodeSystemVersionQuery(&codeSystemVersion, codeSystemId, codeSystemVersionId); err != nil {
 		return 0, nil, nil, err
@@ -44,9 +44,9 @@ func (gq *GormQuery) GetImportedNeighborVersionIds(codeSystemId int32, codeSyste
 
 	versionId := codeSystemVersion.VersionID
 
-	var beforeVersionId *uint32
+	var beforeVersionId *int32
 	beforeVersionId = nil
-	var afterVersionId *uint32
+	var afterVersionId *int32
 	afterVersionId = nil
 
 	var beforeCodeSystemVersions []models.CodeSystemVersion
@@ -123,7 +123,7 @@ func (gq GormQuery) getConceptsByCode(code string, codeSystemId int32) ([]models
 	return concepts, err
 }
 
-func (gq GormQuery) GetNeighborConceptsQuery(code string, codeSystemId int32, versionId uint32, beforeVersionId *uint32, afterVersionId *uint32) (database.NeighborConcepts, error) {
+func (gq GormQuery) GetNeighborConceptsQuery(code string, codeSystemId int32, versionId int32, beforeVersionId *int32, afterVersionId *int32) (database.NeighborConcepts, error) {
 	if concepts, err := gq.getConceptsByCode(code, codeSystemId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):

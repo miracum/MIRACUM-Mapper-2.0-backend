@@ -33,19 +33,19 @@ func (e ConceptStatus) Value() (driver.Value, error) {
 }
 
 type Concept struct {
-	ID           uint64 `gorm:"primarykey"`
+	ID           int32  `gorm:"primarykey;type:integer"`
 	Code         string `gorm:"index"`
 	Display      string
-	CodeSystemID uint32 `gorm:"index"`
+	CodeSystemID int32 `gorm:"index;type:integer"`
 	//Elements            []Element
 	CodeSystem          CodeSystem
 	DisplaySearchVector string `gorm:"type:tsvector GENERATED ALWAYS AS (to_tsvector('english', display)) STORED ;index:,type:gin"`
 	//NextElements        []Element `gorm:"foreignKey:NextConceptID"`
 	Description        *string
 	Status             ConceptStatus `gorm:"type:ConceptStatus"`
-	ValidFromVersionID uint32        `gorm:"index"`
+	ValidFromVersionID int32         `gorm:"index;type:integer"`
 	ValidFromVersion   CodeSystemVersion
-	ValidToVersionID   uint32 `gorm:"index"`
+	ValidToVersionID   int32 `gorm:"index;type:integer"`
 	ValidToVersion     CodeSystemVersion
 }
 

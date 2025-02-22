@@ -25,7 +25,7 @@ func GormProjectToApiProjectDetails(project *models.Project) api.ProjectDetails 
 	var projectDetails api.ProjectDetails = api.ProjectDetails{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  int32(project.ID),
+		Id:                  project.ID,
 		Modified:            modified,
 		Created:             created,
 		Name:                project.Name,
@@ -92,7 +92,7 @@ func GormProjectToApiProject(project *models.Project) *api.Project {
 	return &api.Project{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  int32(project.ID),
+		Id:                  project.ID,
 		Modified:            modified,
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
@@ -104,7 +104,7 @@ func GormProjectToApiProject(project *models.Project) *api.Project {
 func ApiUpdateProjectToGormProject(project *api.UpdateProject) *models.Project {
 	return &models.Project{
 		Model: models.Model{
-			ID: uint32(project.Id),
+			ID: project.Id,
 		},
 		Name:                project.Name,
 		Description:         project.Description,

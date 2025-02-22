@@ -50,7 +50,7 @@ func (gq *GormQuery) CreateCodeSystemVersionQuery(codeSystemVersion *models.Code
 	return err
 }
 
-func (gq *GormQuery) checkReleaseDateExists(codeSystemID uint32, releaseDate time.Time) (bool, error) {
+func (gq *GormQuery) checkReleaseDateExists(codeSystemID int32, releaseDate time.Time) (bool, error) {
 	var codeSystemVersion models.CodeSystemVersion
 	query := gq.Database.First(&codeSystemVersion, "code_system_id = ? AND release_date = ?", codeSystemID, releaseDate)
 	if err := query.Error; err != nil {
@@ -64,7 +64,7 @@ func (gq *GormQuery) checkReleaseDateExists(codeSystemID uint32, releaseDate tim
 	return true, nil
 }
 
-func (gq *GormQuery) getNextVersionIdAndNewerCodeSystemVersions(codeSystemID uint32, releaseDate time.Time) (uint32, []models.CodeSystemVersion, error) {
+func (gq *GormQuery) getNextVersionIdAndNewerCodeSystemVersions(codeSystemID int32, releaseDate time.Time) (int32, []models.CodeSystemVersion, error) {
 	var newerCodeSystemVersions []models.CodeSystemVersion
 	query := gq.Database.Order("release_date DESC").Find(&newerCodeSystemVersions, "code_system_id = ? AND release_date > ?", codeSystemID, releaseDate)
 	if err := query.Error; err != nil {

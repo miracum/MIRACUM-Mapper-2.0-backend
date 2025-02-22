@@ -38,7 +38,7 @@ func convertToGormProjectPermission(userId string, role models.ProjectPermission
 	permission = models.ProjectPermission{
 		Role:      role,
 		UserID:    userUuid,
-		ProjectID: uint32(projectId),
+		ProjectID: projectId,
 	}
 
 	return &permission, nil

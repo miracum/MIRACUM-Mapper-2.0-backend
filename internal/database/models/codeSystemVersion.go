@@ -3,9 +3,9 @@ package models
 import "time"
 
 type CodeSystemVersion struct {
-	ID           uint32 `gorm:"primarykey"`
-	CodeSystemID uint32
-	VersionID    uint32 `gorm:"index"`
+	ID           int32 `gorm:"primarykey;type:integer"`
+	CodeSystemID int32 `gorm:"type:integer"`
+	VersionID    int32 `gorm:"index;type:integer"`
 	VersionName  string
 	ReleaseDate  time.Time
 	Imported     bool `gorm:"default:false"`

@@ -9,7 +9,7 @@ import (
 
 func GormCodeSystemVersionToApiCodeSystemVersion(codeSystemVersion *models.CodeSystemVersion) *api.CodeSystemVersion {
 	return &api.CodeSystemVersion{
-		Id:          int32(codeSystemVersion.ID),
+		Id:          codeSystemVersion.ID,
 		VersionName: codeSystemVersion.VersionName,
 		ReleaseDate: types.Date{Time: codeSystemVersion.ReleaseDate},
 	}
@@ -25,7 +25,7 @@ func GormCodeSystemVersionsToApiCodeSystemVersions(codeSystemVersions *[]models.
 
 func ApiBaseCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion *api.BaseCodeSystemVersion, codeSystemId int32) *models.CodeSystemVersion {
 	return &models.CodeSystemVersion{
-		CodeSystemID: uint32(codeSystemId),
+		CodeSystemID: codeSystemId,
 		VersionName:  codeSystemVersion.VersionName,
 		ReleaseDate:  codeSystemVersion.ReleaseDate.Time,
 	}
@@ -33,8 +33,8 @@ func ApiBaseCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion *api.Base
 
 func ApiCodeSystemVersionToGormCodeSystemVersion(codeSystemVersion *api.CodeSystemVersion, codeSystemId int32) *models.CodeSystemVersion {
 	return &models.CodeSystemVersion{
-		ID:           uint32(codeSystemVersion.Id),
-		CodeSystemID: uint32(codeSystemId),
+		ID:           codeSystemVersion.Id,
+		CodeSystemID: codeSystemId,
 		VersionName:  codeSystemVersion.VersionName,
 		ReleaseDate:  codeSystemVersion.ReleaseDate.Time,
 	}

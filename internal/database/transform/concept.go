@@ -7,7 +7,7 @@ import (
 
 func GormConceptToApiConcept(gormConcept *models.Concept) *api.Concept {
 	return &api.Concept{
-		Id:          int64(gormConcept.ID),
+		Id:          gormConcept.ID,
 		Meaning:     gormConcept.Display,
 		Code:        gormConcept.Code,
 		Description: gormConcept.Description,

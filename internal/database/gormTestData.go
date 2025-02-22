@@ -109,7 +109,7 @@ func createTestData(gormDB *gorm.DB) {
 
 	for i, sampleLoincCode := range pseudoLoincCodes {
 		concept := models.Concept{
-			ID:           uint64(i + 3),
+			ID:           int32(i + 3),
 			CodeSystemID: 2,
 			Code:         sampleLoincCode.Code,
 			Display:      sampleLoincCode.Meaning,
@@ -132,7 +132,7 @@ func createTestData(gormDB *gorm.DB) {
 
 			count = count + rand.Intn(10) + 1
 			concepts[i] = models.Concept{
-				ID:           uint64(count),
+				ID:           int32(count),
 				CodeSystemID: 2,
 				Code:         fmt.Sprint(count),
 				Display:      meaning,
@@ -155,7 +155,7 @@ func createTestData(gormDB *gorm.DB) {
 
 			count = count + rand.Intn(10) + 1
 			concepts[i] = models.Concept{
-				ID:           uint64(count),
+				ID:           int32(count),
 				CodeSystemID: 1,
 				Code:         fmt.Sprint(count),
 				Display:      meaning,

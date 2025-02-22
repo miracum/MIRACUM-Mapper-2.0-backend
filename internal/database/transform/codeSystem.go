@@ -7,7 +7,7 @@ import (
 
 func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSystem {
 	return &api.CodeSystem{
-		Id:          int32(codeSystem.ID),
+		Id:          codeSystem.ID,
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Name:        codeSystem.Name,
@@ -19,7 +19,7 @@ func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSyste
 
 func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem) *api.GetCodeSystem {
 	return &api.GetCodeSystem{
-		Id:          int32(codeSystem.ID),
+		Id:          codeSystem.ID,
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
@@ -41,7 +41,7 @@ func GormCodeSystemsToApiGetCodeSystems(codeSystems *[]models.CodeSystem) *[]api
 func ApiCodeSystemToGormCodeSystem(codeSystem *api.CodeSystem) *models.CodeSystem {
 	return &models.CodeSystem{
 		Model: models.Model{
-			ID: uint32(codeSystem.Id),
+			ID: codeSystem.Id,
 		},
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,

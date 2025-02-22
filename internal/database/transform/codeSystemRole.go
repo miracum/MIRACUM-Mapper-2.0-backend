@@ -15,7 +15,7 @@ func GormCodeSystemRolesToApiCodeSystemRoles(codeSystemRoles *[]models.CodeSyste
 
 func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole) *api.CodeSystemRole {
 	return &api.CodeSystemRole{
-		Id:   int32(codeSystemRole.ID),
+		Id:   codeSystemRole.ID,
 		Name: codeSystemRole.Name,
 		System: struct {
 			Id          int32   `json:"id"`
@@ -23,7 +23,7 @@ func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole
 			NextVersion *string `json:"nextVersion,omitempty"`
 			Version     string  `json:"version"`
 		}{
-			Id:          int32(codeSystemRole.CodeSystemID),
+			Id:          codeSystemRole.CodeSystemID,
 			Name:        codeSystemRole.CodeSystem.Name,
 			NextVersion: &codeSystemRole.NextCodeSystemVersion.VersionName, // TODO check if this is correct
 			Version:     codeSystemRole.CodeSystemVersion.VersionName,
@@ -34,10 +34,10 @@ func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole
 
 func ApiUpdateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.UpdateCodeSystemRole, projectId *api.ProjectId) *models.CodeSystemRole {
 	return &models.CodeSystemRole{
-		ID:        uint32(codeSystemRole.Id),
+		ID:        codeSystemRole.Id,
 		Type:      models.CodeSystemRoleType(codeSystemRole.Type),
 		Name:      codeSystemRole.Name,
-		ProjectID: uint32(*projectId),
+		ProjectID: *projectId,
 	}
 }
 
@@ -45,8 +45,8 @@ func ApiCreateCodeSystemRoleToGormCodeSystemRole(codeSystemRole *api.CreateCodeS
 	return &models.CodeSystemRole{
 		Type:                models.CodeSystemRoleType(codeSystemRole.Type),
 		Name:                codeSystemRole.Name,
-		CodeSystemID:        uint32(codeSystemRole.System),
-		CodeSystemVersionID: uint32(codeSystemRole.Version),
+		CodeSystemID:        codeSystemRole.System,
+		CodeSystemVersionID: codeSystemRole.Version,
 	}
 }
 
@@ -54,7 +54,7 @@ func ApiCreateCodeSystemRolesToGormCodeSystemRoles(codeSystemRoles *[]api.Create
 	gormCodeSystemRoles := []models.CodeSystemRole{}
 	for i, role := range *codeSystemRoles {
 		gormRole := ApiCreateCodeSystemRoleToGormCodeSystemRole(&role)
-		gormRole.Position = uint32(i)
+		gormRole.Position = int32(i)
 		gormCodeSystemRoles = append(gormCodeSystemRoles, *gormRole)
 	}
 	return &gormCodeSystemRoles

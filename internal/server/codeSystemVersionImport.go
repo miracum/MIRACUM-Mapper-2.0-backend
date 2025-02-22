@@ -201,7 +201,7 @@ func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]C
 			if !conceptsAreEqual(&concept, beforeConcept) {
 				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
 			} else {
-				beforeConcept.ValidToVersionID = uint32(codeSystemVersionId)
+				beforeConcept.ValidToVersionID = codeSystemVersionId
 				if err := db.UpdateConceptQuery(beforeConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
@@ -211,7 +211,7 @@ func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]C
 			if !conceptsAreEqual(&concept, afterConcept) {
 				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
 			} else {
-				afterConcept.ValidFromVersionID = uint32(codeSystemVersionId)
+				afterConcept.ValidFromVersionID = codeSystemVersionId
 				if err := db.UpdateConceptQuery(afterConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
@@ -222,12 +222,12 @@ func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]C
 			if !conceptsAreEqual(&concept, beforeConcept) && !conceptsAreEqual(&concept, afterConcept) {
 				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
 			} else if conceptsAreEqual(&concept, beforeConcept) && !conceptsAreEqual(&concept, afterConcept) {
-				beforeConcept.ValidToVersionID = uint32(codeSystemVersionId)
+				beforeConcept.ValidToVersionID = codeSystemVersionId
 				if err := db.UpdateConceptQuery(beforeConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
 			} else if !conceptsAreEqual(&concept, beforeConcept) && conceptsAreEqual(&concept, afterConcept) {
-				afterConcept.ValidFromVersionID = uint32(codeSystemVersionId)
+				afterConcept.ValidFromVersionID = codeSystemVersionId
 				if err := db.UpdateConceptQuery(afterConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
@@ -267,9 +267,9 @@ func createNewConcept(codeSystemId int32, codeSystemVersionId int32, concept *Co
 		Display:            concept.Display,
 		Description:        concept.Description,
 		Status:             concept.Status,
-		CodeSystemID:       uint32(codeSystemId),
-		ValidFromVersionID: uint32(codeSystemVersionId),
-		ValidToVersionID:   uint32(codeSystemVersionId),
+		CodeSystemID:       codeSystemId,
+		ValidFromVersionID: codeSystemVersionId,
+		ValidToVersionID:   codeSystemVersionId,
 	}
 	if err := db.CreateConceptQuery(&newConcept); err != nil {
 		log.Printf("Error creating concept: %v", err)

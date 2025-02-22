@@ -239,7 +239,7 @@ type CodeSystemVersion struct {
 type Concept struct {
 	Code        string        `json:"code"`
 	Description *string       `json:"description,omitempty"`
-	Id          int64         `json:"id"`
+	Id          int32         `json:"id"`
 	Meaning     string        `json:"meaning"`
 	Status      ConceptStatus `json:"status"`
 }
@@ -289,7 +289,7 @@ type CreateProjectDetails struct {
 // Element defines model for Element.
 type Element struct {
 	CodeSystemRole *int32 `json:"codeSystemRole,omitempty"`
-	Concept        *int64 `json:"concept,omitempty"`
+	Concept        *int32 `json:"concept,omitempty"`
 }
 
 // ErrorResponse defines model for ErrorResponse.
@@ -323,7 +323,7 @@ type Mapping struct {
 	Created     string              `json:"created"`
 	Elements    []FullElement       `json:"elements"`
 	Equivalence *MappingEquivalence `json:"equivalence,omitempty"`
-	Id          int64               `json:"id"`
+	Id          int32               `json:"id"`
 	Modified    string              `json:"modified"`
 	Status      *MappingStatus      `json:"status,omitempty"`
 }
@@ -390,7 +390,7 @@ type UpdateMapping struct {
 	Comment     *string                   `json:"comment,omitempty"`
 	Elements    *[]Element                `json:"elements,omitempty"`
 	Equivalence *UpdateMappingEquivalence `json:"equivalence,omitempty"`
-	Id          int64                     `json:"id"`
+	Id          int32                     `json:"id"`
 	Status      *UpdateMappingStatus      `json:"status,omitempty"`
 }
 
@@ -428,7 +428,7 @@ type CodesystemVersionId = int32
 type CodesystemId = int32
 
 // MappingId defines model for mapping_id.
-type MappingId = int64
+type MappingId = int32
 
 // Page defines model for page.
 type Page = int
@@ -462,7 +462,7 @@ type GetAllConceptsParams struct {
 	// Page Page number (must be a positive integer)
 	Page *Page `form:"page,omitempty" json:"page,omitempty"`
 
-	// PageSize Number of items per page (minimum 1, maximum 100)
+	// PageSize Number of items per page (must be a positive integer)
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
 	// SortBy Field to sort sortBy
@@ -489,7 +489,7 @@ type GetAllConceptsByVersionParams struct {
 	// Page Page number (must be a positive integer)
 	Page *Page `form:"page,omitempty" json:"page,omitempty"`
 
-	// PageSize Number of items per page (minimum 1, maximum 100)
+	// PageSize Number of items per page (must be a positive integer)
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
 	// SortBy Field to sort sortBy
@@ -522,7 +522,7 @@ type GetAllProjectsParams struct {
 	// Page Page number (must be a positive integer)
 	Page *Page `form:"page,omitempty" json:"page,omitempty"`
 
-	// PageSize Number of items per page (minimum 1, maximum 100)
+	// PageSize Number of items per page (must be a positive integer)
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
 	// SortBy Field to sort sortBy
@@ -543,7 +543,7 @@ type GetAllMappingsParams struct {
 	// Page Page number (must be a positive integer)
 	Page *Page `form:"page,omitempty" json:"page,omitempty"`
 
-	// PageSize Number of items per page (minimum 1, maximum 100)
+	// PageSize Number of items per page (must be a positive integer)
 	PageSize *PageSize `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
 	// SortBy Field to sort by

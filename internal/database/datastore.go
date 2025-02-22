@@ -27,10 +27,10 @@ type Datastore interface {
 	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32) error
 
 	// Mapping
-	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error
-	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error
-	GetMappingQuery(mapping *models.Mapping, projectId int, mappingId int64) error
-	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error
+	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int32, pageSize int, offset int, sortBy string, sortOrder string) error
+	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]int32, error)) error
+	GetMappingQuery(mapping *models.Mapping, projectId int32, mappingId int32) error
+	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]int32, error), deleteMissingElements bool) error
 	DeleteMappingQuery(mapping *models.Mapping) error
 
 	// User
@@ -53,10 +53,10 @@ type Datastore interface {
 
 	// CodeSystemVersionImport
 	SetCodeSystemVersionImported(codeSystemVersionId int32, imported bool) error
-	GetImportedNeighborVersionIds(codeSystemId int32, codeSystemVersionId int32) (uint32, *uint32, *uint32, error)
+	GetImportedNeighborVersionIds(codeSystemId int32, codeSystemVersionId int32) (int32, *int32, *int32, error)
 	CreateConceptQuery(concept *models.Concept) error
 	UpdateConceptQuery(concept *models.Concept) error
-	GetNeighborConceptsQuery(code string, codeSystemId int32, versionId uint32, beforeVersionId *uint32, afterVersionId *uint32) (NeighborConcepts, error)
+	GetNeighborConceptsQuery(code string, codeSystemId int32, versionId int32, beforeVersionId *int32, afterVersionId *int32) (NeighborConcepts, error)
 
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error

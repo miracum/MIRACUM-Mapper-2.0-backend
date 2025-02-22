@@ -30,7 +30,7 @@ var (
 )
 
 // callback function to check if the mapping is valid
-var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32, error) {
+var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]int32, error) {
 	var errorMessages []string
 
 	if !project.StatusRequired && mapping.Status != nil {
@@ -40,7 +40,7 @@ var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32
 		errorMessages = append(errorMessages, "The project does not allow to set an equivalence.")
 	}
 
-	codeSystemRoleIDs := make(map[uint32]bool)
+	codeSystemRoleIDs := make(map[int32]bool)
 	for _, element := range mapping.Elements {
 		isValid := false
 		for _, role := range project.CodeSystemRoles {
@@ -71,7 +71,7 @@ var checkFunc = func(mapping *models.Mapping, project *models.Project) ([]uint32
 		return nil, database.NewDBError(database.ClientError, strings.Join(errorMessages, "; "))
 	}
 
-	unusedCodeSystemRoleIDs := make([]uint32, 0)
+	unusedCodeSystemRoleIDs := make([]int32, 0)
 	for _, role := range project.CodeSystemRoles {
 		if _, exists := codeSystemRoleIDs[role.ID]; !exists {
 			unusedCodeSystemRoleIDs = append(unusedCodeSystemRoleIDs, role.ID)
@@ -89,7 +89,7 @@ func (s *Server) GetAllMappings(ctx context.Context, request api.GetAllMappingsR
 	sortBy := mappingSortColumns[*request.Params.SortBy]
 	sortOrder := mappingSortOrders[*request.Params.SortOrder]
 
-	projectId := int(request.ProjectId)
+	projectId := request.ProjectId
 
 	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
 	if err != nil {
@@ -229,7 +229,7 @@ func (s *Server) PatchMapping(ctx context.Context, request api.PatchMappingReque
 // GetMapping implements api.StrictServerInterface.
 func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestObject) (api.GetMappingResponseObject, error) {
 
-	projectId := int(request.ProjectId)
+	projectId := request.ProjectId
 	mappingId := request.MappingId
 
 	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
@@ -262,7 +262,7 @@ func (s *Server) GetMapping(ctx context.Context, request api.GetMappingRequestOb
 // DeleteMapping implements api.StrictServerInterface.
 func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingRequestObject) (api.DeleteMappingResponseObject, error) {
 
-	projectId := int(request.ProjectId)
+	projectId := request.ProjectId
 	mappingId := request.MappingId
 
 	permissions, err := getUserPermissions(ctx, s, request.ProjectId)
@@ -279,10 +279,10 @@ func (s *Server) DeleteMapping(ctx context.Context, request api.DeleteMappingReq
 	}
 
 	mapping := models.Mapping{
-		ModelBigId: models.ModelBigId{
-			ID: uint64(mappingId),
+		Model: models.Model{
+			ID: mappingId,
 		},
-		ProjectID: uint32(projectId),
+		ProjectID: projectId,
 	}
 
 	if err := s.Database.DeleteMappingQuery(&mapping); err != nil {

@@ -1,10 +1,10 @@
 package models
 
 type Element struct {
-	MappingID        uint64 `gorm:"primaryKey;index"`
-	CodeSystemRoleID uint32 `gorm:"primaryKey"`
-	ConceptID        *uint64
+	MappingID        int32  `gorm:"primaryKey;index;type:integer"`
+	CodeSystemRoleID int32  `gorm:"primaryKey;type:integer"`
+	ConceptID        *int32 `gorm:"type:integer"`
 	Concept          Concept
-	NextConceptID    *uint64
+	NextConceptID    *int32 `gorm:"type:integer"`
 	NextConcept      Concept
 }

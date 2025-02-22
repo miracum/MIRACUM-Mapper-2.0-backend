@@ -1263,7 +1263,6 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
     user_id:
       name: user_id
       in: path
@@ -1279,7 +1278,6 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
     mapping_id:
       name: mapping_id
       in: path
@@ -1287,8 +1285,7 @@ components:
       description: The ID of the mapping
       schema:
         type: integer
-        format: int64
-        minimum: 1
+        format: int32
     codesystem_id:
       name: codesystem_id
       in: path
@@ -1297,7 +1294,6 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
     codesystem-version_id:
       name: codesystem-version_id
       in: path
@@ -1306,7 +1302,6 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
     page:
       name: page
       in: query
@@ -1319,7 +1314,7 @@ components:
     pageSize:
       name: pageSize
       in: query
-      description: Number of items per page (minimum 1, maximum 100)
+      description: Number of items per page (must be a positive integer)
       required: false
       schema:
         type: integer
@@ -1520,7 +1515,7 @@ components:
           properties:
             id:
               type: integer
-              format: int64
+              format: int32
     Mapping:
       allOf:
         - $ref: "#/components/schemas/UpdateMapping"
@@ -1545,7 +1540,7 @@ components:
           format: int32
         concept:
           type: integer
-          format: int64
+          format: int32
     FullElement:
       allOf:
         - $ref: "#/components/schemas/Element"
@@ -1579,7 +1574,7 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
         code:
           type: string
         meaning:
