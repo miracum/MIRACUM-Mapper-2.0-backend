@@ -202,7 +202,7 @@ func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]C
 				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
 			} else {
 				beforeConcept.ValidToVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(beforeConcept); err != nil {
+				if err := db.UpdateConceptQuery(nil, beforeConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
 			}
@@ -212,7 +212,7 @@ func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]C
 				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
 			} else {
 				afterConcept.ValidFromVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(afterConcept); err != nil {
+				if err := db.UpdateConceptQuery(nil, afterConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
 			}
@@ -223,12 +223,12 @@ func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]C
 				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
 			} else if conceptsAreEqual(&concept, beforeConcept) && !conceptsAreEqual(&concept, afterConcept) {
 				beforeConcept.ValidToVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(beforeConcept); err != nil {
+				if err := db.UpdateConceptQuery(nil, beforeConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
 			} else if !conceptsAreEqual(&concept, beforeConcept) && conceptsAreEqual(&concept, afterConcept) {
 				afterConcept.ValidFromVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(afterConcept); err != nil {
+				if err := db.UpdateConceptQuery(nil, afterConcept); err != nil {
 					log.Printf("Error updating concept: %v", err)
 				}
 			} else {

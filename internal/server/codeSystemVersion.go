@@ -51,9 +51,10 @@ func (s *Server) UpdateCodeSystemVersion(ctx context.Context, request api.Update
 // DeleteCodeSystemVersion implements api.StrictServerInterface.
 func (s *Server) DeleteCodeSystemVersion(ctx context.Context, request api.DeleteCodeSystemVersionRequestObject) (api.DeleteCodeSystemVersionResponseObject, error) {
 	codeSystemVersionId := request.CodesystemVersionId
+	codeSystemId := request.CodesystemId
 	var codeSystemVersion models.CodeSystemVersion
 
-	if err := s.Database.DeleteCodeSystemVersionQuery(&codeSystemVersion, codeSystemVersionId); err != nil {
+	if err := s.Database.DeleteCodeSystemVersionQuery(&codeSystemVersion, codeSystemId, codeSystemVersionId); err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
 			return api.DeleteCodeSystemVersion404JSONResponse(err.Error()), nil

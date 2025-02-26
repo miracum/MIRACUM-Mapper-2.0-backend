@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -12,7 +13,7 @@ import (
 
 func (gq *GormQuery) GetCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&models.CodeSystem{}, codeSystemVersion.CodeSystemID).Error; err != nil {
+		if err := tx.First(&models.CodeSystem{}, codeSystemId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemVersion.CodeSystemID))
@@ -128,40 +129,136 @@ func (gq *GormQuery) UpdateCodeSystemVersionQuery(codeSystemVersion *models.Code
 	return err
 }
 
-func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error {
-	return database.NewDBError(database.ClientError, "CodeSystemVersion cannot be deleted at the moment.")
-	// err := gq.Database.Transaction(func(tx *gorm.DB) error {
-	// 	if err := tx.First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
-	// 		switch {
-	// 		case errors.Is(err, gorm.ErrRecordNotFound):
-	// 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersionId))
-	// 		default:
-	// 			return err
-	// 		}
-	// 	}
+func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error {
+	//return database.NewDBError(database.ClientError, "CodeSystemVersion cannot be deleted at the moment.")
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&models.CodeSystem{}, codeSystemId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			default:
+				return err
+			}
+		}
 
-	// 	codeSystemRoles := []models.CodeSystemRole{}
-	// 	if err := tx.Find(&codeSystemRoles, "code_system_version_id = ? OR next_code_system_version_id = ?", codeSystemVersionId, codeSystemVersionId).Error; err == nil {
-	// 		if len(codeSystemRoles) > 0 {
-	// 			projectIds := []string{}
-	// 			for _, role := range codeSystemRoles {
-	// 				projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
-	// 			}
-	// 			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
-	// 		}
-	// 	}
+		if err := tx.Where("code_system_id = ?", codeSystemId).First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found for CodeSystem with ID %d.", codeSystemVersionId, codeSystemId))
+			default:
+				return err
+			}
+		}
 
-	// 	db := tx.Delete(&codeSystemVersion, codeSystemVersionId)
-	// 	if db.Error != nil {
-	// 		return db.Error
-	// 	} else {
-	// 		if db.RowsAffected == 0 {
-	// 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found.", codeSystemVersionId))
-	// 		}
-	// 		return nil
-	// 	}
-	// })
-	// return err
+		codeSystemRoles := []models.CodeSystemRole{}
+		if err := tx.Find(&codeSystemRoles, "code_system_version_id = ? OR next_code_system_version_id = ?", codeSystemVersionId, codeSystemVersionId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				break
+			default:
+				return err
+			}
+		}
+		if len(codeSystemRoles) > 0 {
+			projectIds := []string{}
+			for _, role := range codeSystemRoles {
+				projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
+			}
+			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
+		}
+
+		var conceptsDelete []models.Concept
+		if err := tx.Where("valid_from_version_id = ? AND valid_to_version_id = ?", codeSystemVersionId, codeSystemVersionId).Find(&conceptsDelete).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				break
+			default:
+				return err
+			}
+		}
+		if err := tx.Delete(&conceptsDelete).Error; err != nil {
+			return err
+		}
+
+		var conceptsFrom []models.Concept
+		if err := tx.Where("valid_from_version_id = ? AND valid_to_version_id != ?", codeSystemVersionId, codeSystemVersionId).Find(&conceptsFrom).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				break
+			default:
+				return err
+			}
+		}
+		if len(conceptsFrom) > 0 {
+			var afterCodeSystemVersions []models.CodeSystemVersion
+			if err := gq.Database.Where("code_system_id = ? AND version_id > ?", codeSystemId, codeSystemVersion.VersionID).Order("version_id ASC").Find(&afterCodeSystemVersions).Error; err != nil {
+				return err
+			}
+			if len(afterCodeSystemVersions) == 0 {
+				return database.NewDBError(database.InternalServerError, fmt.Sprintf("No imported CodeSystemVersion found after CodeSystemVersion with ID %d.", codeSystemVersionId))
+			}
+
+			var afterVersionId *int32
+			afterVersionId = nil
+			for _, afterCodeSystemVersion := range afterCodeSystemVersions {
+				if afterCodeSystemVersion.Imported {
+					afterVersionId = &afterCodeSystemVersion.ID
+					break
+				}
+			}
+			if afterVersionId == nil {
+				return database.NewDBError(database.InternalServerError, fmt.Sprintf("No imported CodeSystemVersion found after CodeSystemVersion with ID %d.", codeSystemVersionId))
+			}
+
+			for _, concept := range conceptsFrom {
+				concept.ValidFromVersionID = *afterVersionId
+				if err := gq.UpdateConceptQuery(tx, &concept); err != nil {
+					return err
+				}
+			}
+		}
+
+		var conceptsTo []models.Concept
+		if err := tx.Where("valid_from_version_id != ? AND valid_to_version_id = ?", codeSystemVersionId, codeSystemVersionId).Find(&conceptsTo).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				break
+			default:
+				return err
+			}
+		}
+		if len(conceptsTo) > 0 {
+			var beforeCodeSystemVersions []models.CodeSystemVersion
+			if err := gq.Database.Where("code_system_id = ? AND version_id < ?", codeSystemId, codeSystemVersion.VersionID).Order("version_id DESC").Find(&beforeCodeSystemVersions).Error; err != nil {
+				return err
+			}
+			if len(beforeCodeSystemVersions) == 0 {
+				return database.NewDBError(database.InternalServerError, fmt.Sprintf("No imported CodeSystemVersion found before CodeSystemVersion with ID %d.", codeSystemVersionId))
+			}
+
+			var beforeVersionId *int32
+			beforeVersionId = nil
+			for _, beforeCodeSystemVersion := range beforeCodeSystemVersions {
+				if beforeCodeSystemVersion.Imported {
+					beforeVersionId = &beforeCodeSystemVersion.ID
+					break
+				}
+			}
+			if beforeVersionId == nil {
+				return database.NewDBError(database.InternalServerError, fmt.Sprintf("No imported CodeSystemVersion found before CodeSystemVersion with ID %d.", codeSystemVersionId))
+			}
+
+			for _, concept := range conceptsTo {
+				concept.ValidToVersionID = *beforeVersionId
+				if err := gq.UpdateConceptQuery(tx, &concept); err != nil {
+					return err
+				}
+			}
+		}
+
+		return tx.Delete(&codeSystemVersion, codeSystemVersionId).Error
+	})
+	return err
 }
 
 // func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {

@@ -87,9 +87,12 @@ func (gq GormQuery) CreateConceptQuery(concept *models.Concept) error {
 	return nil
 }
 
-func (gq GormQuery) UpdateConceptQuery(concept *models.Concept) error {
+func (gq GormQuery) UpdateConceptQuery(db *gorm.DB, concept *models.Concept) error {
+	if db == nil {
+		db = gq.Database
+	}
 	// concept.DisplaySearchVector should not be updated
-	if err := gq.Database.Model(&models.Concept{}).Where("id = ?", concept.ID).Updates(map[string]interface{}{
+	if err := db.Model(&models.Concept{}).Where("id = ?", concept.ID).Updates(map[string]interface{}{
 		"code":                  concept.Code,
 		"display":               concept.Display,
 		"code_system_id":        concept.CodeSystemID,

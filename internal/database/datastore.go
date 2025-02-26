@@ -4,6 +4,7 @@ import (
 	"miracummapper/internal/database/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Datastore interface {
@@ -49,13 +50,13 @@ type Datastore interface {
 	CreateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
 	GetCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
 	UpdateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
-	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemVersionId int32) error
+	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
 
 	// CodeSystemVersionImport
 	SetCodeSystemVersionImported(codeSystemVersionId int32, imported bool) error
 	GetImportedNeighborVersionIds(codeSystemId int32, codeSystemVersionId int32) (int32, *int32, *int32, error)
 	CreateConceptQuery(concept *models.Concept) error
-	UpdateConceptQuery(concept *models.Concept) error
+	UpdateConceptQuery(db *gorm.DB, concept *models.Concept) error
 	GetNeighborConceptsQuery(code string, codeSystemId int32, versionId int32, beforeVersionId *int32, afterVersionId *int32) (NeighborConcepts, error)
 
 	// Concept
