@@ -4,7 +4,6 @@ import (
 	"miracummapper/internal/database/models"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type Datastore interface {
@@ -53,32 +52,18 @@ type Datastore interface {
 	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
 
 	// CodeSystemVersionImport
-	SetCodeSystemVersionImported(codeSystemVersionId int32, imported bool) error
-	GetImportedNeighborVersionIds(codeSystemId int32, codeSystemVersionId int32) (int32, *int32, *int32, error)
-	CreateConceptQuery(concept *models.Concept) error
-	UpdateConceptQuery(db *gorm.DB, concept *models.Concept) error
-	GetNeighborConceptsQuery(code string, codeSystemId int32, versionId int32, beforeVersionId *int32, afterVersionId *int32) (NeighborConcepts, error)
+	CreateConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]ConceptImport)
 
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 }
 
-type NeighborConceptsType int
-
-const (
-	NeighborConceptsTypeBefore NeighborConceptsType = iota
-	NeighborConceptsTypeAfter
-	NeighborConceptsTypeBeforeAndAfter
-	NeighborConceptsTypeSurrounding
-	NeighborConceptsTypeNone
-)
-
-type NeighborConcepts struct {
-	BeforeConcept      *models.Concept
-	AfterConcept       *models.Concept
-	SurroundingConcept *models.Concept
-	NeighborType       NeighborConceptsType
+type ConceptImport struct {
+	Code        string
+	Display     string
+	Description *string
+	Status      models.ConceptStatus
 }
 
 type ErrorType int

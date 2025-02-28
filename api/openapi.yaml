@@ -1130,7 +1130,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "CSV is in the correct format. Start importing concepts now"
+                example: "CSV file processed successfully. Starting to create and update concepts in the background."
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -1141,6 +1141,27 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /import-status:
+    get:
+      tags:
+        - code-system-version
+      summary: Get the status of the running or last import
+      description: Get the status of the currently running or the last import.
+      operationId: getImportStatus
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImportStatus"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "500":
           "$ref": "#/components/responses/InternalServerError"
       security:
@@ -1660,6 +1681,22 @@ components:
             id:
               type: integer
               format: int32
+    ImportStatus:
+      type: object
+      required:
+        - progress
+        - running
+        - error
+      properties:
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        running:
+          type: boolean
+        error:
+          type: string
+          nullable: true
     ErrorResponse:
       type: string
   responses:

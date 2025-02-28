@@ -8,6 +8,7 @@ import (
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
+	"miracummapper/internal/utilities"
 )
 
 // CreateCodeSystemVersion implements api.StrictServerInterface.
@@ -103,4 +104,17 @@ func (s *Server) ImportCodeSystemVersion(ctx context.Context, request api.Import
 	}
 	codeSystemType := codeSystem.Type
 	return processFile(file, codeSystemId, codeSystemVersionId, codeSystemType, s.Database)
+}
+
+// GetImportStatus implements api.StrictServerInterface.
+func (s *Server) GetImportStatus(ctx context.Context, request api.GetImportStatusRequestObject) (api.GetImportStatusResponseObject, error) {
+	importStatus := utilities.GetImportStatus()
+	var errorStringPointer *string
+	if importStatus.Error != nil {
+		errorString := importStatus.Error.Error()
+		errorStringPointer = &errorString
+	} else {
+		errorStringPointer = nil
+	}
+	return api.GetImportStatus200JSONResponse(api.GetImportStatus200JSONResponse{Progress: importStatus.Progress, Running: importStatus.Running, Error: errorStringPointer}), nil
 }

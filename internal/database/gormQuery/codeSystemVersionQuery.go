@@ -212,7 +212,7 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 
 			for _, concept := range conceptsFrom {
 				concept.ValidFromVersionID = *afterVersionId
-				if err := gq.UpdateConceptQuery(tx, &concept); err != nil {
+				if err := UpdateConceptQuery(tx, &concept); err != nil {
 					return err
 				}
 			}
@@ -250,7 +250,7 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 
 			for _, concept := range conceptsTo {
 				concept.ValidToVersionID = *beforeVersionId
-				if err := gq.UpdateConceptQuery(tx, &concept); err != nil {
+				if err := UpdateConceptQuery(tx, &concept); err != nil {
 					return err
 				}
 			}

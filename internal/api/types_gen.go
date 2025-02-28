@@ -317,6 +317,13 @@ type GetCodeSystem struct {
 // GetCodeSystemType defines model for GetCodeSystem.Type.
 type GetCodeSystemType string
 
+// ImportStatus defines model for ImportStatus.
+type ImportStatus struct {
+	Error    *string `json:"error"`
+	Progress int     `json:"progress"`
+	Running  bool    `json:"running"`
+}
+
 // Mapping defines model for Mapping.
 type Mapping struct {
 	Comment     *string             `json:"comment,omitempty"`

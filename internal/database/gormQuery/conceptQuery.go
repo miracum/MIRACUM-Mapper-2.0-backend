@@ -95,3 +95,19 @@ func (gq *GormQuery) GetAllConceptsByVersionQuery(concepts *[]models.Concept, co
 	})
 	return err
 }
+
+func UpdateConceptQuery(db *gorm.DB, concept *models.Concept) error {
+	// concept.DisplaySearchVector should not be updated
+	if err := db.Model(&models.Concept{}).Where("id = ?", concept.ID).Updates(map[string]interface{}{
+		"code":                  concept.Code,
+		"display":               concept.Display,
+		"code_system_id":        concept.CodeSystemID,
+		"description":           concept.Description,
+		"status":                concept.Status,
+		"valid_from_version_id": concept.ValidFromVersionID,
+		"valid_to_version_id":   concept.ValidToVersionID,
+	}).Error; err != nil {
+		return fmt.Errorf("error updating concept: %v", err)
+	}
+	return nil
+}

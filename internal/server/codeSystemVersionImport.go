@@ -5,20 +5,13 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"miracummapper/internal/api"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
+	"miracummapper/internal/utilities"
 )
 
 // Structs for processing CSV files
-
-type ConceptImport struct {
-	Code        string
-	Display     string
-	Description *string
-	Status      models.ConceptStatus
-}
 
 type csvIndex struct {
 	code        int
@@ -87,7 +80,7 @@ func processFile(file io.Reader, codeSystemId int32, codeSystemVersionId int32, 
 	// Read the entire CSV content into a buffer and create a new reader
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(file); err != nil {
-		return api.ImportCodeSystemVersion500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while reading the CSV file"}, nil
+		return api.ImportCodeSystemVersion500JSONResponse{InternalServerErrorJSONResponse: api.InternalServerErrorJSONResponse(fmt.Sprintf("An Error occurred while reading the CSV file: %v", err))}, nil
 	}
 	reader := csv.NewReader(bytes.NewReader(buf.Bytes()))
 
@@ -99,8 +92,7 @@ func processFile(file io.Reader, codeSystemId int32, codeSystemVersionId int32, 
 	}
 
 	// Process the rows
-	go processCSVRows(reader, codeSystemId, codeSystemVersionId, codeSystemType, columnsIndex, db)
-	return api.ImportCodeSystemVersion202JSONResponse("CSV file is being processed"), nil
+	return processCSVRows(reader, codeSystemId, codeSystemVersionId, codeSystemType, columnsIndex, db)
 }
 
 func validateCSVHeader(reader *csv.Reader, requiredColumns []string, optionalColumns []string) (map[string]int, error) {
@@ -138,23 +130,21 @@ func validateCSVHeader(reader *csv.Reader, requiredColumns []string, optionalCol
 	return columnsIndex, nil
 }
 
-func processCSVRows(reader *csv.Reader, codeSystemId int32, codeSystemVersionId int32, codeSystemType models.CodeSystemType, columnsIndex map[string]int, db database.Datastore) {
+func processCSVRows(reader *csv.Reader, codeSystemId int32, codeSystemVersionId int32, codeSystemType models.CodeSystemType, columnsIndex map[string]int, db database.Datastore) (api.ImportCodeSystemVersionResponseObject, error) {
 	csvIndex := getCsvIndex(codeSystemType, columnsIndex)
 
-	var concepts []ConceptImport
+	var concepts []database.ConceptImport
 
 	for {
 		record, err := reader.Read()
 		if err != nil {
 			if err == csv.ErrFieldCount {
-				log.Printf("CSV file has inconsistent number of fields")
-				return
+				return api.ImportCodeSystemVersion400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("CSV file has inconsistent number of fields")}, nil
 			}
 			if err == io.EOF {
 				break
 			}
-			log.Printf("Error reading CSV file: %v", err)
-			return
+			return api.ImportCodeSystemVersion500JSONResponse{InternalServerErrorJSONResponse: api.InternalServerErrorJSONResponse(fmt.Sprintf("An Error occurred while reading the CSV file: %v", err))}, nil
 		}
 
 		var description *string
@@ -162,7 +152,7 @@ func processCSVRows(reader *csv.Reader, codeSystemId int32, codeSystemVersionId 
 			description = &record[csvIndex.description]
 		}
 
-		conceptImport := ConceptImport{
+		conceptImport := database.ConceptImport{
 			Code:        record[csvIndex.code],
 			Display:     getDisplayName(csvIndex.display, record),
 			Description: description,
@@ -172,80 +162,12 @@ func processCSVRows(reader *csv.Reader, codeSystemId int32, codeSystemVersionId 
 		concepts = append(concepts, conceptImport)
 	}
 
-	log.Printf("CSV file processed successfully for CodeSystemID: %d", codeSystemId)
-	createConcepts(codeSystemId, codeSystemVersionId, &concepts, db)
-
-	if err := db.SetCodeSystemVersionImported(codeSystemVersionId, true); err != nil {
-		log.Printf("Error setting CodeSystemVersion as imported: %v", err)
+	if !utilities.TryImporting() {
+		return api.ImportCodeSystemVersion400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("An import is already in progress. Please wait until it is finished.")}, nil
 	}
+	go db.CreateConcepts(codeSystemId, codeSystemVersionId, &concepts)
+	return api.ImportCodeSystemVersion202JSONResponse("CSV file processed successfully. Starting to create and update concepts in the background."), nil
 }
-
-func createConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]ConceptImport, db database.Datastore) {
-	versionId, beforeVersionId, afterVersionId, err := db.GetImportedNeighborVersionIds(codeSystemId, codeSystemVersionId)
-	if err != nil {
-		log.Printf("Error getting neighbor version IDs: %v", err)
-		return
-	}
-
-	for _, concept := range *concepts {
-		neighborConcepts, err := db.GetNeighborConceptsQuery(concept.Code, codeSystemId, versionId, beforeVersionId, afterVersionId)
-		if err != nil {
-			log.Printf("Error getting neighbor concepts: %v", err)
-			return
-		}
-		switch neighborConcepts.NeighborType {
-		case database.NeighborConceptsTypeNone:
-			createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
-		case database.NeighborConceptsTypeBefore:
-			beforeConcept := neighborConcepts.BeforeConcept
-			if !conceptsAreEqual(&concept, beforeConcept) {
-				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
-			} else {
-				beforeConcept.ValidToVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(nil, beforeConcept); err != nil {
-					log.Printf("Error updating concept: %v", err)
-				}
-			}
-		case database.NeighborConceptsTypeAfter:
-			afterConcept := neighborConcepts.AfterConcept
-			if !conceptsAreEqual(&concept, afterConcept) {
-				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
-			} else {
-				afterConcept.ValidFromVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(nil, afterConcept); err != nil {
-					log.Printf("Error updating concept: %v", err)
-				}
-			}
-		case database.NeighborConceptsTypeBeforeAndAfter:
-			beforeConcept := neighborConcepts.BeforeConcept
-			afterConcept := neighborConcepts.AfterConcept
-			if !conceptsAreEqual(&concept, beforeConcept) && !conceptsAreEqual(&concept, afterConcept) {
-				createNewConcept(codeSystemId, codeSystemVersionId, &concept, db)
-			} else if conceptsAreEqual(&concept, beforeConcept) && !conceptsAreEqual(&concept, afterConcept) {
-				beforeConcept.ValidToVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(nil, beforeConcept); err != nil {
-					log.Printf("Error updating concept: %v", err)
-				}
-			} else if !conceptsAreEqual(&concept, beforeConcept) && conceptsAreEqual(&concept, afterConcept) {
-				afterConcept.ValidFromVersionID = codeSystemVersionId
-				if err := db.UpdateConceptQuery(nil, afterConcept); err != nil {
-					log.Printf("Error updating concept: %v", err)
-				}
-			} else {
-				log.Printf("Error: Concept is before and after")
-			}
-		case database.NeighborConceptsTypeSurrounding:
-			surroundingConcept := neighborConcepts.SurroundingConcept
-			if !conceptsAreEqual(&concept, surroundingConcept) {
-				// TODO
-			} else {
-				// Do nothing
-			}
-		}
-	}
-}
-
-// Helper functions
 
 func getDisplayName(displayIndex []int, record []string) string {
 	displayName := ""
@@ -259,29 +181,4 @@ func getDisplayName(displayIndex []int, record []string) string {
 		}
 	}
 	return displayName
-}
-
-func createNewConcept(codeSystemId int32, codeSystemVersionId int32, concept *ConceptImport, db database.Datastore) {
-	newConcept := models.Concept{
-		Code:               concept.Code,
-		Display:            concept.Display,
-		Description:        concept.Description,
-		Status:             concept.Status,
-		CodeSystemID:       codeSystemId,
-		ValidFromVersionID: codeSystemVersionId,
-		ValidToVersionID:   codeSystemVersionId,
-	}
-	if err := db.CreateConceptQuery(&newConcept); err != nil {
-		log.Printf("Error creating concept: %v", err)
-	}
-}
-
-func conceptsAreEqual(conceptImport *ConceptImport, conceptDB *models.Concept) bool {
-	var descriptionsAreEqual bool
-	if conceptImport.Description == nil || conceptDB.Description == nil {
-		descriptionsAreEqual = conceptImport.Description == conceptDB.Description
-	} else {
-		descriptionsAreEqual = *conceptImport.Description == *conceptDB.Description
-	}
-	return conceptImport.Display == conceptDB.Display && descriptionsAreEqual && conceptImport.Status == conceptDB.Status
 }
