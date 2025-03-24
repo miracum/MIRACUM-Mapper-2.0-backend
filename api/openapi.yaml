@@ -1618,7 +1618,7 @@ components:
           type: string
         type:
           type: string
-          enum: [GENERIC, LOINC]
+          enum: [GENERIC, LOINC, ICD_10_GM]
         title:
           type: string
         description:
@@ -1677,10 +1677,13 @@ components:
         - type: object
           required:
             - id
+            - imported
           properties:
             id:
               type: integer
               format: int32
+            imported:
+              type: boolean
     ImportStatus:
       type: object
       required:
