@@ -1112,12 +1112,12 @@ paths:
             schema:
               type: object
               required:
-                - file
+                - main
               properties:
-                file:
+                main:
                   type: string
                   format: binary
-                  description: The CSV file to import
+                  description: The main file with the concepts to import. Can be a CSV or FHIR/JSON file.
                   example: |
                     code,meaning
                     123,test meaning 1
