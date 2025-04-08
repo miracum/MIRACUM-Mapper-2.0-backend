@@ -106,6 +106,41 @@ func (s *Server) ImportCodeSystemVersion(ctx context.Context, request api.Import
 	return processFile(file, codeSystemId, codeSystemVersionId, codeSystemType, s.Database)
 }
 
+// ImportCodeSystemVersionJson implements api.StrictServerInterface.
+func (s *Server) ImportCodeSystemVersionJson(ctx context.Context, request api.ImportCodeSystemVersionJsonRequestObject) (api.ImportCodeSystemVersionJsonResponseObject, error) {
+	codeSystemId := request.CodesystemId
+	codeSystemVersionId := request.CodesystemVersionId
+
+	var codeSystem models.CodeSystem
+	if err := s.Database.GetCodeSystemQuery(&codeSystem, codeSystemId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.ImportCodeSystemVersionJson404JSONResponse(err.Error()), nil
+		default:
+			return api.ImportCodeSystemVersionJson500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystem"}, nil
+		}
+	}
+
+	var codeSystemVersion models.CodeSystemVersion
+	if err := s.Database.GetCodeSystemVersionQuery(&codeSystemVersion, codeSystemId, codeSystemVersionId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.ImportCodeSystemVersionJson404JSONResponse(err.Error()), nil
+		default:
+			return api.ImportCodeSystemVersionJson500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystemVersion"}, nil
+		}
+	}
+
+	if codeSystemVersion.Imported {
+		return api.ImportCodeSystemVersionJson400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("CodeSystemVersion is already imported")}, nil
+	}
+
+	file := request.Body
+	codeSystemType := codeSystem.Type
+	return processJSONFile(file, codeSystemId, codeSystemVersionId, codeSystemType, s.Database)
+
+}
+
 // GetImportStatus implements api.StrictServerInterface.
 func (s *Server) GetImportStatus(ctx context.Context, request api.GetImportStatusRequestObject) (api.GetImportStatusResponseObject, error) {
 	importStatus := utilities.GetImportStatus()

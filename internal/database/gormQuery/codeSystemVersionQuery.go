@@ -167,8 +167,8 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
 		}
 
-		var conceptsDelete []models.Concept
-		if err := tx.Where("valid_from_version_id = ? AND valid_to_version_id = ?", codeSystemVersionId, codeSystemVersionId).Find(&conceptsDelete).Error; err != nil {
+		conceptsDelete := []models.Concept{}
+		if err := tx.Find(&conceptsDelete, "valid_from_version_id = ? AND valid_to_version_id = ?", codeSystemVersionId, codeSystemVersionId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				break
@@ -176,11 +176,13 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 				return err
 			}
 		}
-		if err := tx.Delete(&conceptsDelete).Error; err != nil {
-			return err
+		if len(conceptsDelete) > 0 {
+			if err := tx.Delete(&conceptsDelete).Error; err != nil {
+				return err
+			}
 		}
 
-		var conceptsFrom []models.Concept
+		conceptsFrom := []models.Concept{}
 		if err := tx.Where("valid_from_version_id = ? AND valid_to_version_id != ?", codeSystemVersionId, codeSystemVersionId).Find(&conceptsFrom).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
@@ -218,7 +220,7 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 			}
 		}
 
-		var conceptsTo []models.Concept
+		conceptsTo := []models.Concept{}
 		if err := tx.Where("valid_from_version_id != ? AND valid_to_version_id = ?", codeSystemVersionId, codeSystemVersionId).Find(&conceptsTo).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):

@@ -12,6 +12,7 @@ func GormCodeSystemVersionToApiCodeSystemVersion(codeSystemVersion *models.CodeS
 		Id:          codeSystemVersion.ID,
 		VersionName: codeSystemVersion.VersionName,
 		ReleaseDate: types.Date{Time: codeSystemVersion.ReleaseDate},
+		Imported:    codeSystemVersion.Imported,
 	}
 }
 

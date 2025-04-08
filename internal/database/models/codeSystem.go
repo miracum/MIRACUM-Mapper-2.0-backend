@@ -3,8 +3,9 @@ package models
 type CodeSystemType string
 
 const (
-	GENERIC CodeSystemType = "GENERIC"
-	LOINC   CodeSystemType = "LOINC"
+	GENERIC   CodeSystemType = "GENERIC"
+	LOINC     CodeSystemType = "LOINC"
+	ICD_10_GM CodeSystemType = "ICD_10_GM"
 )
 
 type CodeSystem struct {
