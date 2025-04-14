@@ -76,13 +76,19 @@ func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystem
 			}
 		}
 
-		codeSystemRole.CodeSystemID = oldCodeSystemRole.CodeSystemID
 		codeSystemRole.Position = oldCodeSystemRole.Position
+		codeSystemRole.CodeSystemID = oldCodeSystemRole.CodeSystemID
+		codeSystemRole.Elements = oldCodeSystemRole.Elements
+		codeSystemRole.CodeSystem = oldCodeSystemRole.CodeSystem
+		codeSystemRole.CodeSystemVersionID = oldCodeSystemRole.CodeSystemVersionID
+		codeSystemRole.CodeSystemVersion = oldCodeSystemRole.CodeSystemVersion
+		codeSystemRole.NextCodeSystemVersionID = oldCodeSystemRole.NextCodeSystemVersionID
+		codeSystemRole.NextCodeSystemVersion = oldCodeSystemRole.NextCodeSystemVersion
 
 		if err := tx.Save(codeSystemRole).Error; err != nil {
 			return err
 		}
-		codeSystemRole.CodeSystem = oldCodeSystemRole.CodeSystem
+
 		return nil
 	})
 	return err
