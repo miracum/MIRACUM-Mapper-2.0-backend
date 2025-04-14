@@ -220,10 +220,10 @@ type CodeSystemRole struct {
 	Id     int32  `json:"id"`
 	Name   string `json:"name"`
 	System struct {
-		Id          int32  `json:"id"`
-		Name        string `json:"name"`
-		NextVersion *int32 `json:"nextVersion,omitempty"`
-		Version     int32  `json:"version"`
+		Id          int32              `json:"id"`
+		Name        string             `json:"name"`
+		NextVersion *CodeSystemVersion `json:"nextVersion,omitempty"`
+		Version     CodeSystemVersion  `json:"version"`
 	} `json:"system"`
 	Type CodeSystemRoleType `json:"type"`
 }

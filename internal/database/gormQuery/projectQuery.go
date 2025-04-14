@@ -72,7 +72,7 @@ func (gq *GormQuery) CreateProjectQuery(project *models.Project) error {
 func (gq *GormQuery) GetProjectQuery(project *models.Project, projectId int32) error {
 	db := gq.Database.Preload("CodeSystemRoles", func(db *gorm.DB) *gorm.DB {
 		return db.Order("Position ASC")
-	}).Preload("CodeSystemRoles.CodeSystem").Preload("Permissions.User").First(&project, projectId)
+	}).Preload("CodeSystemRoles.CodeSystem").Preload("CodeSystemRoles.CodeSystemVersion").Preload("CodeSystemRoles.NextCodeSystemVersion").Preload("Permissions.User").First(&project, projectId)
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
 		if db.Error.Error() == "record not found" {

@@ -8,6 +8,9 @@ import (
 )
 
 func GormCodeSystemVersionToApiCodeSystemVersion(codeSystemVersion *models.CodeSystemVersion) *api.CodeSystemVersion {
+	if codeSystemVersion.ID == 0 {
+		return nil
+	}
 	return &api.CodeSystemVersion{
 		Id:          codeSystemVersion.ID,
 		VersionName: codeSystemVersion.VersionName,

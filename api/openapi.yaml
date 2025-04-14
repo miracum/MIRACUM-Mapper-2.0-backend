@@ -1539,11 +1539,9 @@ components:
                 name:
                   type: string
                 version:
-                  type: integer
-                  format: int32
+                  $ref: "#/components/schemas/CodeSystemVersion"
                 nextVersion:
-                  type: integer
-                  format: int32
+                  $ref: "#/components/schemas/CodeSystemVersion"
     CreateMapping:
       type: object
       # required:
