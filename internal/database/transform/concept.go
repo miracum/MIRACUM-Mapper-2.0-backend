@@ -6,6 +6,12 @@ import (
 )
 
 func GormConceptToApiConcept(gormConcept *models.Concept) *api.Concept {
+	if gormConcept == nil {
+		return nil
+	}
+	if gormConcept.ID == 0 {
+		return nil
+	}
 	return &api.Concept{
 		Id:          gormConcept.ID,
 		Meaning:     gormConcept.Display,

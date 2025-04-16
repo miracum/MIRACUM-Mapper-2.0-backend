@@ -42,16 +42,8 @@ func GormElementToApiFullElement(element *models.Element) api.FullElement {
 	codeSystemRole := element.CodeSystemRoleID
 	var apiFullElement api.FullElement = api.FullElement{
 		CodeSystemRole: &codeSystemRole,
-		Concept: &api.Concept{
-			Id:      *element.ConceptID,
-			Code:    element.Concept.Code,
-			Meaning: element.Concept.Display,
-		},
-		NextConcept: &api.Concept{
-			Id:      *element.NextConceptID,
-			Code:    element.NextConcept.Code,
-			Meaning: element.NextConcept.Display,
-		},
+		Concept:        GormConceptToApiConcept(&element.Concept),
+		NextConcept:    GormConceptToApiConcept(&element.NextConcept),
 	}
 	return apiFullElement
 }
