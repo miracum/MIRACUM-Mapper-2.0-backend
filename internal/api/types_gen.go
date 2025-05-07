@@ -345,6 +345,34 @@ type MappingEquivalence string
 // MappingStatus defines model for Mapping.Status.
 type MappingStatus string
 
+// MigrationChangeOldAndNewConcept defines model for MigrationChangeOldAndNewConcept.
+type MigrationChangeOldAndNewConcept struct {
+	Mappings   *[]Mapping `json:"mappings,omitempty"`
+	NewConcept *Concept   `json:"new_concept,omitempty"`
+	OldConcept *Concept   `json:"old_concept,omitempty"`
+}
+
+// MigrationChangeOldConcept defines model for MigrationChangeOldConcept.
+type MigrationChangeOldConcept struct {
+	Mappings   *[]Mapping `json:"mappings,omitempty"`
+	OldConcept *Concept   `json:"old_concept,omitempty"`
+}
+
+// MigrationChanges defines model for MigrationChanges.
+type MigrationChanges struct {
+	ChangeDescription []MigrationChangeOldAndNewConcept `json:"change_description"`
+	ChangeDisplay     []MigrationChangeOldAndNewConcept `json:"change_display"`
+	Deleted           []MigrationChangeOldConcept       `json:"deleted"`
+	Deprecated        []MigrationChangeOldConcept       `json:"deprecated"`
+	Discouraged       []MigrationChangeOldConcept       `json:"discouraged"`
+}
+
+// MigrationStatus defines model for MigrationStatus.
+type MigrationStatus struct {
+	CodeSystemRole *CodeSystemRole `json:"code_system_role,omitempty"`
+	Running        bool            `json:"running"`
+}
+
 // Project defines model for Project.
 type Project struct {
 	Created             string `json:"created"`
@@ -384,6 +412,12 @@ type Role string
 type SendProjectPermission struct {
 	Role   Role   `json:"role"`
 	UserId string `json:"user_id"`
+}
+
+// StartMigration defines model for StartMigration.
+type StartMigration struct {
+	CodeSystemRoleId int32 `json:"code_system_role_id"`
+	VersionId        int32 `json:"version_id"`
 }
 
 // UpdateCodeSystemRole defines model for UpdateCodeSystemRole.
@@ -614,6 +648,9 @@ type CreateMappingJSONRequestBody = CreateMapping
 
 // UpdateMappingJSONRequestBody defines body for UpdateMapping for application/json ContentType.
 type UpdateMappingJSONRequestBody = UpdateMapping
+
+// StartMigrationJSONRequestBody defines body for StartMigration for application/json ContentType.
+type StartMigrationJSONRequestBody = StartMigration
 
 // CreatePermissionJSONRequestBody defines body for CreatePermission for application/json ContentType.
 type CreatePermissionJSONRequestBody = SendProjectPermission

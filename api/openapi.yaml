@@ -238,6 +238,165 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /projects/{project_id}/migration/status:
+    get:
+      tags:
+        - migration
+      summary: Get migration status for a project
+      description: Get migration status for a project
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getMigrationStatus
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MigrationStatus"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/start:
+    post:
+      tags:
+        - migration
+      summary: Start migration to a newer version of a code system role
+      description: Start migration to a newer version of a code system role. Editing mappings is not possible during the migration.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: startMigration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/StartMigration"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Migration started"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project or codesystem-role not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/cancel:
+    post:
+      tags:
+        - migration
+      summary: Cancel migration to a newer version of a code system role
+      description: Cancel migration to a newer version of a code system role. Editing mappings is possible again after the cancellation.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: cancelMigration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Migration cancelled"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/changes:
+    get:
+      tags:
+        - migration
+      summary: Get all changes that need to be reviewed 
+      description: Get all changes between the old and new version of a code system role, that are not yet reviewed.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getMigrationChanges
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MigrationChanges"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/finish:
+    post:
+      tags:
+        - migration
+      summary: Finish migration to a newer version of a code system role
+      description: Finish migration to a newer version of a code system role.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: finishMigration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Migration finished"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /projects/{project_id}/permissions:
     get:
       tags:
@@ -1542,6 +1701,76 @@ components:
                   $ref: "#/components/schemas/CodeSystemVersion"
                 nextVersion:
                   $ref: "#/components/schemas/CodeSystemVersion"
+    MigrationStatus:
+      type: object
+      required:
+        - running
+      properties:
+        running:
+          type: boolean
+        code_system_role:
+          $ref: "#/components/schemas/CodeSystemRole"
+    StartMigration:
+      type: object
+      required:
+        - code_system_role_id
+        - version_id
+      properties:
+        code_system_role_id:
+          type: integer
+          format: int32
+        version_id:
+          type: integer
+          format: int32
+    MigrationChanges:
+      type: object
+      required:
+        - deleted
+        - deprecated
+        - discouraged
+        - change_display
+        - change_description
+      properties:
+        deleted:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldConcept"
+        deprecated:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldConcept"
+        discouraged:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldConcept"
+        change_display:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
+        change_description:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
+    MigrationChangeOldConcept:
+      type: object
+      properties:
+        old_concept:
+          $ref: "#/components/schemas/Concept"
+        mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mapping"
+    MigrationChangeOldAndNewConcept:
+      type: object
+      properties:
+        old_concept:
+          $ref: "#/components/schemas/Concept"
+        new_concept:
+          $ref: "#/components/schemas/Concept"
+        mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mapping"
     CreateMapping:
       type: object
       # required:

@@ -21,6 +21,8 @@ var (
 	MappingDeletePermission        *[]models.ProjectPermissionRole = &[]models.ProjectPermissionRole{models.ProjectOwnerRole, models.EditorRole}
 	MappingCreatePermission        *[]models.ProjectPermissionRole = &[]models.ProjectPermissionRole{models.ProjectOwnerRole, models.EditorRole}
 	MappingUpdateCommentPermission *[]models.ProjectPermissionRole = &[]models.ProjectPermissionRole{models.ProjectOwnerRole, models.EditorRole}
+	StartMigrationPermission       *[]models.ProjectPermissionRole = &[]models.ProjectPermissionRole{models.ProjectOwnerRole}
+	MigrationPermission            *[]models.ProjectPermissionRole = &[]models.ProjectPermissionRole{models.ProjectOwnerRole, models.EditorRole}
 )
 
 // an admin has all permissions

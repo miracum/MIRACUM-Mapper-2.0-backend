@@ -111,3 +111,47 @@ func UpdateConceptQuery(db *gorm.DB, concept *models.Concept) error {
 	}
 	return nil
 }
+
+func (gq *GormQuery) GetConceptQuery(concept *models.Concept, code string, codeSystemId int32, codeSystemVersionId int32) error {
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&models.CodeSystem{}, codeSystemId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			default:
+				return err
+			}
+		}
+
+		var codeSystemVersion models.CodeSystemVersion
+		if err := tx.Where("code_system_id = ?", codeSystemId).First(&codeSystemVersion, codeSystemVersionId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found for CodeSystem with ID %d.", codeSystemVersionId, codeSystemId))
+			default:
+				return err
+			}
+		}
+		versionId := codeSystemVersion.VersionID
+
+		if err := tx.
+			Preload("ValidFromVersion").
+			Preload("ValidToVersion").
+			Model(&models.Concept{}).
+			Joins("JOIN code_system_versions AS valid_from_version ON valid_from_version.id = concepts.valid_from_version_id").
+			Joins("JOIN code_system_versions AS valid_to_version ON valid_to_version.id = concepts.valid_to_version_id").
+			Where("concepts.code_system_id = ?", codeSystemId).
+			Where("valid_from_version.version_id <= ? AND valid_to_version.version_id >= ?", versionId, versionId).
+			Where("code = ?", code).
+			First(&concept).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Concept with code %s couldn't be found for CodeSystem with ID %d.", code, codeSystemId))
+			default:
+				return err
+			}
+		}
+		return nil
+	})
+	return err
+}

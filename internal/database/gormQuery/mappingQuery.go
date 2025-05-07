@@ -83,7 +83,7 @@ func CreateOrUpdateMapping(gq *GormQuery, mapping *models.Mapping, checkFunc fun
 
 func (gq *GormQuery) GetAllMappingsQuery(mappings *[]models.Mapping, projectId int32, pageSize int, offset int, sortBy string, sortOrder string) error {
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("project_id = ?", projectId).Preload("Elements.Concept.CodeSystem").Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&mappings).Error; err != nil {
+		if err := tx.Where("project_id = ?", projectId).Preload("Elements.Concept.CodeSystem").Preload("Elements.NextConcept.CodeSystem").Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize).Find(&mappings).Error; err != nil {
 			return err
 		} else if len(*mappings) == 0 {
 			if err := tx.First(&models.Project{}, projectId).Error; err != nil {

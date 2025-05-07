@@ -108,6 +108,21 @@ type ServerInterface interface {
 	// Get a mapping with its elements by ID
 	// (GET /projects/{project_id}/mappings/{mapping_id})
 	GetMapping(c *gin.Context, projectId ProjectId, mappingId MappingId)
+	// Cancel migration to a newer version of a code system role
+	// (POST /projects/{project_id}/migration/cancel)
+	CancelMigration(c *gin.Context, projectId ProjectId)
+	// Get all changes that need to be reviewed
+	// (GET /projects/{project_id}/migration/changes)
+	GetMigrationChanges(c *gin.Context, projectId ProjectId)
+	// Finish migration to a newer version of a code system role
+	// (POST /projects/{project_id}/migration/finish)
+	FinishMigration(c *gin.Context, projectId ProjectId)
+	// Start migration to a newer version of a code system role
+	// (POST /projects/{project_id}/migration/start)
+	StartMigration(c *gin.Context, projectId ProjectId)
+	// Get migration status for a project
+	// (GET /projects/{project_id}/migration/status)
+	GetMigrationStatus(c *gin.Context, projectId ProjectId)
 	// Get permissions for a project
 	// (GET /projects/{project_id}/permissions)
 	GetAllPermissions(c *gin.Context, projectId ProjectId)
@@ -1040,6 +1055,136 @@ func (siw *ServerInterfaceWrapper) GetMapping(c *gin.Context) {
 	siw.Handler.GetMapping(c, projectId, mappingId)
 }
 
+// CancelMigration operation middleware
+func (siw *ServerInterfaceWrapper) CancelMigration(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CancelMigration(c, projectId)
+}
+
+// GetMigrationChanges operation middleware
+func (siw *ServerInterfaceWrapper) GetMigrationChanges(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetMigrationChanges(c, projectId)
+}
+
+// FinishMigration operation middleware
+func (siw *ServerInterfaceWrapper) FinishMigration(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.FinishMigration(c, projectId)
+}
+
+// StartMigration operation middleware
+func (siw *ServerInterfaceWrapper) StartMigration(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.StartMigration(c, projectId)
+}
+
+// GetMigrationStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetMigrationStatus(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "project_id" -------------
+	var projectId ProjectId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "project_id", c.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter project_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{"normal", "admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetMigrationStatus(c, projectId)
+}
+
 // GetAllPermissions operation middleware
 func (siw *ServerInterfaceWrapper) GetAllPermissions(c *gin.Context) {
 
@@ -1301,6 +1446,11 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PUT(options.BaseURL+"/projects/:project_id/mappings", wrapper.UpdateMapping)
 	router.DELETE(options.BaseURL+"/projects/:project_id/mappings/:mapping_id", wrapper.DeleteMapping)
 	router.GET(options.BaseURL+"/projects/:project_id/mappings/:mapping_id", wrapper.GetMapping)
+	router.POST(options.BaseURL+"/projects/:project_id/migration/cancel", wrapper.CancelMigration)
+	router.GET(options.BaseURL+"/projects/:project_id/migration/changes", wrapper.GetMigrationChanges)
+	router.POST(options.BaseURL+"/projects/:project_id/migration/finish", wrapper.FinishMigration)
+	router.POST(options.BaseURL+"/projects/:project_id/migration/start", wrapper.StartMigration)
+	router.GET(options.BaseURL+"/projects/:project_id/migration/status", wrapper.GetMigrationStatus)
 	router.GET(options.BaseURL+"/projects/:project_id/permissions", wrapper.GetAllPermissions)
 	router.POST(options.BaseURL+"/projects/:project_id/permissions", wrapper.CreatePermission)
 	router.PUT(options.BaseURL+"/projects/:project_id/permissions", wrapper.UpdatePermission)
@@ -2991,6 +3141,327 @@ func (response GetMapping500JSONResponse) VisitGetMappingResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CancelMigrationRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+}
+
+type CancelMigrationResponseObject interface {
+	VisitCancelMigrationResponse(w http.ResponseWriter) error
+}
+
+type CancelMigration200JSONResponse string
+
+func (response CancelMigration200JSONResponse) VisitCancelMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CancelMigration400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response CancelMigration400JSONResponse) VisitCancelMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CancelMigration401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response CancelMigration401JSONResponse) VisitCancelMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CancelMigration403JSONResponse struct{ ForbiddenErrorJSONResponse }
+
+func (response CancelMigration403JSONResponse) VisitCancelMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CancelMigration404JSONResponse ErrorResponse
+
+func (response CancelMigration404JSONResponse) VisitCancelMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CancelMigration500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response CancelMigration500JSONResponse) VisitCancelMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationChangesRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+}
+
+type GetMigrationChangesResponseObject interface {
+	VisitGetMigrationChangesResponse(w http.ResponseWriter) error
+}
+
+type GetMigrationChanges200JSONResponse MigrationChanges
+
+func (response GetMigrationChanges200JSONResponse) VisitGetMigrationChangesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationChanges400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetMigrationChanges400JSONResponse) VisitGetMigrationChangesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationChanges401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response GetMigrationChanges401JSONResponse) VisitGetMigrationChangesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationChanges403JSONResponse struct{ ForbiddenErrorJSONResponse }
+
+func (response GetMigrationChanges403JSONResponse) VisitGetMigrationChangesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationChanges404JSONResponse ErrorResponse
+
+func (response GetMigrationChanges404JSONResponse) VisitGetMigrationChangesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationChanges500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetMigrationChanges500JSONResponse) VisitGetMigrationChangesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type FinishMigrationRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+}
+
+type FinishMigrationResponseObject interface {
+	VisitFinishMigrationResponse(w http.ResponseWriter) error
+}
+
+type FinishMigration200JSONResponse string
+
+func (response FinishMigration200JSONResponse) VisitFinishMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type FinishMigration400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response FinishMigration400JSONResponse) VisitFinishMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type FinishMigration401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response FinishMigration401JSONResponse) VisitFinishMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type FinishMigration403JSONResponse struct{ ForbiddenErrorJSONResponse }
+
+func (response FinishMigration403JSONResponse) VisitFinishMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type FinishMigration404JSONResponse ErrorResponse
+
+func (response FinishMigration404JSONResponse) VisitFinishMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type FinishMigration500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response FinishMigration500JSONResponse) VisitFinishMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StartMigrationRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+	Body      *StartMigrationJSONRequestBody
+}
+
+type StartMigrationResponseObject interface {
+	VisitStartMigrationResponse(w http.ResponseWriter) error
+}
+
+type StartMigration200JSONResponse string
+
+func (response StartMigration200JSONResponse) VisitStartMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StartMigration400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response StartMigration400JSONResponse) VisitStartMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StartMigration401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response StartMigration401JSONResponse) VisitStartMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StartMigration403JSONResponse struct{ ForbiddenErrorJSONResponse }
+
+func (response StartMigration403JSONResponse) VisitStartMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StartMigration404JSONResponse ErrorResponse
+
+func (response StartMigration404JSONResponse) VisitStartMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StartMigration500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response StartMigration500JSONResponse) VisitStartMigrationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationStatusRequestObject struct {
+	ProjectId ProjectId `json:"project_id"`
+}
+
+type GetMigrationStatusResponseObject interface {
+	VisitGetMigrationStatusResponse(w http.ResponseWriter) error
+}
+
+type GetMigrationStatus200JSONResponse MigrationStatus
+
+func (response GetMigrationStatus200JSONResponse) VisitGetMigrationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationStatus400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response GetMigrationStatus400JSONResponse) VisitGetMigrationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationStatus401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response GetMigrationStatus401JSONResponse) VisitGetMigrationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationStatus403JSONResponse struct{ ForbiddenErrorJSONResponse }
+
+func (response GetMigrationStatus403JSONResponse) VisitGetMigrationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationStatus404JSONResponse ErrorResponse
+
+func (response GetMigrationStatus404JSONResponse) VisitGetMigrationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMigrationStatus500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response GetMigrationStatus500JSONResponse) VisitGetMigrationStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetAllPermissionsRequestObject struct {
 	ProjectId ProjectId `json:"project_id"`
 }
@@ -3564,6 +4035,21 @@ type StrictServerInterface interface {
 	// Get a mapping with its elements by ID
 	// (GET /projects/{project_id}/mappings/{mapping_id})
 	GetMapping(ctx context.Context, request GetMappingRequestObject) (GetMappingResponseObject, error)
+	// Cancel migration to a newer version of a code system role
+	// (POST /projects/{project_id}/migration/cancel)
+	CancelMigration(ctx context.Context, request CancelMigrationRequestObject) (CancelMigrationResponseObject, error)
+	// Get all changes that need to be reviewed
+	// (GET /projects/{project_id}/migration/changes)
+	GetMigrationChanges(ctx context.Context, request GetMigrationChangesRequestObject) (GetMigrationChangesResponseObject, error)
+	// Finish migration to a newer version of a code system role
+	// (POST /projects/{project_id}/migration/finish)
+	FinishMigration(ctx context.Context, request FinishMigrationRequestObject) (FinishMigrationResponseObject, error)
+	// Start migration to a newer version of a code system role
+	// (POST /projects/{project_id}/migration/start)
+	StartMigration(ctx context.Context, request StartMigrationRequestObject) (StartMigrationResponseObject, error)
+	// Get migration status for a project
+	// (GET /projects/{project_id}/migration/status)
+	GetMigrationStatus(ctx context.Context, request GetMigrationStatusRequestObject) (GetMigrationStatusResponseObject, error)
 	// Get permissions for a project
 	// (GET /projects/{project_id}/permissions)
 	GetAllPermissions(ctx context.Context, request GetAllPermissionsRequestObject) (GetAllPermissionsResponseObject, error)
@@ -4449,6 +4935,149 @@ func (sh *strictHandler) GetMapping(ctx *gin.Context, projectId ProjectId, mappi
 	}
 }
 
+// CancelMigration operation middleware
+func (sh *strictHandler) CancelMigration(ctx *gin.Context, projectId ProjectId) {
+	var request CancelMigrationRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CancelMigration(ctx, request.(CancelMigrationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CancelMigration")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(CancelMigrationResponseObject); ok {
+		if err := validResponse.VisitCancelMigrationResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMigrationChanges operation middleware
+func (sh *strictHandler) GetMigrationChanges(ctx *gin.Context, projectId ProjectId) {
+	var request GetMigrationChangesRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMigrationChanges(ctx, request.(GetMigrationChangesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMigrationChanges")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetMigrationChangesResponseObject); ok {
+		if err := validResponse.VisitGetMigrationChangesResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// FinishMigration operation middleware
+func (sh *strictHandler) FinishMigration(ctx *gin.Context, projectId ProjectId) {
+	var request FinishMigrationRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.FinishMigration(ctx, request.(FinishMigrationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "FinishMigration")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(FinishMigrationResponseObject); ok {
+		if err := validResponse.VisitFinishMigrationResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartMigration operation middleware
+func (sh *strictHandler) StartMigration(ctx *gin.Context, projectId ProjectId) {
+	var request StartMigrationRequestObject
+
+	request.ProjectId = projectId
+
+	var body StartMigrationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.StartMigration(ctx, request.(StartMigrationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartMigration")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(StartMigrationResponseObject); ok {
+		if err := validResponse.VisitStartMigrationResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMigrationStatus operation middleware
+func (sh *strictHandler) GetMigrationStatus(ctx *gin.Context, projectId ProjectId) {
+	var request GetMigrationStatusRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMigrationStatus(ctx, request.(GetMigrationStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMigrationStatus")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetMigrationStatusResponseObject); ok {
+		if err := validResponse.VisitGetMigrationStatusResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetAllPermissions operation middleware
 func (sh *strictHandler) GetAllPermissions(ctx *gin.Context, projectId ProjectId) {
 	var request GetAllPermissionsRequestObject
@@ -4682,82 +5311,89 @@ func (sh *strictHandler) DeleteUser(ctx *gin.Context, userId UserId) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"8ZnNoiF7D//Xm/8EAAD//wQXSsDgpAAA",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

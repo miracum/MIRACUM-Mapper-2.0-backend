@@ -26,6 +26,13 @@ type Datastore interface {
 	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
 	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32) error
 
+	// CodeSystemRoleMigration
+	StartMigrationQuery(projectId int32, codeSystemRoleId int32, versionId int32) error
+	CancelMigrationQuery(projectId int32) error
+	GetMigrationCodeSystemRoleQuery(projectId int32) (*models.CodeSystemRole, error)
+	GetMigrationValidToVersionIdsQuery(codeSystemId int32, nextCodeSystemVersionId int32) ([]int32, error)
+	FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping) error
+
 	// Mapping
 	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int32, pageSize int, offset int, sortBy string, sortOrder string) error
 	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]int32, error)) error
@@ -57,6 +64,7 @@ type Datastore interface {
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
+	GetConceptQuery(concept *models.Concept, code string, codeSystemId int32, codeSystemVersionId int32) error
 }
 
 type ConceptImport struct {
