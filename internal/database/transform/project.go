@@ -113,3 +113,61 @@ func ApiUpdateProjectToGormProject(project *api.UpdateProject) *models.Project {
 		StatusRequired:      project.StatusRequired,
 	}
 }
+
+func GormMigrationOptionsToApiMigrationOptions(project *models.Project, newerCodeSystemVersions *map[int32][]models.CodeSystemVersion) *api.MigrationOptions {
+	var modified string
+	if !project.UpdatedAt.IsZero() {
+		modified = project.UpdatedAt.String()
+	} else {
+		modified = ""
+	}
+
+	var created string
+	if !project.CreatedAt.IsZero() {
+		created = project.CreatedAt.String()
+	} else {
+		created = ""
+	}
+
+	var migrationOptions api.MigrationOptions = api.MigrationOptions{
+		Description:         project.Description,
+		EquivalenceRequired: project.EquivalenceRequired,
+		Id:                  project.ID,
+		Modified:            modified,
+		Created:             created,
+		Name:                project.Name,
+		StatusRequired:      project.StatusRequired,
+		Version:             project.Version,
+	}
+
+	migrationOptions.CodeSystemRoles = *GormCodeSystemRolesMigrationToApiCodeSystemRolesMigration(&project.CodeSystemRoles, newerCodeSystemVersions)
+
+	return &migrationOptions
+}
+
+func GormCodeSystemRolesMigrationToApiCodeSystemRolesMigration(codeSystemRoles *[]models.CodeSystemRole, newerCodeSystemVersions *map[int32][]models.CodeSystemVersion) *[]api.CodeSystemRoleMigration {
+	apiCodeSystemRoles := []api.CodeSystemRoleMigration{}
+	for _, role := range *codeSystemRoles {
+		var newerVersions = (*newerCodeSystemVersions)[role.ID]
+		apiCodeSystemRole := api.CodeSystemRoleMigration{
+			Id:   role.ID,
+			Name: role.Name,
+			System: struct {
+				Id            int32                    `json:"id"`
+				Name          string                   `json:"name"`
+				NewerVersions *[]api.CodeSystemVersion `json:"newer_versions,omitempty"`
+				NextVersion   *api.CodeSystemVersion   `json:"next_version,omitempty"`
+				Version       api.CodeSystemVersion    `json:"version"`
+			}{
+				Id:            role.CodeSystemID,
+				Name:          role.CodeSystem.Name,
+				NewerVersions: GormCodeSystemVersionsToApiCodeSystemVersions(&newerVersions),
+				NextVersion:   GormCodeSystemVersionToApiCodeSystemVersion(&role.NextCodeSystemVersion),
+				Version:       *GormCodeSystemVersionToApiCodeSystemVersion(&role.CodeSystemVersion),
+			},
+			Type: api.CodeSystemRoleMigrationType(role.Type),
+		}
+		apiCodeSystemRoles = append(apiCodeSystemRoles, apiCodeSystemRole)
+	}
+	return &apiCodeSystemRoles
+}

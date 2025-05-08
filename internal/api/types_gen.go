@@ -32,6 +32,12 @@ const (
 	CodeSystemRoleTypeTarget CodeSystemRoleType = "target"
 )
 
+// Defines values for CodeSystemRoleMigrationType.
+const (
+	CodeSystemRoleMigrationTypeSource CodeSystemRoleMigrationType = "source"
+	CodeSystemRoleMigrationTypeTarget CodeSystemRoleMigrationType = "target"
+)
+
 // Defines values for ConceptStatus.
 const (
 	ConceptStatusActive      ConceptStatus = "active"
@@ -94,8 +100,8 @@ const (
 
 // Defines values for UpdateCodeSystemRoleType.
 const (
-	Source UpdateCodeSystemRoleType = "source"
-	Target UpdateCodeSystemRoleType = "target"
+	UpdateCodeSystemRoleTypeSource UpdateCodeSystemRoleType = "source"
+	UpdateCodeSystemRoleTypeTarget UpdateCodeSystemRoleType = "target"
 )
 
 // Defines values for UpdateMappingEquivalence.
@@ -222,7 +228,7 @@ type CodeSystemRole struct {
 	System struct {
 		Id          int32              `json:"id"`
 		Name        string             `json:"name"`
-		NextVersion *CodeSystemVersion `json:"nextVersion,omitempty"`
+		NextVersion *CodeSystemVersion `json:"next_version,omitempty"`
 		Version     CodeSystemVersion  `json:"version"`
 	} `json:"system"`
 	Type CodeSystemRoleType `json:"type"`
@@ -230,6 +236,23 @@ type CodeSystemRole struct {
 
 // CodeSystemRoleType defines model for CodeSystemRole.Type.
 type CodeSystemRoleType string
+
+// CodeSystemRoleMigration defines model for CodeSystemRoleMigration.
+type CodeSystemRoleMigration struct {
+	Id     int32  `json:"id"`
+	Name   string `json:"name"`
+	System struct {
+		Id            int32                `json:"id"`
+		Name          string               `json:"name"`
+		NewerVersions *[]CodeSystemVersion `json:"newer_versions,omitempty"`
+		NextVersion   *CodeSystemVersion   `json:"next_version,omitempty"`
+		Version       CodeSystemVersion    `json:"version"`
+	} `json:"system"`
+	Type CodeSystemRoleMigrationType `json:"type"`
+}
+
+// CodeSystemRoleMigrationType defines model for CodeSystemRoleMigration.Type.
+type CodeSystemRoleMigrationType string
 
 // CodeSystemVersion defines model for CodeSystemVersion.
 type CodeSystemVersion struct {
@@ -365,6 +388,19 @@ type MigrationChanges struct {
 	Deleted           []MigrationChangeOldConcept       `json:"deleted"`
 	Deprecated        []MigrationChangeOldConcept       `json:"deprecated"`
 	Discouraged       []MigrationChangeOldConcept       `json:"discouraged"`
+}
+
+// MigrationOptions defines model for MigrationOptions.
+type MigrationOptions struct {
+	CodeSystemRoles     []CodeSystemRoleMigration `json:"code_system_roles"`
+	Created             string                    `json:"created"`
+	Description         string                    `json:"description"`
+	EquivalenceRequired bool                      `json:"equivalence_required"`
+	Id                  int32                     `json:"id"`
+	Modified            string                    `json:"modified"`
+	Name                string                    `json:"name"`
+	StatusRequired      bool                      `json:"status_required"`
+	Version             string                    `json:"version"`
 }
 
 // MigrationStatus defines model for MigrationStatus.

@@ -20,7 +20,7 @@ func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole
 		System: struct {
 			Id          int32                  `json:"id"`
 			Name        string                 `json:"name"`
-			NextVersion *api.CodeSystemVersion `json:"nextVersion,omitempty"`
+			NextVersion *api.CodeSystemVersion `json:"next_version,omitempty"`
 			Version     api.CodeSystemVersion  `json:"version"`
 		}{
 			Id:          codeSystemRole.CodeSystemID,

@@ -30,6 +30,8 @@ tags:
     #   url: http://swagger.io
   - name: project
     description: Operations about projects
+  - name: migration
+    description: Operations about project migration
   - name: project-permission
     description: Operations about project permissions
   - name: project-codesystem-roles
@@ -238,6 +240,36 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /projects/{project_id}/migration/options:
+    get:
+      tags:
+        - migration
+      summary: Get migration options for a project
+      description: Get migration options for a project
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getMigrationOptions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MigrationOptions"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /projects/{project_id}/migration/status:
     get:
       tags:
@@ -1701,6 +1733,44 @@ components:
                   $ref: "#/components/schemas/CodeSystemVersion"
                 nextVersion:
                   $ref: "#/components/schemas/CodeSystemVersion"
+    CodeSystemRoleMigration:
+      allOf:
+        - $ref: "#/components/schemas/UpdateCodeSystemRole"
+        - type: object
+          required:
+            - system
+          properties:
+            system:
+              type: object
+              required:
+                - id
+                - name
+                - version
+              properties:
+                id:
+                  type: integer
+                  format: int32
+                name:
+                  type: string
+                version:
+                  $ref: "#/components/schemas/CodeSystemVersion"
+                next_version:
+                  $ref: "#/components/schemas/CodeSystemVersion"
+                newer_versions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CodeSystemVersion"
+    MigrationOptions:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          required:
+            - code_system_roles
+          properties:
+            code_system_roles:
+              type: array
+              items:
+                $ref: "#/components/schemas/CodeSystemRoleMigration"
     MigrationStatus:
       type: object
       required:

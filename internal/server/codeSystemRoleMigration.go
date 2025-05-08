@@ -12,6 +12,57 @@ import (
 	"slices"
 )
 
+// GetMigrationOptions implements api.StrictServerInterface.
+func (s *Server) GetMigrationOptions(ctx context.Context, request api.GetMigrationOptionsRequestObject) (api.GetMigrationOptionsResponseObject, error) {
+	projectId := request.ProjectId
+
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetMigrationOptions404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetMigrationOptions500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MigrationPermission, permissions) {
+		return api.GetMigrationOptions403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get the migration changes for the project with ID %d", projectId))}, nil
+	}
+
+	var project models.Project
+	if err := s.Database.GetProjectQuery(&project, projectId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetMigrationOptions404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetMigrationOptions500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project"}, nil
+		}
+	}
+
+	var newerCodeSystemVersions map[int32][]models.CodeSystemVersion = make(map[int32][]models.CodeSystemVersion)
+	for _, codeSystemRole := range project.CodeSystemRoles {
+		if codeSystemRole.NextCodeSystemVersionID != nil {
+			return api.GetMigrationOptions400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("There is already a migration in progress for this project.")}, nil
+		}
+		newerCodeSystemVersions[codeSystemRole.ID] = []models.CodeSystemVersion{}
+		var codeSystem models.CodeSystem
+		if err := s.Database.GetCodeSystemQuery(&codeSystem, codeSystemRole.CodeSystemID); err != nil {
+			switch {
+			case errors.Is(err, database.ErrNotFound):
+				return api.GetMigrationOptions404JSONResponse(fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemRole.CodeSystemID)), nil
+			default:
+				return api.GetMigrationOptions500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the code system"}, nil
+			}
+		}
+		for _, codeSystemVersion := range codeSystem.CodeSystemVersions {
+			if codeSystemVersion.VersionID > codeSystemRole.CodeSystemVersion.VersionID {
+				newerCodeSystemVersions[codeSystemRole.ID] = append(newerCodeSystemVersions[codeSystemRole.ID], codeSystemVersion)
+			}
+		}
+	}
+	return api.GetMigrationOptions200JSONResponse(*transform.GormMigrationOptionsToApiMigrationOptions(&project, &newerCodeSystemVersions)), nil
+}
+
 // GetMigrationStatus implements api.StrictServerInterface.
 func (s *Server) GetMigrationStatus(ctx context.Context, request api.GetMigrationStatusRequestObject) (api.GetMigrationStatusResponseObject, error) {
 	projectId := request.ProjectId
