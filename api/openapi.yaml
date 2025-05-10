@@ -1731,7 +1731,7 @@ components:
                   type: string
                 version:
                   $ref: "#/components/schemas/CodeSystemVersion"
-                nextVersion:
+                next_version:
                   $ref: "#/components/schemas/CodeSystemVersion"
     CodeSystemRoleMigration:
       allOf:

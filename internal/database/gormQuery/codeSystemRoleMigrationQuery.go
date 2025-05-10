@@ -98,7 +98,7 @@ func (gq *GormQuery) GetMigrationCodeSystemRoleQuery(projectId int32) (*models.C
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		var project models.Project
-		if err := tx.Preload("CodeSystemRoles").Preload("CodeSystemRoles.CodeSystemVersion").Preload("CodeSystemRoles.NextCodeSystemVersion").First(&project, projectId).Error; err != nil {
+		if err := tx.Preload("CodeSystemRoles").Preload("CodeSystemRoles.CodeSystem").Preload("CodeSystemRoles.CodeSystemVersion").Preload("CodeSystemRoles.NextCodeSystemVersion").First(&project, projectId).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				return database.NewDBError(database.NotFound, fmt.Sprintf("Project with ID %d couldn't be found.", projectId))
