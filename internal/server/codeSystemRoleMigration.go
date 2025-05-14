@@ -457,3 +457,8 @@ func tryFinishMigration(db database.Datastore, codeSystemRole *models.CodeSystem
 	}
 	return db.FinishMigrationQuery(codeSystemRole, mappings)
 }
+
+// MigrateMapping implements api.StrictServerInterface.
+func (s *Server) MigrateMapping(ctx context.Context, request api.MigrateMappingRequestObject) (api.MigrateMappingResponseObject, error) {
+	panic("unimplemented")
+}

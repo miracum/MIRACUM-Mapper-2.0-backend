@@ -91,6 +91,14 @@ const (
 	MappingStatusPending  MappingStatus = "pending"
 )
 
+// Defines values for MigrateMappingMigrationType.
+const (
+	Delete MigrateMappingMigrationType = "delete"
+	Keep   MigrateMappingMigrationType = "keep"
+	New    MigrateMappingMigrationType = "new"
+	None   MigrateMappingMigrationType = "none"
+)
+
 // Defines values for Role.
 const (
 	Editor       Role = "editor"
@@ -367,6 +375,16 @@ type MappingEquivalence string
 
 // MappingStatus defines model for Mapping.Status.
 type MappingStatus string
+
+// MigrateMapping defines model for MigrateMapping.
+type MigrateMapping struct {
+	MappingId     int32                       `json:"mapping_id"`
+	MigrationType MigrateMappingMigrationType `json:"migrationType"`
+	NewConceptId  *int32                      `json:"new_concept_id,omitempty"`
+}
+
+// MigrateMappingMigrationType defines model for MigrateMapping.MigrationType.
+type MigrateMappingMigrationType string
 
 // MigrationChangeOldAndNewConcept defines model for MigrationChangeOldAndNewConcept.
 type MigrationChangeOldAndNewConcept struct {
@@ -649,6 +667,9 @@ type GetAllMappingsParamsSortBy string
 // GetAllMappingsParamsSortOrder defines parameters for GetAllMappings.
 type GetAllMappingsParamsSortOrder string
 
+// MigrateMappingJSONBody defines parameters for MigrateMapping.
+type MigrateMappingJSONBody = []MigrateMapping
+
 // CreateCodeSystemJSONRequestBody defines body for CreateCodeSystem for application/json ContentType.
 type CreateCodeSystemJSONRequestBody = CreateCodeSystem
 
@@ -684,6 +705,9 @@ type CreateMappingJSONRequestBody = CreateMapping
 
 // UpdateMappingJSONRequestBody defines body for UpdateMapping for application/json ContentType.
 type UpdateMappingJSONRequestBody = UpdateMapping
+
+// MigrateMappingJSONRequestBody defines body for MigrateMapping for application/json ContentType.
+type MigrateMappingJSONRequestBody = MigrateMappingJSONBody
 
 // StartMigrationJSONRequestBody defines body for StartMigration for application/json ContentType.
 type StartMigrationJSONRequestBody = StartMigration
