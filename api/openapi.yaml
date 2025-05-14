@@ -1823,6 +1823,9 @@ components:
             $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
     MigrationChangeOldConcept:
       type: object
+      required:
+        - old_concept
+        - mappings
       properties:
         old_concept:
           $ref: "#/components/schemas/Concept"
@@ -1832,6 +1835,10 @@ components:
             $ref: "#/components/schemas/Mapping"
     MigrationChangeOldAndNewConcept:
       type: object
+      required:
+        - old_concept
+        - new_concept
+        - mappings
       properties:
         old_concept:
           $ref: "#/components/schemas/Concept"

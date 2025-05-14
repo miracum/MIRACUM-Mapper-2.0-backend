@@ -67,19 +67,6 @@ func (s *Server) GetMigrationOptions(ctx context.Context, request api.GetMigrati
 func (s *Server) GetMigrationStatus(ctx context.Context, request api.GetMigrationStatusRequestObject) (api.GetMigrationStatusResponseObject, error) {
 	projectId := request.ProjectId
 
-	permissions, err := getUserPermissions(ctx, s, projectId)
-	if err != nil {
-		switch {
-		case errors.Is(err, database.ErrProjectNotFound):
-			return api.GetMigrationStatus404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
-		default:
-			return api.GetMigrationStatus500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
-		}
-	}
-	if !checkUserHasPermissions(MigrationPermission, permissions) {
-		return api.GetMigrationStatus403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get the migration changes for the project with ID %d", projectId))}, nil
-	}
-
 	codeSystemRole, err := s.Database.GetMigrationCodeSystemRoleQuery(projectId)
 	if err != nil {
 		switch {
@@ -264,12 +251,12 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 				// if concept is not found, it means it was deleted
 				deletedConcept, ok := deleted[*element.ConceptID]
 				if ok {
-					*deletedConcept.Mappings = append(*deletedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
+					deletedConcept.Mappings = append(deletedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 					deleted[*element.ConceptID] = deletedConcept
 				} else {
 					deleted[*element.ConceptID] = api.MigrationChangeOldConcept{
-						OldConcept: transform.GormConceptToApiConcept(&element.Concept),
-						Mappings:   &[]api.Mapping{transform.GormMappingToApiMapping(mapping)},
+						OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+						Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
 					}
 				}
 				continue
@@ -281,48 +268,48 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 		if concept.Status == models.Deprecated {
 			deprecatedConcept, ok := deprecated[*element.ConceptID]
 			if ok {
-				*deprecatedConcept.Mappings = append(*deprecatedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
+				deprecatedConcept.Mappings = append(deprecatedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				deprecated[*element.ConceptID] = deprecatedConcept
 			} else {
 				deprecated[*element.ConceptID] = api.MigrationChangeOldConcept{
-					OldConcept: transform.GormConceptToApiConcept(&element.Concept),
-					Mappings:   &[]api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
 				}
 			}
 		} else if concept.Status == models.Discouraged {
 			discouragedConcept, ok := discouraged[*element.ConceptID]
 			if ok {
-				*discouragedConcept.Mappings = append(*discouragedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
+				discouragedConcept.Mappings = append(discouragedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				discouraged[*element.ConceptID] = discouragedConcept
 			} else {
 				discouraged[*element.ConceptID] = api.MigrationChangeOldConcept{
-					OldConcept: transform.GormConceptToApiConcept(&element.Concept),
-					Mappings:   &[]api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
 				}
 			}
 		} else if concept.Display != element.Concept.Display {
 			changeDisplayConcept, ok := changeDisplay[*element.ConceptID]
 			if ok {
-				*changeDisplayConcept.Mappings = append(*changeDisplayConcept.Mappings, transform.GormMappingToApiMapping(mapping))
+				changeDisplayConcept.Mappings = append(changeDisplayConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				changeDisplay[*element.ConceptID] = changeDisplayConcept
 			} else {
 				changeDisplay[*element.ConceptID] = api.MigrationChangeOldAndNewConcept{
-					OldConcept: transform.GormConceptToApiConcept(&element.Concept),
-					NewConcept: transform.GormConceptToApiConcept(&concept),
-					Mappings:   &[]api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+					NewConcept: *transform.GormConceptToApiConcept(&concept),
+					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
 				}
 			}
 		} else if ((concept.Description == nil || element.Concept.Description == nil) && concept.Description != element.Concept.Description) ||
 			(concept.Description != nil && element.Concept.Description != nil && *concept.Description != *element.Concept.Description) {
 			changeDescriptionConcept, ok := changeDescription[*element.ConceptID]
 			if ok {
-				*changeDescriptionConcept.Mappings = append(*changeDescriptionConcept.Mappings, transform.GormMappingToApiMapping(mapping))
+				changeDescriptionConcept.Mappings = append(changeDescriptionConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				changeDescription[*element.ConceptID] = changeDescriptionConcept
 			} else {
 				changeDescription[*element.ConceptID] = api.MigrationChangeOldAndNewConcept{
-					OldConcept: transform.GormConceptToApiConcept(&element.Concept),
-					NewConcept: transform.GormConceptToApiConcept(&concept),
-					Mappings:   &[]api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+					NewConcept: *transform.GormConceptToApiConcept(&concept),
+					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
 				}
 			}
 		}

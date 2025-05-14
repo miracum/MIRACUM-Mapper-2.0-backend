@@ -370,15 +370,15 @@ type MappingStatus string
 
 // MigrationChangeOldAndNewConcept defines model for MigrationChangeOldAndNewConcept.
 type MigrationChangeOldAndNewConcept struct {
-	Mappings   *[]Mapping `json:"mappings,omitempty"`
-	NewConcept *Concept   `json:"new_concept,omitempty"`
-	OldConcept *Concept   `json:"old_concept,omitempty"`
+	Mappings   []Mapping `json:"mappings"`
+	NewConcept Concept   `json:"new_concept"`
+	OldConcept Concept   `json:"old_concept"`
 }
 
 // MigrationChangeOldConcept defines model for MigrationChangeOldConcept.
 type MigrationChangeOldConcept struct {
-	Mappings   *[]Mapping `json:"mappings,omitempty"`
-	OldConcept *Concept   `json:"old_concept,omitempty"`
+	Mappings   []Mapping `json:"mappings"`
+	OldConcept Concept   `json:"old_concept"`
 }
 
 // MigrationChanges defines model for MigrationChanges.
