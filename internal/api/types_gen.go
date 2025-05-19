@@ -379,7 +379,7 @@ type MappingStatus string
 // MigrateMapping defines model for MigrateMapping.
 type MigrateMapping struct {
 	MappingId     int32                       `json:"mapping_id"`
-	MigrationType MigrateMappingMigrationType `json:"migrationType"`
+	MigrationType MigrateMappingMigrationType `json:"migration_type"`
 	NewConceptId  *int32                      `json:"new_concept_id,omitempty"`
 }
 

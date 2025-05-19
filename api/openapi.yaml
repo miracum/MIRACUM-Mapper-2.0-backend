@@ -1890,10 +1890,10 @@ components:
     MigrateMapping:
       type: object
       required:
-        - migrationType
+        - migration_type
         - mapping_id
       properties:
-        migrationType:
+        migration_type:
           type: string
           enum: [none, delete, keep, new]
         mapping_id:
