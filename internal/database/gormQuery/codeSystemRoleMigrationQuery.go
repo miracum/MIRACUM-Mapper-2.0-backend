@@ -88,6 +88,31 @@ func (gq *GormQuery) CancelMigrationQuery(projectId int32) error {
 			return err
 		}
 
+		var mappings []models.Mapping
+		if err := tx.Where("project_id = ?", projectId).Preload("Elements.NextConcept.CodeSystem").Find(&mappings).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Mappings for Project with ID %d couldn't be found.", projectId))
+			default:
+				return err
+			}
+		}
+
+		for _, mapping := range mappings {
+			for _, element := range mapping.Elements {
+				if element.CodeSystemRoleID == codeSystemRole.ID {
+					if element.NextConceptID != nil {
+						if err := tx.Model(models.Element{}).Where("mapping_id = ? AND code_system_role_id = ?", mapping.ID, codeSystemRole.ID).Updates(map[string]any{
+							"next_concept_id": nil,
+						}).Error; err != nil {
+							return err
+						}
+					}
+					break
+				}
+			}
+		}
+
 		return nil
 	})
 	return err
