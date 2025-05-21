@@ -386,6 +386,13 @@ type MigrateMapping struct {
 // MigrateMappingMigrationType defines model for MigrateMapping.MigrationType.
 type MigrateMappingMigrationType string
 
+// MigrateMappingError defines model for MigrateMappingError.
+type MigrateMappingError struct {
+	Code      string          `json:"code"`
+	Error     string          `json:"error"`
+	Migration *MigrateMapping `json:"migration,omitempty"`
+}
+
 // MigrationChangeOldAndNewConcept defines model for MigrationChangeOldAndNewConcept.
 type MigrationChangeOldAndNewConcept struct {
 	Mappings   []Mapping `json:"mappings"`

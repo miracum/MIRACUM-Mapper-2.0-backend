@@ -177,6 +177,38 @@ func (gq *GormQuery) GetMigrationValidToVersionIdsQuery(codeSystemId int32, next
 	return validToVersionIds, err
 }
 
+func (gq *GormQuery) GetMigrationValidFromVersionIdsQuery(codeSystemId int32, codeSystemVersionId int32) ([]int32, error) {
+	var validFromVersionIds []int32
+
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		var codeSystem models.CodeSystem
+		if err := gq.Database.Preload("CodeSystemVersions").First(&codeSystem, codeSystemId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			default:
+				return err
+			}
+		}
+		var codeSystemVersionVersionId int32 = 0
+		for _, version := range codeSystem.CodeSystemVersions {
+			if version.ID == codeSystemVersionId {
+				codeSystemVersionVersionId = version.VersionID
+			}
+		}
+		if codeSystemVersionVersionId == 0 {
+			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystemVersion with ID %d couldn't be found for CodeSystem with ID %d.", codeSystemVersionId, codeSystemId))
+		}
+		for _, version := range codeSystem.CodeSystemVersions {
+			if version.VersionID <= codeSystemVersionVersionId {
+				validFromVersionIds = append(validFromVersionIds, version.ID)
+			}
+		}
+		return nil
+	})
+	return validFromVersionIds, err
+}
+
 func (gq *GormQuery) FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping) error {
 	codeSystemRoleId := codeSystemRole.ID
 
@@ -207,4 +239,18 @@ func (gq *GormQuery) FinishMigrationQuery(codeSystemRole *models.CodeSystemRole,
 		return nil
 	})
 	return err
+}
+
+func (gq *GormQuery) MigrationElementSetNextConceptQuery(mappingId int32, codeSystemRoleId int32, nextConceptId *int32) error {
+	if err := gq.Database.Model(&models.Element{}).Where("mapping_id = ? AND code_system_role_id = ?", mappingId, codeSystemRoleId).Updates(map[string]any{
+		"next_concept_id": nextConceptId,
+	}).Error; err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return database.NewDBError(database.NotFound, fmt.Sprintf("Element with mapping ID %d and code system role ID %d couldn't be found.", mappingId, codeSystemRoleId))
+		default:
+			return err
+		}
+	}
+	return nil
 }

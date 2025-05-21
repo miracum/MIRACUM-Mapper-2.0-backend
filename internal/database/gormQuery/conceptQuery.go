@@ -155,3 +155,24 @@ func (gq *GormQuery) GetConceptQuery(concept *models.Concept, code string, codeS
 	})
 	return err
 }
+
+func (gq *GormQuery) GetConceptByIdQuery(concept *models.Concept, conceptId int32) error {
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Preload("CodeSystem").
+			Preload("ValidFromVersion").
+			Preload("ValidToVersion").
+			Model(&models.Concept{}).
+			Where("id = ?", conceptId).
+			First(&concept).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("Concept with ID %d couldn't be found.", conceptId))
+			default:
+				return err
+			}
+		}
+		return nil
+	})
+	return err
+}

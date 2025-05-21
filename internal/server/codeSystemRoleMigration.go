@@ -460,5 +460,199 @@ func tryFinishMigration(db database.Datastore, codeSystemRole *models.CodeSystem
 
 // MigrateMapping implements api.StrictServerInterface.
 func (s *Server) MigrateMapping(ctx context.Context, request api.MigrateMappingRequestObject) (api.MigrateMappingResponseObject, error) {
-	panic("unimplemented")
+	projectId := request.ProjectId
+	body := request.Body
+
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.MigrateMapping404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.MigrateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(MigrationPermission, permissions) {
+		return api.MigrateMapping403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to migrate the mappings for the project with ID %d", projectId))}, nil
+	}
+
+	codeSystemRole, err := s.Database.GetMigrationCodeSystemRoleQuery(projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.MigrateMapping404JSONResponse(err.Error()), nil
+		case errors.Is(err, database.ErrClientError):
+			return api.MigrateMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		default:
+			return api.MigrateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the migration code system role"}, err
+		}
+	}
+
+	validToVersions, err := s.Database.GetMigrationValidToVersionIdsQuery(codeSystemRole.CodeSystemID, *codeSystemRole.NextCodeSystemVersionID)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.MigrateMapping404JSONResponse(err.Error()), nil
+		case errors.Is(err, database.ErrClientError):
+			return api.MigrateMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		default:
+			return api.MigrateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to migrate the mappings"}, err
+		}
+	}
+
+	validFromVersions, err := s.Database.GetMigrationValidFromVersionIdsQuery(codeSystemRole.CodeSystemID, codeSystemRole.CodeSystemVersionID)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.MigrateMapping404JSONResponse(err.Error()), nil
+		case errors.Is(err, database.ErrClientError):
+			return api.MigrateMapping400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+		default:
+			return api.MigrateMapping500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to migrate the mappings"}, err
+		}
+	}
+
+	response := api.MigrateMapping200JSONResponse{Errors: []api.MigrateMappingError{}}
+
+	for _, migration := range *body {
+		switch migration.MigrationType {
+
+		case "none":
+			continue
+
+		case "delete":
+			var mapping models.Mapping
+			if err := s.Database.GetMappingQuery(&mapping, projectId, migration.MappingId); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "get the mapping"))
+				continue
+			}
+			if err := s.Database.DeleteMappingQuery(&mapping); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "delete the mapping"))
+				continue
+			}
+			continue
+
+		case "keep":
+			var mapping models.Mapping
+			if err := s.Database.GetMappingQuery(&mapping, projectId, migration.MappingId); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "get the mapping"))
+				continue
+			}
+			var element *models.Element
+			for _, elementLoop := range mapping.Elements {
+				if elementLoop.CodeSystemRoleID == codeSystemRole.ID {
+					element = &elementLoop
+					break
+				}
+			}
+			if element == nil {
+				response.Errors = append(response.Errors, getError(nil, &migration, "get the element"))
+				continue
+			}
+
+			var concept models.Concept
+			if err := s.Database.GetConceptQuery(&concept, element.Concept.Code, codeSystemRole.CodeSystemID, *codeSystemRole.NextCodeSystemVersionID); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "get the concept"))
+				continue
+			}
+			if err := s.Database.MigrationElementSetNextConceptQuery(element.MappingID, element.CodeSystemRoleID, &concept.ID); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "set the next concept"))
+				continue
+			}
+			continue
+
+		case "new":
+			if migration.NewConceptId == nil {
+				response.Errors = append(response.Errors, api.MigrateMappingError{
+					Migration: &migration,
+					Code:      "400",
+					Error:     "new_concept_id is required for migration_type new.",
+				})
+				continue
+			}
+			var mapping models.Mapping
+			if err := s.Database.GetMappingQuery(&mapping, projectId, migration.MappingId); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "get the mapping"))
+				continue
+			}
+			var element *models.Element
+			for _, elementLoop := range mapping.Elements {
+				if elementLoop.CodeSystemRoleID == codeSystemRole.ID {
+					element = &elementLoop
+					break
+				}
+			}
+			if element == nil {
+				response.Errors = append(response.Errors, getError(nil, &migration, "get the element"))
+				continue
+			}
+
+			var concept models.Concept
+			if err := s.Database.GetConceptByIdQuery(&concept, *migration.NewConceptId); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "get the concept"))
+				continue
+			}
+			if concept.CodeSystemID != codeSystemRole.CodeSystemID {
+				response.Errors = append(response.Errors, api.MigrateMappingError{
+					Migration: &migration,
+					Code:      "400",
+					Error:     fmt.Sprintf("The concept with ID %d does not belong to the code system with ID %d.", *migration.NewConceptId, codeSystemRole.CodeSystemID),
+				})
+				continue
+			}
+			if !slices.Contains(validToVersions, concept.ValidToVersionID) || !slices.Contains(validFromVersions, concept.ValidFromVersionID) {
+				response.Errors = append(response.Errors, api.MigrateMappingError{
+					Migration: &migration,
+					Code:      "400",
+					Error:     fmt.Sprintf("The concept with ID %d is not valid in this version of the code system version with ID %d.", *migration.NewConceptId, codeSystemRole.CodeSystemID),
+				})
+				continue
+			}
+			if err := s.Database.MigrationElementSetNextConceptQuery(element.MappingID, element.CodeSystemRoleID, migration.NewConceptId); err != nil {
+				response.Errors = append(response.Errors, getError(&err, &migration, "set the next concept"))
+				continue
+			}
+			continue
+
+		default:
+			response.Errors = append(response.Errors, api.MigrateMappingError{
+				Migration: &migration,
+				Code:      "400",
+				Error:     fmt.Sprintf("Invalid migration type %s. Valid types are none, delete, keep and new.", migration.MigrationType),
+			})
+			continue
+		}
+	}
+
+	return response, nil
+}
+
+func getError(err *error, migration *api.MigrateMapping, errString string) api.MigrateMappingError {
+	if err == nil {
+		return api.MigrateMappingError{
+			Migration: migration,
+			Code:      "500",
+			Error:     fmt.Sprintf("An Error occurred while trying to %s.", errString),
+		}
+	}
+	switch {
+	case errors.Is(*err, database.ErrClientError):
+		return api.MigrateMappingError{
+			Migration: migration,
+			Code:      "400",
+			Error:     (*err).Error(),
+		}
+	case errors.Is(*err, database.ErrNotFound):
+		return api.MigrateMappingError{
+			Migration: migration,
+			Code:      "404",
+			Error:     (*err).Error(),
+		}
+	default:
+		return api.MigrateMappingError{
+			Migration: migration,
+			Code:      "500",
+			Error:     fmt.Sprintf("An Error occurred while trying to %s.", errString),
+		}
+	}
 }

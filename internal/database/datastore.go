@@ -31,7 +31,9 @@ type Datastore interface {
 	CancelMigrationQuery(projectId int32) error
 	GetMigrationCodeSystemRoleQuery(projectId int32) (*models.CodeSystemRole, error)
 	GetMigrationValidToVersionIdsQuery(codeSystemId int32, nextCodeSystemVersionId int32) ([]int32, error)
+	GetMigrationValidFromVersionIdsQuery(codeSystemId int32, codeSystemVersionId int32) ([]int32, error)
 	FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping) error
+	MigrationElementSetNextConceptQuery(mappingId int32, codeSystemRoleId int32, nextConceptId *int32) error
 
 	// Mapping
 	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int32, pageSize int, offset int, sortBy string, sortOrder string) error
@@ -65,6 +67,7 @@ type Datastore interface {
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetConceptQuery(concept *models.Concept, code string, codeSystemId int32, codeSystemVersionId int32) error
+	GetConceptByIdQuery(concept *models.Concept, conceptId int32) error
 }
 
 type ConceptImport struct {
