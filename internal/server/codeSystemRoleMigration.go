@@ -26,7 +26,7 @@ func (s *Server) GetMigrationOptions(ctx context.Context, request api.GetMigrati
 		}
 	}
 	if !checkUserHasPermissions(MigrationPermission, permissions) {
-		return api.GetMigrationOptions403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get the migration changes for the project with ID %d", projectId))}, nil
+		return api.GetMigrationOptions403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get the migration options for the project with ID %d", projectId))}, nil
 	}
 
 	var project models.Project
@@ -67,6 +67,19 @@ func (s *Server) GetMigrationOptions(ctx context.Context, request api.GetMigrati
 func (s *Server) GetMigrationStatus(ctx context.Context, request api.GetMigrationStatusRequestObject) (api.GetMigrationStatusResponseObject, error) {
 	projectId := request.ProjectId
 
+	permissions, err := getUserPermissions(ctx, s, projectId)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.GetMigrationStatus404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.GetMigrationStatus500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project permission for the user"}, nil
+		}
+	}
+	if !checkUserHasPermissions(ProjectViewPermission, permissions) && !checkUserHasPermissions(MappingViewPermission, permissions) {
+		return api.GetMigrationStatus403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to get the migration status for the project with ID %d", projectId))}, nil
+	}
+
 	codeSystemRole, err := s.Database.GetMigrationCodeSystemRoleQuery(projectId)
 	if err != nil {
 		switch {
@@ -97,7 +110,7 @@ func (s *Server) StartMigration(ctx context.Context, request api.StartMigrationR
 		}
 	}
 	if !checkUserHasPermissions(StartMigrationPermission, permissions) {
-		return api.StartMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to update the project with ID %d", projectId))}, nil
+		return api.StartMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to start a migration for the project with ID %d", projectId))}, nil
 	}
 
 	if err := s.Database.StartMigrationQuery(projectId, codeSystemRoleId, versionId); err != nil {
@@ -128,7 +141,7 @@ func (s *Server) CancelMigration(ctx context.Context, request api.CancelMigratio
 		}
 	}
 	if !checkUserHasPermissions(StartMigrationPermission, permissions) {
-		return api.CancelMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to update the project with ID %d", projectId))}, nil
+		return api.CancelMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to cancel a migration for the project with ID %d", projectId))}, nil
 	}
 
 	if err := s.Database.CancelMigrationQuery(projectId); err != nil {
@@ -354,7 +367,7 @@ func (s *Server) FinishMigration(ctx context.Context, request api.FinishMigratio
 		}
 	}
 	if !checkUserHasPermissions(StartMigrationPermission, permissions) {
-		return api.FinishMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to update the project with ID %d", projectId))}, nil
+		return api.FinishMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to finish a migration for the project with ID %d", projectId))}, nil
 	}
 
 	codeSystemRole, err := s.Database.GetMigrationCodeSystemRoleQuery(projectId)
