@@ -1331,16 +1331,16 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import:
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/generic:
     post:
       tags:
         - code-system-version
-      summary: Import concepts for a code system version by ID
-      description: Import concepts for a code system version by ID. The concepts for GENERIC and LOINC Codesystems are imported from a CSV file. For the import of a FHIR/JSON file please use the endpoint /import-json #The format of the CSV must be "code,meaning"
+      summary: Import concepts for a generic code system version by ID
+      description: Import concepts for a generic code system version by ID. The concepts and optional replace by hints are imported from CSV files. For other code system types use the other endpoints.
       parameters:
         - $ref: "#/components/parameters/codesystem_id"
         - $ref: "#/components/parameters/codesystem-version_id"
-      operationId: importCodeSystemVersion
+      operationId: importCodeSystemVersionGeneric
       requestBody:
         required: true
         content:
@@ -1353,11 +1353,11 @@ paths:
                 main:
                   type: string
                   format: binary
-                  description: The main file with the concepts to import. For LOINC use the file LoincTable/Loinc.csv. For GENERIC use a CSV file that has the columns "code", "display" and "status" and an optional column "description".
-                # replace_by:
-                #   type: string
-                #   format: binary
-                #   description: An optional file with replace by hints for mappings
+                  description: The main CSV file with the concepts to import. Required columns are "code", "display" and "status". The column "description" is optional. "status" has to be one of ["active" | "trial" | "deprecated" | "discouraged"]. If the code system does not support a status, use "active" for all concepts.
+                replace_by:
+                  type: string
+                  format: binary
+                  description: An optional CSV file with replace by / map to hints for deprecated / deleted concepts. Required columns are "code" and "map_to". The columns "equivalence" and "comment" are optional. "map_to" is the code of the concept that should replace the deprecated / deleted concept "code". "equivalence" has to be one of ["relatedto" | "equivalent" | "equal" | "wider" | "subsumes" | "narrower" | "specializes" | "inexact" | "unmatched" | "disjoint"] or empty.
       responses:
         "202":
           description: Success
@@ -1365,7 +1365,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "CSV file processed successfully. Starting to create and update concepts in the background."
+                example: "Files processed successfully. Starting to create and update concepts in the background."
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -1381,23 +1381,34 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import-json:
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/loinc:
     post:
       tags:
         - code-system-version
-      summary: Import concepts for a code system version by ID
-      description: Import concepts for a code system version by ID. The concepts are imported from a FHIR/JSON file. #The format of the CSV must be "code,meaning"
+      summary: Import concepts for a Loinc code system version by ID
+      description: Import concepts for a Loinc code system version by ID. The CSV files can be uploaded directly without a conersion. For other code system types use the other endpoints.
       parameters:
         - $ref: "#/components/parameters/codesystem_id"
         - $ref: "#/components/parameters/codesystem-version_id"
-      operationId: importCodeSystemVersionJson
+      operationId: importCodeSystemVersionLoinc
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              description: The JSON file with the concepts to import. Must be according to the FHIR R4 standard. For ICD_10_GM use the file CodeSystem-icd10gm-<version>.json. # TODO wird hier nicht angezeigt
+              required:
+                - loinc
+                - map_to
+              properties:
+                loinc:
+                  type: string
+                  format: binary
+                  description: The main CSV file with the concepts to import. Use the file LoincTable/Loinc.csv.
+                map_to:
+                  type: string
+                  format: binary
+                  description: The CSV file with replace by / map to hints for deprecated / deleted concepts. Use the file LoincTable/MapTo.csv.
       responses:
         "202":
           description: Success
@@ -1405,7 +1416,55 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "JSON file processed successfully. Starting to create and update concepts in the background."
+                example: "Files processed successfully. Starting to create and update concepts in the background."
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/icd10gm:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a ICD-10-GM code system version by ID
+      description: Import concepts for a ICD-10-GM code system version by ID. The concepts are imported from FHIR/JSON files CodeSystem-icd10gm-....json and ConceptMap-icd10gm-....json. The files must be according to the FHIR R4 standard. The JSON-Objects must be copied into the request body (see example). For other code system types use the other endpoints.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersionIcd
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                codeSystem: {
+                  "resourceType": "CodeSystem",
+                  "other fields": " ... "
+                }
+                conceptMap: {
+                  "resourceType": "ConceptMap",
+                  "other fields": " ... "
+                }
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Files processed successfully. Starting to create and update concepts in the background."
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":

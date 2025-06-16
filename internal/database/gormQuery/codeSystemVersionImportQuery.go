@@ -34,10 +34,16 @@ type NeighborConcepts struct {
 	NeighborType       NeighborConceptsType
 }
 
-func (gq GormQuery) CreateConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]database.ConceptImport) {
+func (gq GormQuery) ImportConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]database.ConceptImport, replaceBies *[]models.ConceptReplaceBy) {
 	defer utilities.DoneImporting()
 
 	numConcepts := len(*concepts)
+	numReplaceBies := 0
+	if replaceBies != nil {
+		numReplaceBies = len(*replaceBies)
+	}
+	totalNum := numConcepts + numReplaceBies
+
 	utilities.SetImportBegin()
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
@@ -64,7 +70,7 @@ func (gq GormQuery) CreateConcepts(codeSystemId int32, codeSystemVersionId int32
 		}
 
 		for i, concept := range *concepts {
-			utilities.SetImportProgress(i * 100 / numConcepts)
+			utilities.SetImportProgress(i * 100 / totalNum)
 
 			neighborConcepts, err := getNeighborConcepts(tx, concept.Code, codeSystemId, versionId, beforeVersionId, afterVersionId)
 			if err != nil {
@@ -125,6 +131,31 @@ func (gq GormQuery) CreateConcepts(codeSystemId int32, codeSystemVersionId int32
 					return fmt.Errorf("error: Surrounding concept is not equal to new concept (indicates invalid data)")
 				} else {
 					// Do nothing
+				}
+			}
+		}
+
+		if replaceBies != nil {
+			for i, replaceBy := range *replaceBies {
+				utilities.SetImportProgress((i + numConcepts) * 100 / totalNum)
+
+				var existingReplaceBy models.ConceptReplaceBy
+				if err := tx.Where("code_system_id = ? AND code = ? AND map_to = ?", replaceBy.CodeSystemID, replaceBy.Code, replaceBy.MapTo).First(&existingReplaceBy).Error; err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						// If it doesn't exist, create it
+						if err := tx.Create(&replaceBy).Error; err != nil {
+							return fmt.Errorf("error creating ConceptReplaceBy: %v", err)
+						}
+					} else {
+						return fmt.Errorf("error checking existing ConceptReplaceBy: %v", err)
+					}
+				} else {
+					// If it exists, update it
+					existingReplaceBy.Equivalence = replaceBy.Equivalence
+					existingReplaceBy.Comment = replaceBy.Comment
+					if err := tx.Save(&existingReplaceBy).Error; err != nil {
+						return fmt.Errorf("error updating ConceptReplaceBy: %v", err)
+					}
 				}
 			}
 		}

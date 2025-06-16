@@ -623,14 +623,26 @@ type GetAllConceptsByVersionParamsSortBy string
 // GetAllConceptsByVersionParamsSortOrder defines parameters for GetAllConceptsByVersion.
 type GetAllConceptsByVersionParamsSortOrder string
 
-// ImportCodeSystemVersionMultipartBody defines parameters for ImportCodeSystemVersion.
-type ImportCodeSystemVersionMultipartBody struct {
-	// Main The main file with the concepts to import. For LOINC use the file LoincTable/Loinc.csv. For GENERIC use a CSV file that has the columns "code", "display" and "status" and an optional column "description".
+// ImportCodeSystemVersionGenericMultipartBody defines parameters for ImportCodeSystemVersionGeneric.
+type ImportCodeSystemVersionGenericMultipartBody struct {
+	// Main The main CSV file with the concepts to import. Required columns are "code", "display" and "status". The column "description" is optional. "status" has to be one of ["active" | "trial" | "deprecated" | "discouraged"]. If the code system does not support a status, use "active" for all concepts.
 	Main openapi_types.File `json:"main"`
+
+	// ReplaceBy An optional CSV file with replace by / map to hints for deprecated / deleted concepts. Required columns are "code" and "map_to". The columns "equivalence" and "comment" are optional. "map_to" is the code of the concept that should replace the deprecated / deleted concept "code". "equivalence" has to be one of ["relatedto" | "equivalent" | "equal" | "wider" | "subsumes" | "narrower" | "specializes" | "inexact" | "unmatched" | "disjoint"] or empty.
+	ReplaceBy *openapi_types.File `json:"replace_by,omitempty"`
 }
 
-// ImportCodeSystemVersionJsonJSONBody defines parameters for ImportCodeSystemVersionJson.
-type ImportCodeSystemVersionJsonJSONBody = map[string]interface{}
+// ImportCodeSystemVersionIcdJSONBody defines parameters for ImportCodeSystemVersionIcd.
+type ImportCodeSystemVersionIcdJSONBody = map[string]interface{}
+
+// ImportCodeSystemVersionLoincMultipartBody defines parameters for ImportCodeSystemVersionLoinc.
+type ImportCodeSystemVersionLoincMultipartBody struct {
+	// Loinc The main CSV file with the concepts to import. Use the file LoincTable/Loinc.csv.
+	Loinc openapi_types.File `json:"loinc"`
+
+	// MapTo The CSV file with replace by / map to hints for deprecated / deleted concepts. Use the file LoincTable/MapTo.csv.
+	MapTo openapi_types.File `json:"map_to"`
+}
 
 // GetAllProjectsParams defines parameters for GetAllProjects.
 type GetAllProjectsParams struct {
@@ -689,11 +701,14 @@ type CreateCodeSystemVersionJSONRequestBody = BaseCodeSystemVersion
 // UpdateCodeSystemVersionJSONRequestBody defines body for UpdateCodeSystemVersion for application/json ContentType.
 type UpdateCodeSystemVersionJSONRequestBody = UpdateCodeSystemVersion
 
-// ImportCodeSystemVersionMultipartRequestBody defines body for ImportCodeSystemVersion for multipart/form-data ContentType.
-type ImportCodeSystemVersionMultipartRequestBody ImportCodeSystemVersionMultipartBody
+// ImportCodeSystemVersionGenericMultipartRequestBody defines body for ImportCodeSystemVersionGeneric for multipart/form-data ContentType.
+type ImportCodeSystemVersionGenericMultipartRequestBody ImportCodeSystemVersionGenericMultipartBody
 
-// ImportCodeSystemVersionJsonJSONRequestBody defines body for ImportCodeSystemVersionJson for application/json ContentType.
-type ImportCodeSystemVersionJsonJSONRequestBody = ImportCodeSystemVersionJsonJSONBody
+// ImportCodeSystemVersionIcdJSONRequestBody defines body for ImportCodeSystemVersionIcd for application/json ContentType.
+type ImportCodeSystemVersionIcdJSONRequestBody = ImportCodeSystemVersionIcdJSONBody
+
+// ImportCodeSystemVersionLoincMultipartRequestBody defines body for ImportCodeSystemVersionLoinc for multipart/form-data ContentType.
+type ImportCodeSystemVersionLoincMultipartRequestBody ImportCodeSystemVersionLoincMultipartBody
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
 type CreateProjectJSONRequestBody = CreateProjectDetails

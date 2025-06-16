@@ -54,12 +54,15 @@ type ServerInterface interface {
 	// Get all concepts for a code system version by ID
 	// (GET /codesystems/{codesystem_id}/versions/{codesystem-version_id}/concepts)
 	GetAllConceptsByVersion(c *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId, params GetAllConceptsByVersionParams)
-	// Import concepts for a code system version by ID
-	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import)
-	ImportCodeSystemVersion(c *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId)
-	// Import concepts for a code system version by ID
-	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import-json)
-	ImportCodeSystemVersionJson(c *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId)
+	// Import concepts for a generic code system version by ID
+	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/generic)
+	ImportCodeSystemVersionGeneric(c *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId)
+	// Import concepts for a ICD-10-GM code system version by ID
+	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/icd10gm)
+	ImportCodeSystemVersionIcd(c *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId)
+	// Import concepts for a Loinc code system version by ID
+	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/loinc)
+	ImportCodeSystemVersionLoinc(c *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId)
 	// Get the status of the running or last import
 	// (GET /import-status)
 	GetImportStatus(c *gin.Context)
@@ -523,8 +526,8 @@ func (siw *ServerInterfaceWrapper) GetAllConceptsByVersion(c *gin.Context) {
 	siw.Handler.GetAllConceptsByVersion(c, codesystemId, codesystemVersionId, params)
 }
 
-// ImportCodeSystemVersion operation middleware
-func (siw *ServerInterfaceWrapper) ImportCodeSystemVersion(c *gin.Context) {
+// ImportCodeSystemVersionGeneric operation middleware
+func (siw *ServerInterfaceWrapper) ImportCodeSystemVersionGeneric(c *gin.Context) {
 
 	var err error
 
@@ -557,11 +560,11 @@ func (siw *ServerInterfaceWrapper) ImportCodeSystemVersion(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.ImportCodeSystemVersion(c, codesystemId, codesystemVersionId)
+	siw.Handler.ImportCodeSystemVersionGeneric(c, codesystemId, codesystemVersionId)
 }
 
-// ImportCodeSystemVersionJson operation middleware
-func (siw *ServerInterfaceWrapper) ImportCodeSystemVersionJson(c *gin.Context) {
+// ImportCodeSystemVersionIcd operation middleware
+func (siw *ServerInterfaceWrapper) ImportCodeSystemVersionIcd(c *gin.Context) {
 
 	var err error
 
@@ -594,7 +597,44 @@ func (siw *ServerInterfaceWrapper) ImportCodeSystemVersionJson(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.ImportCodeSystemVersionJson(c, codesystemId, codesystemVersionId)
+	siw.Handler.ImportCodeSystemVersionIcd(c, codesystemId, codesystemVersionId)
+}
+
+// ImportCodeSystemVersionLoinc operation middleware
+func (siw *ServerInterfaceWrapper) ImportCodeSystemVersionLoinc(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "codesystem_id" -------------
+	var codesystemId CodesystemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem_id", c.Param("codesystem_id"), &codesystemId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "codesystem-version_id" -------------
+	var codesystemVersionId CodesystemVersionId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "codesystem-version_id", c.Param("codesystem-version_id"), &codesystemVersionId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter codesystem-version_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(OAuth2Scopes, []string{"admin"})
+
+	c.Set(BearerAuthScopes, []string{"admin"})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ImportCodeSystemVersionLoinc(c, codesystemId, codesystemVersionId)
 }
 
 // GetImportStatus operation middleware
@@ -1486,8 +1526,9 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PUT(options.BaseURL+"/codesystems/:codesystem_id/versions", wrapper.UpdateCodeSystemVersion)
 	router.DELETE(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id", wrapper.DeleteCodeSystemVersion)
 	router.GET(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id/concepts", wrapper.GetAllConceptsByVersion)
-	router.POST(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id/import", wrapper.ImportCodeSystemVersion)
-	router.POST(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id/import-json", wrapper.ImportCodeSystemVersionJson)
+	router.POST(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id/import/generic", wrapper.ImportCodeSystemVersionGeneric)
+	router.POST(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id/import/icd10gm", wrapper.ImportCodeSystemVersionIcd)
+	router.POST(options.BaseURL+"/codesystems/:codesystem_id/versions/:codesystem-version_id/import/loinc", wrapper.ImportCodeSystemVersionLoinc)
 	router.GET(options.BaseURL+"/import-status", wrapper.GetImportStatus)
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
 	router.GET(options.BaseURL+"/projects", wrapper.GetAllProjects)
@@ -2111,114 +2152,171 @@ func (response GetAllConceptsByVersion500JSONResponse) VisitGetAllConceptsByVers
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersionRequestObject struct {
+type ImportCodeSystemVersionGenericRequestObject struct {
 	CodesystemId        CodesystemId        `json:"codesystem_id"`
 	CodesystemVersionId CodesystemVersionId `json:"codesystem-version_id"`
 	Body                *multipart.Reader
 }
 
-type ImportCodeSystemVersionResponseObject interface {
-	VisitImportCodeSystemVersionResponse(w http.ResponseWriter) error
+type ImportCodeSystemVersionGenericResponseObject interface {
+	VisitImportCodeSystemVersionGenericResponse(w http.ResponseWriter) error
 }
 
-type ImportCodeSystemVersion202JSONResponse string
+type ImportCodeSystemVersionGeneric202JSONResponse string
 
-func (response ImportCodeSystemVersion202JSONResponse) VisitImportCodeSystemVersionResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionGeneric202JSONResponse) VisitImportCodeSystemVersionGenericResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(202)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersion400JSONResponse struct{ BadRequestErrorJSONResponse }
+type ImportCodeSystemVersionGeneric400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response ImportCodeSystemVersion400JSONResponse) VisitImportCodeSystemVersionResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionGeneric400JSONResponse) VisitImportCodeSystemVersionGenericResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersion401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+type ImportCodeSystemVersionGeneric401JSONResponse struct{ UnauthorizedErrorJSONResponse }
 
-func (response ImportCodeSystemVersion401JSONResponse) VisitImportCodeSystemVersionResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionGeneric401JSONResponse) VisitImportCodeSystemVersionGenericResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersion404JSONResponse ErrorResponse
+type ImportCodeSystemVersionGeneric404JSONResponse ErrorResponse
 
-func (response ImportCodeSystemVersion404JSONResponse) VisitImportCodeSystemVersionResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionGeneric404JSONResponse) VisitImportCodeSystemVersionGenericResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersion500JSONResponse struct {
+type ImportCodeSystemVersionGeneric500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response ImportCodeSystemVersion500JSONResponse) VisitImportCodeSystemVersionResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionGeneric500JSONResponse) VisitImportCodeSystemVersionGenericResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersionJsonRequestObject struct {
+type ImportCodeSystemVersionIcdRequestObject struct {
 	CodesystemId        CodesystemId        `json:"codesystem_id"`
 	CodesystemVersionId CodesystemVersionId `json:"codesystem-version_id"`
-	Body                *ImportCodeSystemVersionJsonJSONRequestBody
+	Body                *ImportCodeSystemVersionIcdJSONRequestBody
 }
 
-type ImportCodeSystemVersionJsonResponseObject interface {
-	VisitImportCodeSystemVersionJsonResponse(w http.ResponseWriter) error
+type ImportCodeSystemVersionIcdResponseObject interface {
+	VisitImportCodeSystemVersionIcdResponse(w http.ResponseWriter) error
 }
 
-type ImportCodeSystemVersionJson202JSONResponse string
+type ImportCodeSystemVersionIcd202JSONResponse string
 
-func (response ImportCodeSystemVersionJson202JSONResponse) VisitImportCodeSystemVersionJsonResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionIcd202JSONResponse) VisitImportCodeSystemVersionIcdResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(202)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersionJson400JSONResponse struct{ BadRequestErrorJSONResponse }
+type ImportCodeSystemVersionIcd400JSONResponse struct{ BadRequestErrorJSONResponse }
 
-func (response ImportCodeSystemVersionJson400JSONResponse) VisitImportCodeSystemVersionJsonResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionIcd400JSONResponse) VisitImportCodeSystemVersionIcdResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersionJson401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+type ImportCodeSystemVersionIcd401JSONResponse struct{ UnauthorizedErrorJSONResponse }
 
-func (response ImportCodeSystemVersionJson401JSONResponse) VisitImportCodeSystemVersionJsonResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionIcd401JSONResponse) VisitImportCodeSystemVersionIcdResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersionJson404JSONResponse ErrorResponse
+type ImportCodeSystemVersionIcd404JSONResponse ErrorResponse
 
-func (response ImportCodeSystemVersionJson404JSONResponse) VisitImportCodeSystemVersionJsonResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionIcd404JSONResponse) VisitImportCodeSystemVersionIcdResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type ImportCodeSystemVersionJson500JSONResponse struct {
+type ImportCodeSystemVersionIcd500JSONResponse struct {
 	InternalServerErrorJSONResponse
 }
 
-func (response ImportCodeSystemVersionJson500JSONResponse) VisitImportCodeSystemVersionJsonResponse(w http.ResponseWriter) error {
+func (response ImportCodeSystemVersionIcd500JSONResponse) VisitImportCodeSystemVersionIcdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportCodeSystemVersionLoincRequestObject struct {
+	CodesystemId        CodesystemId        `json:"codesystem_id"`
+	CodesystemVersionId CodesystemVersionId `json:"codesystem-version_id"`
+	Body                *multipart.Reader
+}
+
+type ImportCodeSystemVersionLoincResponseObject interface {
+	VisitImportCodeSystemVersionLoincResponse(w http.ResponseWriter) error
+}
+
+type ImportCodeSystemVersionLoinc202JSONResponse string
+
+func (response ImportCodeSystemVersionLoinc202JSONResponse) VisitImportCodeSystemVersionLoincResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportCodeSystemVersionLoinc400JSONResponse struct{ BadRequestErrorJSONResponse }
+
+func (response ImportCodeSystemVersionLoinc400JSONResponse) VisitImportCodeSystemVersionLoincResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportCodeSystemVersionLoinc401JSONResponse struct{ UnauthorizedErrorJSONResponse }
+
+func (response ImportCodeSystemVersionLoinc401JSONResponse) VisitImportCodeSystemVersionLoincResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportCodeSystemVersionLoinc404JSONResponse ErrorResponse
+
+func (response ImportCodeSystemVersionLoinc404JSONResponse) VisitImportCodeSystemVersionLoincResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ImportCodeSystemVersionLoinc500JSONResponse struct {
+	InternalServerErrorJSONResponse
+}
+
+func (response ImportCodeSystemVersionLoinc500JSONResponse) VisitImportCodeSystemVersionLoincResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
 
@@ -4172,12 +4270,15 @@ type StrictServerInterface interface {
 	// Get all concepts for a code system version by ID
 	// (GET /codesystems/{codesystem_id}/versions/{codesystem-version_id}/concepts)
 	GetAllConceptsByVersion(ctx context.Context, request GetAllConceptsByVersionRequestObject) (GetAllConceptsByVersionResponseObject, error)
-	// Import concepts for a code system version by ID
-	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import)
-	ImportCodeSystemVersion(ctx context.Context, request ImportCodeSystemVersionRequestObject) (ImportCodeSystemVersionResponseObject, error)
-	// Import concepts for a code system version by ID
-	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import-json)
-	ImportCodeSystemVersionJson(ctx context.Context, request ImportCodeSystemVersionJsonRequestObject) (ImportCodeSystemVersionJsonResponseObject, error)
+	// Import concepts for a generic code system version by ID
+	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/generic)
+	ImportCodeSystemVersionGeneric(ctx context.Context, request ImportCodeSystemVersionGenericRequestObject) (ImportCodeSystemVersionGenericResponseObject, error)
+	// Import concepts for a ICD-10-GM code system version by ID
+	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/icd10gm)
+	ImportCodeSystemVersionIcd(ctx context.Context, request ImportCodeSystemVersionIcdRequestObject) (ImportCodeSystemVersionIcdResponseObject, error)
+	// Import concepts for a Loinc code system version by ID
+	// (POST /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/loinc)
+	ImportCodeSystemVersionLoinc(ctx context.Context, request ImportCodeSystemVersionLoincRequestObject) (ImportCodeSystemVersionLoincResponseObject, error)
 	// Get the status of the running or last import
 	// (GET /import-status)
 	GetImportStatus(ctx context.Context, request GetImportStatusRequestObject) (GetImportStatusResponseObject, error)
@@ -4585,9 +4686,9 @@ func (sh *strictHandler) GetAllConceptsByVersion(ctx *gin.Context, codesystemId 
 	}
 }
 
-// ImportCodeSystemVersion operation middleware
-func (sh *strictHandler) ImportCodeSystemVersion(ctx *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId) {
-	var request ImportCodeSystemVersionRequestObject
+// ImportCodeSystemVersionGeneric operation middleware
+func (sh *strictHandler) ImportCodeSystemVersionGeneric(ctx *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId) {
+	var request ImportCodeSystemVersionGenericRequestObject
 
 	request.CodesystemId = codesystemId
 	request.CodesystemVersionId = codesystemVersionId
@@ -4600,10 +4701,10 @@ func (sh *strictHandler) ImportCodeSystemVersion(ctx *gin.Context, codesystemId 
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ImportCodeSystemVersion(ctx, request.(ImportCodeSystemVersionRequestObject))
+		return sh.ssi.ImportCodeSystemVersionGeneric(ctx, request.(ImportCodeSystemVersionGenericRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ImportCodeSystemVersion")
+		handler = middleware(handler, "ImportCodeSystemVersionGeneric")
 	}
 
 	response, err := handler(ctx, request)
@@ -4611,8 +4712,8 @@ func (sh *strictHandler) ImportCodeSystemVersion(ctx *gin.Context, codesystemId 
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(ImportCodeSystemVersionResponseObject); ok {
-		if err := validResponse.VisitImportCodeSystemVersionResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(ImportCodeSystemVersionGenericResponseObject); ok {
+		if err := validResponse.VisitImportCodeSystemVersionGenericResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -4620,14 +4721,14 @@ func (sh *strictHandler) ImportCodeSystemVersion(ctx *gin.Context, codesystemId 
 	}
 }
 
-// ImportCodeSystemVersionJson operation middleware
-func (sh *strictHandler) ImportCodeSystemVersionJson(ctx *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId) {
-	var request ImportCodeSystemVersionJsonRequestObject
+// ImportCodeSystemVersionIcd operation middleware
+func (sh *strictHandler) ImportCodeSystemVersionIcd(ctx *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId) {
+	var request ImportCodeSystemVersionIcdRequestObject
 
 	request.CodesystemId = codesystemId
 	request.CodesystemVersionId = codesystemVersionId
 
-	var body ImportCodeSystemVersionJsonJSONRequestBody
+	var body ImportCodeSystemVersionIcdJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
@@ -4636,10 +4737,10 @@ func (sh *strictHandler) ImportCodeSystemVersionJson(ctx *gin.Context, codesyste
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ImportCodeSystemVersionJson(ctx, request.(ImportCodeSystemVersionJsonRequestObject))
+		return sh.ssi.ImportCodeSystemVersionIcd(ctx, request.(ImportCodeSystemVersionIcdRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ImportCodeSystemVersionJson")
+		handler = middleware(handler, "ImportCodeSystemVersionIcd")
 	}
 
 	response, err := handler(ctx, request)
@@ -4647,8 +4748,43 @@ func (sh *strictHandler) ImportCodeSystemVersionJson(ctx *gin.Context, codesyste
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(ImportCodeSystemVersionJsonResponseObject); ok {
-		if err := validResponse.VisitImportCodeSystemVersionJsonResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(ImportCodeSystemVersionIcdResponseObject); ok {
+		if err := validResponse.VisitImportCodeSystemVersionIcdResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImportCodeSystemVersionLoinc operation middleware
+func (sh *strictHandler) ImportCodeSystemVersionLoinc(ctx *gin.Context, codesystemId CodesystemId, codesystemVersionId CodesystemVersionId) {
+	var request ImportCodeSystemVersionLoincRequestObject
+
+	request.CodesystemId = codesystemId
+	request.CodesystemVersionId = codesystemVersionId
+
+	if reader, err := ctx.Request.MultipartReader(); err == nil {
+		request.Body = reader
+	} else {
+		ctx.Error(err)
+		return
+	}
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportCodeSystemVersionLoinc(ctx, request.(ImportCodeSystemVersionLoincRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportCodeSystemVersionLoinc")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(ImportCodeSystemVersionLoincResponseObject); ok {
+		if err := validResponse.VisitImportCodeSystemVersionLoincResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -5570,93 +5706,100 @@ func (sh *strictHandler) DeleteUser(ctx *gin.Context, userId UserId) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xdW3PctpL+KyjuPthVoxk58Val9Ob4tjobRS7Lzj5ELhWGxMwgBgEGAKVMfPTfT+FG",
+	"giTIIecijWKehxOPiEsD6K+70Wg0vkUxSzNGEZUiOvsWZZDDFEnE9a+YJUishUTpCWcE3eBE/TVBIuY4",
+	"k5jR6Cz6tELg/A1gCyBXCKgawFQBqko0ibAqlUG5iiYRhSmKzkLtTiKO/swxR0l0JnmOJpGIVyiFqsMF",
+	"4ymU0VmEqfzxh2gSyXWGzE+0RDy6v5/4Td4iLjCjPah9XVQCv5lKG+n1Gt8fyYNI3UTiPkhLYZZhuuxB",
+	"ly0ZJsprZleKMrhETVo+wCUCNE/niINnaS4kmCMAQcYElvgWAdvCc0fenzni65I+3ahPSYIWMCcyOnsx",
+	"iVJMcZqn+t8tBF3hvwNE/WroYQuAJUoFyBAHqvS2FOpewlSeqv9tJpWzP1Ase6ymLRleTa+ZXVdTMC4v",
+	"eYJ4kyD9Z0WPKoPpEjyDIgaMA1WsbZrK9oLzFEERR5MIUTVHv9tfqr3oS0GekFzxsaIuF4j3mCxVLDxT",
+	"roGuaap3e68Ki4xRgbTs/RkmH9GfORLyLeeMG3FMJaJS/RNmGcExVHTN/hCKuG/dbVcHck5vIcEJsD2A",
+	"Z2i6nE4ARUtouDIBIlddoGQCsC08Z8nalAQpFkKtzQIjkjxXq6MXBJTq43l0P4neMT7HSYLoAYZQtA2e",
+	"YSryxQLHGFGp0KapY9TQcE4l4hSSK8RvET/IXJoOgOkB6C5AkiMgGUighHMokJoinGYEpYhK3RVAqpxQ",
+	"JH6mMJcrxvHfKDkAgX7z4JlbOkWQXdiYowRRiSFRU3bvuNSyoUBK91wZ3aNMBM4yxCU2bGqaDtBRoyLw",
+	"3YAl8EFiSVq+6D98K5D8/u2vbz+ev44m0S+X57+q/56/fnPz4vTm/UUA2pMo5zg0ZT5Of9eFLHW2ibIp",
+	"Ntfy8X5SmxhnPjTmhyOCoEA3CZSoIh31HwIkOgOjZXZqtFZKT6q9tVH9wQr5Bq2bFkz1ewsJojG6KYko",
+	"Cs4ZIwjSzqUVEspcbKh9W05m9+jtqG8L280fQQu9TRpC81RleUjI5SI6+/1b9N8cLaKz6L9mpdk8s2iZ",
+	"veYISh8s95P6DBul0kdD+sPEIRq/VKj8yAxi+lH6OUsqlOraTWpFC+Z7jqKDDSj6S954y9w5rQ2QVVlk",
+	"YN3m3E7qfNSc7FolOzF9FuUCLzl0iHoyq3OHuFse06YyZLdaKNs45Byuv5+V99RBvzUPa5OtBcgkwmnG",
+	"uAxL2NBEFOXbhkZjlAV0htp3bqX9e48kRZCqOu3qxLcIYKwMWNUQx5BolZBxFEOpRX+CRcxyDpeVgbZo",
+	"Fz0venwlEUWXQaVRVwBbLr+d8lprTsRX579d0xYk9Jjjul0lWM5jPYuQL5EM2lIeEIcqNIu6wp9RKvBW",
+	"c8vMxoX1NgTYME2ttdw0W4zV3V+QvTUVQuLLMyn8+eKIKA47kcw3O9Q+2szkCRYnFHLO7hA/kStIT+zE",
+	"+gXmnMGk8Z0yeWKbDy5DBwQwLf6ZIZqoCkGmb5lsaye+QRJiIoYxs7MxmxJMAerGeqo4I2iAfgkBIrBG",
+	"zk/h7QR793GFaGJp/1BUb3ZS4+fmmMJUhGWrY7egbK1ivweU41JSb4al6l1tOD9az0MQP+9yQjwa+zFB",
+	"iaHmqAoCuxW4KWZthtcDa90Hp/o9kltZ9l02/SHspPAur42BzrXuvioEQZU+5DwKNCcEzhUjGV9UY6Ez",
+	"zpYcCV0rhX9Zl2LFwXgaYjme05qGbjM1ih7KShNLYEjoe+J+iOnsqgV4T4uQZD9qwsdFQAylLMELHOys",
+	"NitFyUlBoEdOeM3NvqJdIVY9+H3MLLdRuakbA5RRpA0pgrTL4itCWaR3CUGFRNHdjcX4zXb73RopleOI",
+	"IJtU5qLwoIUNVfQXTDMFgujl6cuQA6bAS1nStgwok2DBcpqE6qX+Tq+Lb2pL1xi9f2hizc8OiLheX68g",
+	"XaJLkryiya/ortVgt833Z/MSTYHNXLHUA8Q5I8ngWrU58puokjEpB9hvuh5kovY+5CGDDOiEWH+4qe3R",
+	"+o1yA8MFRu96wyIjcH3InoyMSnboorPxYid5mPa9zekBOqjxk5uqjh1yY+UmIcbp5MBLXWbA5uEgG4cW",
+	"j9xws75LF2NG20ywekPDCB5mYrmSoWXxPP9D7KmONemwp3ayf8ITve2O9PBMte996D72oJ1z6LXcPLPq",
+	"waJu0PoQfEPZzyJg5NnTc91XiFfdlrd0sdxidKfruIlld1T/RgmWFfOoZMLwfn7nEVvDdsM5YhkF0DbI",
+	"Kwm5rBwRdLNnf3O+GgQ11AIP9VtpMzSY4LnFAY4nhjsrOzz/rQ7H+mhaT3gHL8lWJ7udcz54n1z1ph78",
+	"nLKqRvbkSNw3jVaQ1ZwnKcQkyIWLnJBWFsVhlagkQr/V1yxaFA8eSwkU5xzL9ZWaLRszhCBH/FUuV+rX",
+	"XP965yboX///yUVHaftBfy0nbCVlpmi8VNV/0FNL2J0X44H/Noam3UdX/viZE9vE2WxGWAzJigl59tPp",
+	"Ty9mquCMI0hSMUuhkIjPMs4kixmZsQxRnJzEjFIUS11U08gyG12SpDq8askhlQLonwDGsXEhpSidq0Vz",
+	"n6kaKnHflaRgX9G+aNNtVfyKUE+UdqJiumChcDEsABY6WGwO46+IJmDBuP59cf7x1evPF8C5Fj4xRqbg",
+	"XIKMs1ucIAEgBa8+nAPJQAopXBbBeQLcYblSjWAOYsZN1FiiGnG7wqkOFwVGcAkQQwrmyDaTACjAHSJk",
+	"Cj6tkO4iF0iA/0PrmDD4VVOohoaotEFHANIEVNZ7Gk0igmNkXcY27O39h19Ofpyegl/sl0mUF3Mvzmaz",
+	"u7u76ZLmU8aXM1tbzJYZUZWmK5kSL/gnCk0Q+NnMondkdBa9mJ5OT/UmO0MUZjg6i37Uf5roqDzNR7My",
+	"PFb/VmqisVzvkQSQED+GWaiBKnmgR32emFKvCCn1gvZl+oF7P5yeDorf6mUPVh3XTVuwEfR1lRcoeGkI",
+	"CjVfED6rhxvqei8212vGrt1Pov/p02MoME/LtTxNIV+3LIhW80vhjJQTdyCv7G0mAqtqVB2AgKI7v6Up",
+	"uKRkbUSKgYjZe2xY/sYZr5HbSMifWbIetPDDYomqGkLyHN3vyHh9TzyOjLlenr7c2zCrh1+BkZbz4Dl/",
+	"FRE//PBwRPwGCU6MJH77V4wy57zYDWbWfNBWmFP6v1uN+0WZW741UX744iO0DVxdKM0DIDUGIoCV+yPz",
+	"NTh/04Rpbsp2w7RuvR8KpiNAjwCg4pgAuh8duA9wtoOqFZ73k4qpNPtWuVZ0b4CrjwEbEH6j/94PwqaN",
+	"DRA2DVYg7N9Oa9k7lkVm1StRam5GND4SGh8fDO3s2aGr2rcJAS4P7RSeBvfWNhejvbdvBq7uaPYnj2f2",
+	"QLjPntYUNLv7kIz+AJdqm622+u7mnfUbiAzF+nxGFa3f82rfIFvKduT7ycYK+hJnz3L6KqUqW7tLhhFJ",
+	"gGR65Pr/fl533DTUH0PXDF20hnVM12KHQ37pjVSXNxubZAsEebwqXEq2uxDVOpJQl4667iB29VBGQIc6",
+	"sF979PHlIdwl7Yfgo2w7qGzrIWoqws4s02ZB5wdZ9vDz2OLt0m6z78e10cMHVOYO2F3F73+P2nK15LG2",
+	"qxUCRiiObqVNbqUNWA7bTifFja5BLifXV2/XU4eUaDtAPk4p0UbtKCdGOfF0vFsV/G6UDH2NDv+DlwBo",
+	"uDtsg3hpusU6xEvdPbYn8TIZUMFPhvRA7rVRKlSlAuOgMTlPwvX2sEjdi6Okht4DOUx+Xj82kkeXy+hy",
+	"GV0u/xCXS7ucHep6aZWtJnXEbIko4jhu99CYa6p1Ym21Lkn7SSPN1lLylukmIQEcZQTGSBVcYR0hyBFw",
+	"qSzAgrMUvL76DSwwQWIK3jEOmFwhXulMcasAuUAa0eY7oknGVINNaW1G0VC67+3oH9X8atsWpjmROINc",
+	"zhaMpycJlLDK5PWbb5iGk9+pL8WMFnGI5eJIZmd/qlPLqT0jiBnJU2qW5lqLxetoAq4je6noOtJLem0T",
+	"GVxHbr1VLVWsJOI6AlgUiz/16oAV1J3PEWAUAbYAv1/bPAjXEfg3uDbpQOy/ywtP7g/lpafr6MsUnDeT",
+	"mSYMCY1hkWeajSEwnU8063i9abb2QKlYqIhSnmMKtRBvxAZbVr6Zr5tT/4qWLF+dfQ8AM5DCTE2CQcJC",
+	"p0x0AwUzu7tISrq6l8iuSgqzG8mqqyLAtZ8Ioyhrk3Co3xxV1sm14qJh9cwWKWM1PUCuoARixXKSFMNS",
+	"37sGUVA7bZAU4gibR0NT8m+/hiz/UHDJHU4Qt/8W+VzkKRL2p0vl4b4qew8S/HdRAFP0F4xdqzlNoYxX",
+	"Prv9oaTLdfRFGfAozeS6F5c0bgrjYMqiHh6bYe6D8ib0OyVJQcaZUuAoAcKo8kVOyHoK9HUWZQhL5jzq",
+	"ijMKt5mVEpgWIdFLrlTiNDDU0Wo4wiiKLVX44fd31gbBcfLidJkOtUHOX785eXF68v6ivxXSsDPe/e/5",
+	"x9m/ri5/NdaGty0/sVSdTKfTqWIVDQprL1/ArPHd9GWaKVIGxzHjicWWQo/qD3x8qbQQTSBPTCVFwMnl",
+	"3NwTcHVjlqnNKKa2qjUUbEJXgRCwAH9+WBvpPE6O0z7qKf38jDzql5kHnQNXRGcRmE6nwNwG0DfSPhmJ",
+	"Vo3bj4tlH9JCUSeQ12YU96O4f1Bx30NaPpjAJwzTwVvOX1SlTaK+2Dc6r16eEQYTlIAEcxRLstYWOMtN",
+	"RBc1LRxWgGrC/xFbzGLddtpjfrbzqUvqyfkE5wTN9D+nsbjtufcy25MwOXvcb7WRewGzT6w3ubVNALE8",
+	"YccwbgdG/fDI+mGDeO2lGwzCT8rklq2HNop1TLHCoZBzjqgS0DYXCrDeegKFdLIjdApTyaN3wOPMSj+b",
+	"WPtx7mDugzvCq+OtibcevZjC5TgI8oK+bO1UaqGzlVBS0meF4q8AGwqEeacBC0eLvnfNkcw5FQACoR9q",
+	"ABmjS5AiIeASNdnlgzmY2YlHal5X01VVwCoioh45WzuYqLqc1Tirzmnx1sQlPTbLYO+hbzxLrV5Yz+AS",
+	"U3N7HFx5B6aQCLb1qekHR8tQo+iIjjB1roci2aJJ96GDsYpckDjZ+STzQc4Ay2Qdfc8AFzkBxbp+B7rc",
+	"PFjltLh7dyfznrGSTFmUy9XzA5wTZiVaHLLdi089L9Db4hbRZWIrbdjVH38T4Jn0Dg2snWeTVACpbN/n",
+	"NlVFpZaSCmqO5giYfHMJgAupdlSKFJt+IhSS/aF4vupwd/JrOcgeOD4y1Psx2cVj/PK6BTJtmOuITfZe",
+	"ZAOYmo2hVp9v3GFk7hX0wOjCU3KBuABerMpgdLZENR8WaLWsg4+CsCPccv64uWbtwbUH126WWf9pdxrq",
+	"QcctwAxC3LeYZ9/KNxT7RQ+7XgrHJFbWNCHGarYBw0q1u9RPWhG73OG1Zx1d5if13zaRURSlSVhqtEUi",
+	"lyJhoCFevip50Bji48X1YwP0iCKEu3Vlpw/IMW5iTCODGIBpTHJzbLpCgGAhFSZc2X0YsKGN6RPBwtFa",
+	"kU9V1e1xu1Zj52GqZVZ7YHtQzjvH+Z1cb129nnpy/9QO3u6UeR/dEzmPBo69ZHgeUXN0qAmzcoVXm0g6",
+	"aaBl08aMwlS/6Kv4wUT/wEa3DkAt+HFHId13Rj+aJ/R3BMrhb4sagDzWVdGy9xGOW8GRmWAFDwP/qOum",
+	"3XdG9XDrJ5MdoqG/1q0Er9g06vfdqng/YqSS0GlnGTIoYMRli3+g+6Aj9A8M/YMlvtof7PyHmjqN3MJH",
+	"0mG8muCvoqTZPxoXS+FV0YcfZVjPni+CXrjhHBazez8Ane9++Gl+eE+sFs+bTooXXv038oqHY57E6Wjr",
+	"+2Cj+Hpi56h9BIkn1Wxxs62AMl51ZKNx+t24r3TifUKcGPI8u/M1yIXza1VfAXB3o87fiCm4wEIXKypC",
+	"jlxoYiCqRVHn+PRo9x3ly4kPuuGodDvidVtzo/mY5j9xh+FwrBCMpagA1z3dUcC0TVZsjsdw3XQIIs8H",
+	"rkQJRagiSJ5VjJTGK2LGvdEUMrb95y2RGEcsQ2pvH40yZDxdPpLT5c3IbhMUnQnu9mxStDgtR6thRPxo",
+	"NTy61bDZTTL7Vr4w3i8IpacAaYsM2Ydk2Lyb955NP6jvccTz4fC8Jzg1GDcEp9Ydeodzvi8QtA+x6Mz5",
+	"EP1kJ8W1RuvlxEnQHThCZ4TOg0KnyueaS3sCp0PxuPeNZzGkMSIdOdz1d1BUAJIZaxjx4g4hWwQOEqbg",
+	"bYKl/wQmwAJkTAg8JwjAJcTU3iHQKNT9kLa7BPpr+SrzYwaqlDfBCnoc9doDfuzXZL/vkJSt+dlHWMGH",
+	"PTGmb8z0iPgy5cAcyTuEzOEyI4nWan7a9SB9E5OtC3LjhF8jCez77C16zJH32lJ3rJGRDUJHSB1plJdl",
+	"X82HFJlrvnNUsOEOCFpgisWqXUu909+30VINaJimjlfVmKkYNc3Rw2JrntwBJ+ZfqB0oho+8aAqbf2wr",
+	"qNjGHtnN2O+gv0pq8Lx/vw7IaiYBpBhEbElugY0azdWsM7aLL0MSEYxy4VG3djugcQchYbLAdpujpdSy",
+	"pRuHHu0G5aVt/+gNSkfoiJDjMyg3M+C27C8k5LJdQ+oMWXvzd6jpKXweSc7dWV7RflOragL2aH/u//Cu",
+	"RuEBlGfI8NXrNtq9TzHUeFtM7YbyTWnKUp+1ZD5ExRUJyY5cw/VMaDZC5DEVXAv3DeN879705iRgtSQD",
+	"bXH3bQm+vK6O/saoXcaS5jHW+ylctW7j0MDFlLLs0IxZZU3bSS4Qt3Ed5t8hENicU2Wvx2ihIZoEOP9R",
+	"0vbUCRihtq2pplny+wi1bIGomoEeIqAz9nII+ttybY3gH8E/gv8Q4Zad6NwE/V7m8eybampwuq+txIXN",
+	"w7UfcbE5aswO7EEyFY3IPhyy9x10uROoeib5arRtLzHF/azq90iOMBlh8hgw8XN7dXNxH/2jE7xudMHo",
+	"Um0Ols+6iYfwjqienlZq8D3HLOV2qt2y6lX2FnJG2NK8vOr8CtUF+0V/PqAYMSv0HayIsQD1g0xcv1U0",
+	"h8K+8OPlczV3X1/psZ98Yl8R7Vq8YZae01PdWV1rWVonpVpbwUbO1rb7N5+NMBmm5B5EbW3gt+8gIevn",
+	"PeuZvWZjrWkhx/H1fqpNUoUeEk0qbWsyDd/V8XCLCMtSRKV9gCSaRDkn0Vm0kjI7m80IiyFZMSHPfjr9",
+	"6VTzoyUocJgucwHgnOXSe9HES0RjD6gaiWwuHWpcbe+hBFs3K5626Fu5PHTx3uwvz7H7t5NVjkCq9Pgm",
+	"QY8mzXvKC0xRYo8+hTkMLT3etfYbmZh69JKWGYzcuItQuI2VnZK0NXNjNGys5p3merW9t4QGNuLOisON",
+	"FQ8T9WrUJIryGzJv799/uf9PAAAA//8Wa1pygNEAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

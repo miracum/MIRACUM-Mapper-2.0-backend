@@ -61,7 +61,7 @@ type Datastore interface {
 	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
 
 	// CodeSystemVersionImport
-	CreateConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]ConceptImport)
+	ImportConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]ConceptImport, replaceBies *[]models.ConceptReplaceBy)
 
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
