@@ -46,6 +46,20 @@ const (
 	ConceptStatusTrial       ConceptStatus = "trial"
 )
 
+// Defines values for ConceptReplaceByEquivalence.
+const (
+	ConceptReplaceByEquivalenceDisjoint    ConceptReplaceByEquivalence = "disjoint"
+	ConceptReplaceByEquivalenceEqual       ConceptReplaceByEquivalence = "equal"
+	ConceptReplaceByEquivalenceEquivalent  ConceptReplaceByEquivalence = "equivalent"
+	ConceptReplaceByEquivalenceInexact     ConceptReplaceByEquivalence = "inexact"
+	ConceptReplaceByEquivalenceNarrower    ConceptReplaceByEquivalence = "narrower"
+	ConceptReplaceByEquivalenceRelatedto   ConceptReplaceByEquivalence = "relatedto"
+	ConceptReplaceByEquivalenceSpecializes ConceptReplaceByEquivalence = "specializes"
+	ConceptReplaceByEquivalenceSubsumes    ConceptReplaceByEquivalence = "subsumes"
+	ConceptReplaceByEquivalenceUnmatched   ConceptReplaceByEquivalence = "unmatched"
+	ConceptReplaceByEquivalenceWider       ConceptReplaceByEquivalence = "wider"
+)
+
 // Defines values for CreateCodeSystemRoleType.
 const (
 	CreateCodeSystemRoleTypeSource CreateCodeSystemRoleType = "source"
@@ -114,11 +128,11 @@ const (
 
 // Defines values for UpdateMappingEquivalence.
 const (
-	Equivalent                 UpdateMappingEquivalence = "equivalent"
-	NotRelated                 UpdateMappingEquivalence = "not-related"
-	RelatedTo                  UpdateMappingEquivalence = "related-to"
-	SourceIsBroaderThanTarget  UpdateMappingEquivalence = "source-is-broader-than-target"
-	SourceIsNarrowerThanTarget UpdateMappingEquivalence = "source-is-narrower-than-target"
+	UpdateMappingEquivalenceEquivalent                 UpdateMappingEquivalence = "equivalent"
+	UpdateMappingEquivalenceNotRelated                 UpdateMappingEquivalence = "not-related"
+	UpdateMappingEquivalenceRelatedTo                  UpdateMappingEquivalence = "related-to"
+	UpdateMappingEquivalenceSourceIsBroaderThanTarget  UpdateMappingEquivalence = "source-is-broader-than-target"
+	UpdateMappingEquivalenceSourceIsNarrowerThanTarget UpdateMappingEquivalence = "source-is-narrower-than-target"
 )
 
 // Defines values for UpdateMappingStatus.
@@ -282,6 +296,18 @@ type Concept struct {
 // ConceptStatus defines model for Concept.Status.
 type ConceptStatus string
 
+// ConceptReplaceBy defines model for ConceptReplaceBy.
+type ConceptReplaceBy struct {
+	Code         string                       `json:"code"`
+	CodeSystemId int32                        `json:"code_system_id"`
+	Comment      *string                      `json:"comment,omitempty"`
+	Equivalence  *ConceptReplaceByEquivalence `json:"equivalence,omitempty"`
+	MapTo        Concept                      `json:"map_to"`
+}
+
+// ConceptReplaceByEquivalence defines model for ConceptReplaceBy.Equivalence.
+type ConceptReplaceByEquivalence string
+
 // CreateCodeSystem defines model for CreateCodeSystem.
 type CreateCodeSystem = BaseCodeSystem
 
@@ -395,15 +421,17 @@ type MigrateMappingError struct {
 
 // MigrationChangeOldAndNewConcept defines model for MigrationChangeOldAndNewConcept.
 type MigrationChangeOldAndNewConcept struct {
-	Mappings   []Mapping `json:"mappings"`
-	NewConcept Concept   `json:"new_concept"`
-	OldConcept Concept   `json:"old_concept"`
+	Mappings   []Mapping          `json:"mappings"`
+	NewConcept Concept            `json:"new_concept"`
+	OldConcept Concept            `json:"old_concept"`
+	ReplaceBy  []ConceptReplaceBy `json:"replace_by"`
 }
 
 // MigrationChangeOldConcept defines model for MigrationChangeOldConcept.
 type MigrationChangeOldConcept struct {
-	Mappings   []Mapping `json:"mappings"`
-	OldConcept Concept   `json:"old_concept"`
+	Mappings   []Mapping          `json:"mappings"`
+	OldConcept Concept            `json:"old_concept"`
+	ReplaceBy  []ConceptReplaceBy `json:"replace_by"`
 }
 
 // MigrationChanges defines model for MigrationChanges.
@@ -411,8 +439,8 @@ type MigrationChanges struct {
 	ChangeDescription []MigrationChangeOldAndNewConcept `json:"change_description"`
 	ChangeDisplay     []MigrationChangeOldAndNewConcept `json:"change_display"`
 	Deleted           []MigrationChangeOldConcept       `json:"deleted"`
-	Deprecated        []MigrationChangeOldConcept       `json:"deprecated"`
-	Discouraged       []MigrationChangeOldConcept       `json:"discouraged"`
+	Deprecated        []MigrationChangeOldAndNewConcept `json:"deprecated"`
+	Discouraged       []MigrationChangeOldAndNewConcept `json:"discouraged"`
 }
 
 // MigrationOptions defines model for MigrationOptions.

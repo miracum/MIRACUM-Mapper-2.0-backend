@@ -1,6 +1,7 @@
 package database
 
 import (
+	"miracummapper/internal/api"
 	"miracummapper/internal/database/models"
 
 	"github.com/google/uuid"
@@ -68,6 +69,9 @@ type Datastore interface {
 	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetConceptQuery(concept *models.Concept, code string, codeSystemId int32, codeSystemVersionId int32) error
 	GetConceptByIdQuery(concept *models.Concept, conceptId int32) error
+
+	// ConceptReplaceBy
+	GetConceptReplaceBies(code string, codeSystemId int32, codeSystemVersionId int32) (*[]api.ConceptReplaceBy, error)
 }
 
 type ConceptImport struct {

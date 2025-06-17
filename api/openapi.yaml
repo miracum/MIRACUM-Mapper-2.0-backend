@@ -1912,11 +1912,11 @@ components:
         deprecated:
           type: array
           items:
-            $ref: "#/components/schemas/MigrationChangeOldConcept"
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
         discouraged:
           type: array
           items:
-            $ref: "#/components/schemas/MigrationChangeOldConcept"
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
         change_display:
           type: array
           items:
@@ -1930,6 +1930,7 @@ components:
       required:
         - old_concept
         - mappings
+        - replace_by
       properties:
         old_concept:
           $ref: "#/components/schemas/Concept"
@@ -1937,12 +1938,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Mapping"
+        replace_by:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConceptReplaceBy"
     MigrationChangeOldAndNewConcept:
       type: object
       required:
         - old_concept
         - new_concept
         - mappings
+        - replace_by
       properties:
         old_concept:
           $ref: "#/components/schemas/Concept"
@@ -1952,6 +1958,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Mapping"
+        replace_by:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConceptReplaceBy"
     MigrateMapping:
       type: object
       required:
@@ -2084,6 +2094,26 @@ components:
         status:
           type: string
           enum: [active, trial, deprecated, discouraged]
+    ConceptReplaceBy:
+      type: object
+      required:
+        - code
+        - map_to
+        - code_system_id
+      properties:
+        code:
+          type: string
+        map_to:
+          type: object
+          $ref: "#/components/schemas/Concept"
+        code_system_id:
+          type: integer
+          format: int32
+        equivalence:
+          type: string
+          enum: [relatedto, equivalent, equal, wider, subsumes, narrower, specializes, inexact, unmatched, disjoint]
+        comment:
+          type: string
     BaseCodeSystem:
       type: object
       required:

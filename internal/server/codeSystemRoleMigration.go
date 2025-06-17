@@ -228,8 +228,8 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 	var changeDescription = make(map[int32]api.MigrationChangeOldAndNewConcept)
 	var changeDisplay = make(map[int32]api.MigrationChangeOldAndNewConcept)
 	var deleted = make(map[int32]api.MigrationChangeOldConcept)
-	var deprecated = make(map[int32]api.MigrationChangeOldConcept)
-	var discouraged = make(map[int32]api.MigrationChangeOldConcept)
+	var deprecated = make(map[int32]api.MigrationChangeOldAndNewConcept)
+	var discouraged = make(map[int32]api.MigrationChangeOldAndNewConcept)
 
 	codeSystemRoleId := codeSystemRole.ID
 	codeSystemId := codeSystemRole.CodeSystemID
@@ -267,9 +267,15 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 					deletedConcept.Mappings = append(deletedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 					deleted[*element.ConceptID] = deletedConcept
 				} else {
+					conceptReplaceBies, err := db.GetConceptReplaceBies(element.Concept.Code, codeSystemId, nextCodeSystemVersionId)
+					if err != nil {
+						return nil, err
+					}
+
 					deleted[*element.ConceptID] = api.MigrationChangeOldConcept{
 						OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
 						Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
+						ReplaceBy:  *conceptReplaceBies,
 					}
 				}
 				continue
@@ -284,9 +290,16 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 				deprecatedConcept.Mappings = append(deprecatedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				deprecated[*element.ConceptID] = deprecatedConcept
 			} else {
-				deprecated[*element.ConceptID] = api.MigrationChangeOldConcept{
+				conceptReplaceBies, err := db.GetConceptReplaceBies(element.Concept.Code, codeSystemId, nextCodeSystemVersionId)
+				if err != nil {
+					return nil, err
+				}
+
+				deprecated[*element.ConceptID] = api.MigrationChangeOldAndNewConcept{
 					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+					NewConcept: *transform.GormConceptToApiConcept(&concept),
 					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					ReplaceBy:  *conceptReplaceBies,
 				}
 			}
 		} else if concept.Status == models.Discouraged {
@@ -295,9 +308,16 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 				discouragedConcept.Mappings = append(discouragedConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				discouraged[*element.ConceptID] = discouragedConcept
 			} else {
-				discouraged[*element.ConceptID] = api.MigrationChangeOldConcept{
+				conceptReplaceBies, err := db.GetConceptReplaceBies(element.Concept.Code, codeSystemId, nextCodeSystemVersionId)
+				if err != nil {
+					return nil, err
+				}
+
+				discouraged[*element.ConceptID] = api.MigrationChangeOldAndNewConcept{
 					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
+					NewConcept: *transform.GormConceptToApiConcept(&concept),
 					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					ReplaceBy:  *conceptReplaceBies,
 				}
 			}
 		} else if concept.Display != element.Concept.Display {
@@ -306,10 +326,16 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 				changeDisplayConcept.Mappings = append(changeDisplayConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				changeDisplay[*element.ConceptID] = changeDisplayConcept
 			} else {
+				conceptReplaceBies, err := db.GetConceptReplaceBies(element.Concept.Code, codeSystemId, nextCodeSystemVersionId)
+				if err != nil {
+					return nil, err
+				}
+
 				changeDisplay[*element.ConceptID] = api.MigrationChangeOldAndNewConcept{
 					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
 					NewConcept: *transform.GormConceptToApiConcept(&concept),
 					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					ReplaceBy:  *conceptReplaceBies,
 				}
 			}
 		} else if ((concept.Description == nil || element.Concept.Description == nil) && concept.Description != element.Concept.Description) ||
@@ -319,10 +345,16 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 				changeDescriptionConcept.Mappings = append(changeDescriptionConcept.Mappings, transform.GormMappingToApiMapping(mapping))
 				changeDescription[*element.ConceptID] = changeDescriptionConcept
 			} else {
+				conceptReplaceBies, err := db.GetConceptReplaceBies(element.Concept.Code, codeSystemId, nextCodeSystemVersionId)
+				if err != nil {
+					return nil, err
+				}
+
 				changeDescription[*element.ConceptID] = api.MigrationChangeOldAndNewConcept{
 					OldConcept: *transform.GormConceptToApiConcept(&element.Concept),
 					NewConcept: *transform.GormConceptToApiConcept(&concept),
 					Mappings:   []api.Mapping{transform.GormMappingToApiMapping(mapping)},
+					ReplaceBy:  *conceptReplaceBies,
 				}
 			}
 		}
@@ -345,10 +377,10 @@ func computeMigrationChanges(db database.Datastore, codeSystemRole *models.CodeS
 		changes.Deleted = []api.MigrationChangeOldConcept{}
 	}
 	if changes.Deprecated == nil {
-		changes.Deprecated = []api.MigrationChangeOldConcept{}
+		changes.Deprecated = []api.MigrationChangeOldAndNewConcept{}
 	}
 	if changes.Discouraged == nil {
-		changes.Discouraged = []api.MigrationChangeOldConcept{}
+		changes.Discouraged = []api.MigrationChangeOldAndNewConcept{}
 	}
 	return &changes, nil
 }
