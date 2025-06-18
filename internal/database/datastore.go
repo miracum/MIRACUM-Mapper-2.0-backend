@@ -33,7 +33,7 @@ type Datastore interface {
 	GetMigrationCodeSystemRoleQuery(projectId int32) (*models.CodeSystemRole, error)
 	GetMigrationValidToVersionIdsQuery(codeSystemId int32, nextCodeSystemVersionId int32) ([]int32, error)
 	GetMigrationValidFromVersionIdsQuery(codeSystemId int32, codeSystemVersionId int32) ([]int32, error)
-	FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping) error
+	FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping, statusRequired bool) error
 	MigrationElementSetNextConceptQuery(mappingId int32, codeSystemRoleId int32, nextConceptId *int32) error
 
 	// Mapping

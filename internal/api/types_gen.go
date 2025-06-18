@@ -79,6 +79,7 @@ const (
 const (
 	CreateMappingStatusActive   CreateMappingStatus = "active"
 	CreateMappingStatusInactive CreateMappingStatus = "inactive"
+	CreateMappingStatusMigrated CreateMappingStatus = "migrated"
 	CreateMappingStatusPending  CreateMappingStatus = "pending"
 )
 
@@ -102,6 +103,7 @@ const (
 const (
 	MappingStatusActive   MappingStatus = "active"
 	MappingStatusInactive MappingStatus = "inactive"
+	MappingStatusMigrated MappingStatus = "migrated"
 	MappingStatusPending  MappingStatus = "pending"
 )
 
@@ -139,6 +141,7 @@ const (
 const (
 	UpdateMappingStatusActive   UpdateMappingStatus = "active"
 	UpdateMappingStatusInactive UpdateMappingStatus = "inactive"
+	UpdateMappingStatusMigrated UpdateMappingStatus = "migrated"
 	UpdateMappingStatusPending  UpdateMappingStatus = "pending"
 )
 

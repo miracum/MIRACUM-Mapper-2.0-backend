@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -209,7 +210,7 @@ func (gq *GormQuery) GetMigrationValidFromVersionIdsQuery(codeSystemId int32, co
 	return validFromVersionIds, err
 }
 
-func (gq *GormQuery) FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping) error {
+func (gq *GormQuery) FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping, statusRequired bool) error {
 	codeSystemRoleId := codeSystemRole.ID
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
@@ -221,9 +222,12 @@ func (gq *GormQuery) FinishMigrationQuery(codeSystemRole *models.CodeSystemRole,
 			return err
 		}
 		for _, mapping := range *mappings {
+			commentString := ""
 			for _, element := range mapping.Elements {
 				if element.CodeSystemRoleID == codeSystemRoleId {
 					if element.NextConceptID != nil {
+						commentString = getMigrationCommentString(codeSystemRole, &element.Concept, &element.NextConcept, element.Concept.Code != element.NextConcept.Code)
+
 						element.ConceptID = element.NextConceptID
 						element.Concept = element.NextConcept
 						element.NextConceptID = nil
@@ -235,10 +239,55 @@ func (gq *GormQuery) FinishMigrationQuery(codeSystemRole *models.CodeSystemRole,
 					break
 				}
 			}
+			if commentString != "" {
+				if mapping.Comment == nil || *mapping.Comment == "" {
+					mapping.Comment = &commentString
+				} else {
+					newComment := commentString + " " + *mapping.Comment
+					mapping.Comment = &newComment
+				}
+				if statusRequired {
+					newStatus := models.Migrated
+					mapping.Status = &newStatus
+				}
+				if err := tx.Save(&mapping).Error; err != nil {
+					return err
+				}
+			}
 		}
 		return nil
 	})
 	return err
+}
+
+func getMigrationCommentString(codeSystemRole *models.CodeSystemRole, oldConcept *models.Concept, newConcept *models.Concept, conceptChanged bool) string {
+	year, month, day := time.Now().Date()
+	comment := fmt.Sprintf("Migrated %s %s ", codeSystemRole.Type, codeSystemRole.CodeSystem.Name)
+	if codeSystemRole.Name != "" {
+		comment += fmt.Sprintf("(%s) ", codeSystemRole.Name)
+	}
+	comment += fmt.Sprintf("on %d-%02d-%02d: ", year, month, day)
+
+	if conceptChanged {
+		comment += fmt.Sprintf("Concept [%s] (%s) was replaced by [%s] (%s). ", oldConcept.Code, oldConcept.Display, newConcept.Code, newConcept.Display)
+	} else {
+		if oldConcept.Status != newConcept.Status {
+			comment += fmt.Sprintf("Status has changed from [%s] to [%s]. ", oldConcept.Status, newConcept.Status)
+		}
+		if oldConcept.Display != newConcept.Display {
+			comment += fmt.Sprintf("Display has changed from [%s] to [%s]. ", oldConcept.Display, newConcept.Display)
+		}
+		if oldConcept.Description != nil && newConcept.Description != nil {
+			if *oldConcept.Description != *newConcept.Description {
+				comment += fmt.Sprintf("Description has changed from '[%s]' to '[%s]'. ", *oldConcept.Description, *newConcept.Description)
+			}
+		} else if oldConcept.Description == nil && newConcept.Description != nil {
+			comment += fmt.Sprintf("Description was added: [%s]. ", *newConcept.Description)
+		} else if oldConcept.Description != nil && newConcept.Description == nil {
+			comment += fmt.Sprintf("Description was removed: [%s]. ", *oldConcept.Description)
+		}
+	}
+	return fmt.Sprintf("--- %s ---", comment)
 }
 
 func (gq *GormQuery) MigrationElementSetNextConceptQuery(mappingId int32, codeSystemRoleId int32, nextConceptId *int32) error {

@@ -74,7 +74,7 @@ func executeSQL(db *gorm.DB, sqlStatements []string) error {
 func initEnums(db *gorm.DB) error {
 	enumStatements := []string{
 		"CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');",
-		"CREATE TYPE MappingStatus AS ENUM ('active', 'inactive', 'pending');",
+		"CREATE TYPE MappingStatus AS ENUM ('active', 'inactive', 'pending', 'migrated');",
 		"CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');",
 		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'project_owner', 'editor');",
 		"CREATE TYPE ConceptStatus AS ENUM ('active', 'trial', 'deprecated', 'discouraged');",

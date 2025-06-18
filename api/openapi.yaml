@@ -2009,7 +2009,7 @@ components:
             ]
         status:
           type: string
-          enum: [active, inactive, pending]
+          enum: [active, inactive, pending, migrated]
         comment:
           type: string
         elements:

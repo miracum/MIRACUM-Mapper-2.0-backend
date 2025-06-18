@@ -402,6 +402,16 @@ func (s *Server) FinishMigration(ctx context.Context, request api.FinishMigratio
 		return api.FinishMigration403JSONResponse{ForbiddenErrorJSONResponse: api.ForbiddenErrorJSONResponse(fmt.Sprintf("User is not authorized to finish a migration for the project with ID %d", projectId))}, nil
 	}
 
+	project := models.Project{}
+	if err := s.Database.GetProjectQuery(&project, projectId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrProjectNotFound):
+			return api.FinishMigration404JSONResponse(fmt.Sprintf("Project with ID %d couldn't be found.", projectId)), nil
+		default:
+			return api.FinishMigration500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the project"}, nil
+		}
+	}
+
 	codeSystemRole, err := s.Database.GetMigrationCodeSystemRoleQuery(projectId)
 	if err != nil {
 		switch {
@@ -437,7 +447,7 @@ func (s *Server) FinishMigration(ctx context.Context, request api.FinishMigratio
 		}
 	}
 
-	err = tryFinishMigration(s.Database, codeSystemRole, validToVersions, &mappings)
+	err = tryFinishMigration(s.Database, codeSystemRole, validToVersions, &mappings, project.StatusRequired)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):
@@ -451,7 +461,7 @@ func (s *Server) FinishMigration(ctx context.Context, request api.FinishMigratio
 	return api.FinishMigration200JSONResponse("Migration finished successfully"), nil
 }
 
-func tryFinishMigration(db database.Datastore, codeSystemRole *models.CodeSystemRole, validToVersions []int32, mappings *[]models.Mapping) error {
+func tryFinishMigration(db database.Datastore, codeSystemRole *models.CodeSystemRole, validToVersions []int32, mappings *[]models.Mapping, statusRequired bool) error {
 	codeSystemRoleId := codeSystemRole.ID
 	codeSystemId := codeSystemRole.CodeSystemID
 	nextCodeSystemVersionId := *codeSystemRole.NextCodeSystemVersionID
@@ -500,7 +510,7 @@ func tryFinishMigration(db database.Datastore, codeSystemRole *models.CodeSystem
 		}
 
 	}
-	return db.FinishMigrationQuery(codeSystemRole, mappings)
+	return db.FinishMigrationQuery(codeSystemRole, mappings, statusRequired)
 }
 
 // MigrateMapping implements api.StrictServerInterface.
