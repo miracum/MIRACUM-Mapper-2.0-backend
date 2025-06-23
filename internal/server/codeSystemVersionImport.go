@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -11,7 +12,7 @@ import (
 	"strings"
 )
 
-// This file contains functions for processing CSV files for importing generic and LOINC code systems.
+// This file contains functions for processing CSV files for importing generic, LOINC and SNOMED code systems.
 
 // Structs for processing CSV files
 
@@ -27,6 +28,18 @@ type csvIndexReplaceBy struct {
 	mapTo       int
 	equivalence int
 	comment     int
+}
+
+type csvIndexSnomedConcepts struct {
+	code   int
+	active int
+}
+
+type csvIndexSnomedDescriptions struct {
+	conceptId int
+	active    int
+	typeId    int
+	term      int
 }
 
 // Helper functions for conversion
@@ -156,6 +169,30 @@ func getCSVIndexReplaceBy(codeSystemType models.CodeSystemType, columnsIndex map
 	}
 }
 
+func getCSVColumnsSnomedConcepts() ([]string, []string) {
+	return []string{"id", "active"}, []string{}
+}
+
+func getCSVColumnsSnomedDescriptions() ([]string, []string) {
+	return []string{"conceptId", "active", "typeId", "term"}, []string{}
+}
+
+func getCSVIndexSnomedConcepts(columnsIndex map[string]int) csvIndexSnomedConcepts {
+	return csvIndexSnomedConcepts{
+		code:   columnsIndex["id"],
+		active: columnsIndex["active"],
+	}
+}
+
+func getCSVIndexSnomedDescriptions(columnsIndex map[string]int) csvIndexSnomedDescriptions {
+	return csvIndexSnomedDescriptions{
+		conceptId: columnsIndex["conceptId"],
+		active:    columnsIndex["active"],
+		typeId:    columnsIndex["typeId"],
+		term:      columnsIndex["term"],
+	}
+}
+
 func validateCSVHeader(reader *csv.Reader, requiredColumns []string, optionalColumns []string) (map[string]int, error) {
 	header, err := reader.Read()
 	if err != nil {
@@ -269,4 +306,72 @@ func processCSVRowsReplaceBy(reader *csv.Reader, csvIndex csvIndexReplaceBy, cod
 	}
 
 	return &replaceByConcepts, 200, nil
+}
+
+func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Scanner, csvIndexConcepts csvIndexSnomedConcepts, csvIndexDescriptions csvIndexSnomedDescriptions) (*[]database.ConceptImport, int32, error) {
+	var concepts map[string]database.ConceptImport = make(map[string]database.ConceptImport)
+
+	for {
+		record, err := conceptReader.Read()
+		if err != nil {
+			if err == csv.ErrFieldCount {
+				return nil, 400, fmt.Errorf("Concepts file has inconsistent number of fields")
+			}
+			if err == io.EOF {
+				break
+			}
+			return nil, 500, fmt.Errorf("An Error occurred while reading the Concepts file: %v", err)
+		}
+
+		active := record[csvIndexConcepts.active] == "1"
+
+		conceptImport := database.ConceptImport{
+			Code:   record[csvIndexConcepts.code],
+			Status: models.ActiveConcept,
+		}
+
+		if !active {
+			conceptImport.Status = models.Deprecated
+		}
+
+		concepts[conceptImport.Code] = conceptImport
+	}
+
+	for descriptionReader.Scan() {
+		line := descriptionReader.Text()
+		if err := descriptionReader.Err(); err != nil {
+			return nil, 500, fmt.Errorf("An Error occurred while reading the Descriptions file: %v", err)
+		}
+
+		record := strings.Split(line, "\t")
+		if len(record) != 9 {
+			return nil, 400, fmt.Errorf("Descriptions file has inconsistent number of fields")
+		}
+
+		active := record[csvIndexDescriptions.active] == "1"
+		if !active {
+			continue // Skip inactive descriptions
+		}
+
+		typeId := record[csvIndexDescriptions.typeId]
+		if typeId != "900000000000013009" { // Only process "Fully Specified Name" type
+			continue
+		}
+
+		conceptCode := record[csvIndexDescriptions.conceptId]
+		if _, exists := concepts[conceptCode]; exists {
+			concept := concepts[conceptCode]
+			concept.Display = record[csvIndexDescriptions.term]
+			concepts[conceptCode] = concept
+		}
+	}
+
+	var conceptImports []database.ConceptImport
+	for _, concept := range concepts {
+		if concept.Display == "" {
+			return nil, 400, fmt.Errorf("Concept with code %s has no display name", concept.Code)
+		}
+		conceptImports = append(conceptImports, concept)
+	}
+	return &conceptImports, 200, nil
 }

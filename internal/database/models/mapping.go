@@ -37,6 +37,7 @@ const (
 	ActiveMapping MappingStatus = "active"
 	Inactive      MappingStatus = "inactive"
 	Pending       MappingStatus = "pending"
+	Migrated      MappingStatus = "migrated"
 )
 
 func (e *MappingStatus) Scan(value interface{}) error {

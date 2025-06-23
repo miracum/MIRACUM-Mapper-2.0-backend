@@ -1480,6 +1480,57 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/snomedct:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a SNOMED CT code system version by ID
+      description: Import concepts for a SNOMED code system version by ID. The concepts are imported from the files sct2_Concept_Snapshot_<version>.txt and sct2_Description_Snapshot_....txt. The files can be uploaded directly without a conersion. For other code system types use the other endpoints.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersionSnomed
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - concept
+                - description
+              properties:
+                concept:
+                  type: string
+                  format: binary
+                  description: The .txt file with the concepts to import. Use the file sct2_Concept_Snapshot_....txt.
+                description:
+                  type: string
+                  format: binary
+                  description: The .txt file with the descriptions to import. Use the file sct2_Description_Snapshot_....txt.
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Files processed successfully. Starting to create and update concepts in the background."
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
   /import-status:
     get:
       tags:
@@ -2127,7 +2178,7 @@ components:
           type: string
         type:
           type: string
-          enum: [GENERIC, LOINC, ICD_10_GM]
+          enum: [GENERIC, LOINC, ICD_10_GM, SNOMED_CT]
         title:
           type: string
         description:

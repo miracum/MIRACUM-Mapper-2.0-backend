@@ -78,7 +78,7 @@ func initEnums(db *gorm.DB) error {
 		"CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');",
 		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'project_owner', 'editor');",
 		"CREATE TYPE ConceptStatus AS ENUM ('active', 'trial', 'deprecated', 'discouraged');",
-		"CREATE TYPE CodeSystemType AS ENUM ('GENERIC', 'LOINC', 'ICD_10_GM');",
+		"CREATE TYPE CodeSystemType AS ENUM ('GENERIC', 'LOINC', 'ICD_10_GM', 'SNOMED_CT');",
 		"CREATE TYPE ConceptReplaceByEquivalence AS ENUM ('relatedto', 'equivalent', 'equal', 'wider', 'subsumes', 'narrower', 'specializes', 'inexact', 'unmatched', 'disjoint');",
 	}
 

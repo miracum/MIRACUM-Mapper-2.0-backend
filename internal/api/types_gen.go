@@ -14,16 +14,18 @@ const (
 
 // Defines values for BaseCodeSystemType.
 const (
-	BaseCodeSystemTypeGENERIC BaseCodeSystemType = "GENERIC"
-	BaseCodeSystemTypeICD10GM BaseCodeSystemType = "ICD_10_GM"
-	BaseCodeSystemTypeLOINC   BaseCodeSystemType = "LOINC"
+	BaseCodeSystemTypeGENERIC  BaseCodeSystemType = "GENERIC"
+	BaseCodeSystemTypeICD10GM  BaseCodeSystemType = "ICD_10_GM"
+	BaseCodeSystemTypeLOINC    BaseCodeSystemType = "LOINC"
+	BaseCodeSystemTypeSNOMEDCT BaseCodeSystemType = "SNOMED_CT"
 )
 
 // Defines values for CodeSystemType.
 const (
-	CodeSystemTypeGENERIC CodeSystemType = "GENERIC"
-	CodeSystemTypeICD10GM CodeSystemType = "ICD_10_GM"
-	CodeSystemTypeLOINC   CodeSystemType = "LOINC"
+	CodeSystemTypeGENERIC  CodeSystemType = "GENERIC"
+	CodeSystemTypeICD10GM  CodeSystemType = "ICD_10_GM"
+	CodeSystemTypeLOINC    CodeSystemType = "LOINC"
+	CodeSystemTypeSNOMEDCT CodeSystemType = "SNOMED_CT"
 )
 
 // Defines values for CodeSystemRoleType.
@@ -85,9 +87,10 @@ const (
 
 // Defines values for GetCodeSystemType.
 const (
-	GENERIC GetCodeSystemType = "GENERIC"
-	ICD10GM GetCodeSystemType = "ICD_10_GM"
-	LOINC   GetCodeSystemType = "LOINC"
+	GENERIC  GetCodeSystemType = "GENERIC"
+	ICD10GM  GetCodeSystemType = "ICD_10_GM"
+	LOINC    GetCodeSystemType = "LOINC"
+	SNOMEDCT GetCodeSystemType = "SNOMED_CT"
 )
 
 // Defines values for MappingEquivalence.
@@ -675,6 +678,15 @@ type ImportCodeSystemVersionLoincMultipartBody struct {
 	MapTo openapi_types.File `json:"map_to"`
 }
 
+// ImportCodeSystemVersionSnomedMultipartBody defines parameters for ImportCodeSystemVersionSnomed.
+type ImportCodeSystemVersionSnomedMultipartBody struct {
+	// Concept The .txt file with the concepts to import. Use the file sct2_Concept_Snapshot_....txt.
+	Concept openapi_types.File `json:"concept"`
+
+	// Description The .txt file with the descriptions to import. Use the file sct2_Description_Snapshot_....txt.
+	Description openapi_types.File `json:"description"`
+}
+
 // GetAllProjectsParams defines parameters for GetAllProjects.
 type GetAllProjectsParams struct {
 	// Page Page number (must be a positive integer)
@@ -740,6 +752,9 @@ type ImportCodeSystemVersionIcdJSONRequestBody = ImportCodeSystemVersionIcdJSONB
 
 // ImportCodeSystemVersionLoincMultipartRequestBody defines body for ImportCodeSystemVersionLoinc for multipart/form-data ContentType.
 type ImportCodeSystemVersionLoincMultipartRequestBody ImportCodeSystemVersionLoincMultipartBody
+
+// ImportCodeSystemVersionSnomedMultipartRequestBody defines body for ImportCodeSystemVersionSnomed for multipart/form-data ContentType.
+type ImportCodeSystemVersionSnomedMultipartRequestBody ImportCodeSystemVersionSnomedMultipartBody
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
 type CreateProjectJSONRequestBody = CreateProjectDetails

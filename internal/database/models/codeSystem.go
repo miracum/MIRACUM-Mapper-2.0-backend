@@ -6,6 +6,7 @@ const (
 	GENERIC   CodeSystemType = "GENERIC"
 	LOINC     CodeSystemType = "LOINC"
 	ICD_10_GM CodeSystemType = "ICD_10_GM"
+	SNOMED_CT CodeSystemType = "SNOMED_CT"
 )
 
 type CodeSystem struct {
