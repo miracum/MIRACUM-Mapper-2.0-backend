@@ -34,6 +34,7 @@ type CodeSystemRole struct {
 	Name                    string
 	Position                int32     `gorm:"type:integer"`
 	ProjectID               int32     `gorm:"index;type:integer"`
+	Project                 Project   // preloaded on get codeSystem
 	CodeSystemID            int32     `gorm:"type:integer"`
 	Elements                []Element `gorm:"constraint:OnDelete:CASCADE"`
 	CodeSystem              CodeSystem

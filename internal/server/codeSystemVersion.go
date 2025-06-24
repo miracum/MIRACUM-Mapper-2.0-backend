@@ -28,7 +28,7 @@ func (s *Server) CreateCodeSystemVersion(ctx context.Context, request api.Create
 		}
 	}
 
-	return api.CreateCodeSystemVersion200JSONResponse(*transform.GormCodeSystemVersionToApiCodeSystemVersion(&db_codeSystemVersion)), nil
+	return api.CreateCodeSystemVersion200JSONResponse(*transform.GormCodeSystemVersionToApiCodeSystemVersion(&db_codeSystemVersion, false)), nil
 }
 
 // UpdateCodeSystemVersion implements api.StrictServerInterface.
@@ -46,7 +46,7 @@ func (s *Server) UpdateCodeSystemVersion(ctx context.Context, request api.Update
 		}
 	}
 
-	return api.UpdateCodeSystemVersion200JSONResponse(*transform.GormCodeSystemVersionToApiCodeSystemVersion(&db_codeSystemVersion)), nil
+	return api.UpdateCodeSystemVersion200JSONResponse(*transform.GormCodeSystemVersionToApiCodeSystemVersion(&db_codeSystemVersion, false)), nil
 }
 
 // DeleteCodeSystemVersion implements api.StrictServerInterface.
@@ -66,7 +66,7 @@ func (s *Server) DeleteCodeSystemVersion(ctx context.Context, request api.Delete
 		}
 	}
 
-	return api.DeleteCodeSystemVersion200JSONResponse(*transform.GormCodeSystemVersionToApiCodeSystemVersion(&codeSystemVersion)), nil
+	return api.DeleteCodeSystemVersion200JSONResponse(*transform.GormCodeSystemVersionToApiCodeSystemVersion(&codeSystemVersion, false)), nil
 }
 
 // GetImportStatus implements api.StrictServerInterface.

@@ -17,7 +17,7 @@ func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSyste
 	}
 }
 
-func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem) *api.GetCodeSystem {
+func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem, isAdmin bool) *api.GetCodeSystem {
 	return &api.GetCodeSystem{
 		Id:          codeSystem.ID,
 		Author:      codeSystem.Author,
@@ -26,14 +26,14 @@ func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem) *api.GetCod
 		Name:        codeSystem.Name,
 		Type:        api.GetCodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
-		Versions:    *GormCodeSystemVersionsToApiCodeSystemVersions(&codeSystem.CodeSystemVersions),
+		Versions:    *GormCodeSystemVersionsToApiCodeSystemVersions(&codeSystem.CodeSystemVersions, isAdmin),
 	}
 }
 
-func GormCodeSystemsToApiGetCodeSystems(codeSystems *[]models.CodeSystem) *[]api.GetCodeSystem {
+func GormCodeSystemsToApiGetCodeSystems(codeSystems *[]models.CodeSystem, isAdmin bool) *[]api.GetCodeSystem {
 	apiCodeSystems := []api.GetCodeSystem{}
 	for _, codeSystem := range *codeSystems {
-		apiCodeSystems = append(apiCodeSystems, *GormCodeSystemToApiGetCodeSystem(&codeSystem))
+		apiCodeSystems = append(apiCodeSystems, *GormCodeSystemToApiGetCodeSystem(&codeSystem, isAdmin))
 	}
 	return &apiCodeSystems
 }

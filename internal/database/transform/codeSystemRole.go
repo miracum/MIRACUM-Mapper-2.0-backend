@@ -25,8 +25,8 @@ func GormCodeSystemRoleToApiCodeSystemRole(codeSystemRole *models.CodeSystemRole
 		}{
 			Id:          codeSystemRole.CodeSystemID,
 			Name:        codeSystemRole.CodeSystem.Name,
-			NextVersion: GormCodeSystemVersionToApiCodeSystemVersion(&codeSystemRole.NextCodeSystemVersion),
-			Version:     *GormCodeSystemVersionToApiCodeSystemVersion(&codeSystemRole.CodeSystemVersion),
+			NextVersion: GormCodeSystemVersionToApiCodeSystemVersion(&codeSystemRole.NextCodeSystemVersion, false),
+			Version:     *GormCodeSystemVersionToApiCodeSystemVersion(&codeSystemRole.CodeSystemVersion, false),
 		},
 		Type: api.CodeSystemRoleType(codeSystemRole.Type),
 	}

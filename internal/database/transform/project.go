@@ -161,9 +161,9 @@ func GormCodeSystemRolesMigrationToApiCodeSystemRolesMigration(codeSystemRoles *
 			}{
 				Id:            role.CodeSystemID,
 				Name:          role.CodeSystem.Name,
-				NewerVersions: GormCodeSystemVersionsToApiCodeSystemVersions(&newerVersions),
-				NextVersion:   GormCodeSystemVersionToApiCodeSystemVersion(&role.NextCodeSystemVersion),
-				Version:       *GormCodeSystemVersionToApiCodeSystemVersion(&role.CodeSystemVersion),
+				NewerVersions: GormCodeSystemVersionsToApiCodeSystemVersions(&newerVersions, false),
+				NextVersion:   GormCodeSystemVersionToApiCodeSystemVersion(&role.NextCodeSystemVersion, false),
+				Version:       *GormCodeSystemVersionToApiCodeSystemVersion(&role.CodeSystemVersion, false),
 			},
 			Type: api.CodeSystemRoleMigrationType(role.Type),
 		}

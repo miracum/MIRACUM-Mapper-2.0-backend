@@ -3,26 +3,45 @@ package transform
 import (
 	"miracummapper/internal/api"
 	"miracummapper/internal/database/models"
+	"slices"
 
 	"github.com/oapi-codegen/runtime/types"
 )
 
-func GormCodeSystemVersionToApiCodeSystemVersion(codeSystemVersion *models.CodeSystemVersion) *api.CodeSystemVersion {
+func GormCodeSystemVersionToApiCodeSystemVersion(codeSystemVersion *models.CodeSystemVersion, isAdmin bool) *api.CodeSystemVersion {
 	if codeSystemVersion.ID == 0 {
 		return nil
 	}
+	projectUses := []string{}
+
+	if isAdmin {
+		for _, role := range codeSystemVersion.CodeSystemRoles {
+			projectName := role.Project.Name
+			if !slices.Contains(projectUses, projectName) {
+				projectUses = append(projectUses, projectName)
+			}
+		}
+		for _, nextRole := range codeSystemVersion.NextCodeSystemRoles {
+			projectName := nextRole.Project.Name
+			if !slices.Contains(projectUses, projectName) {
+				projectUses = append(projectUses, projectName)
+			}
+		}
+	}
+
 	return &api.CodeSystemVersion{
 		Id:          codeSystemVersion.ID,
 		VersionName: codeSystemVersion.VersionName,
 		ReleaseDate: types.Date{Time: codeSystemVersion.ReleaseDate},
 		Imported:    codeSystemVersion.Imported,
+		ProjectUses: projectUses,
 	}
 }
 
-func GormCodeSystemVersionsToApiCodeSystemVersions(codeSystemVersions *[]models.CodeSystemVersion) *[]api.CodeSystemVersion {
+func GormCodeSystemVersionsToApiCodeSystemVersions(codeSystemVersions *[]models.CodeSystemVersion, isAdmin bool) *[]api.CodeSystemVersion {
 	apiCodeSystemVersions := []api.CodeSystemVersion{}
 	for _, version := range *codeSystemVersions {
-		apiCodeSystemVersions = append(apiCodeSystemVersions, *GormCodeSystemVersionToApiCodeSystemVersion(&version))
+		apiCodeSystemVersions = append(apiCodeSystemVersions, *GormCodeSystemVersionToApiCodeSystemVersion(&version, isAdmin))
 	}
 	return &apiCodeSystemVersions
 }

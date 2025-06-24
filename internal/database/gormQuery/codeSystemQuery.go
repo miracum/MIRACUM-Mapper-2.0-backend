@@ -11,7 +11,7 @@ import (
 )
 
 func (gq *GormQuery) GetAllCodeSystemsQuery(codeSystems *[]models.CodeSystem) error {
-	return gq.Database.Preload("CodeSystemVersions").Find(&codeSystems).Error
+	return gq.Database.Preload("CodeSystemVersions.CodeSystemRoles.Project").Preload("CodeSystemVersions.NextCodeSystemRoles.Project").Find(&codeSystems).Error
 }
 
 func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error {
@@ -19,7 +19,7 @@ func (gq *GormQuery) CreateCodeSystemQuery(codeSystem *models.CodeSystem) error 
 }
 
 func (gq *GormQuery) GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error {
-	if err := gq.Database.Preload("CodeSystemVersions").First(&codeSystem, codeSystemId).Error; err != nil {
+	if err := gq.Database.Preload("CodeSystemVersions.CodeSystemRoles.Project").Preload("CodeSystemVersions.NextCodeSystemRoles.Project").First(&codeSystem, codeSystemId).Error; err != nil {
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound):
 			return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))

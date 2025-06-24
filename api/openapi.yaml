@@ -1503,11 +1503,11 @@ paths:
                 concept:
                   type: string
                   format: binary
-                  description: The .txt file with the concepts to import. Use the file sct2_Concept_Snapshot_....txt.
+                  description: The .txt file with the concepts to import. Use the file Snapshot/Terminology/sct2_Concept_Snapshot_....txt.
                 description:
                   type: string
                   format: binary
-                  description: The .txt file with the descriptions to import. Use the file sct2_Description_Snapshot_....txt.
+                  description: The .txt file with the descriptions to import. Use the file Snapshot/Terminology/sct2_Description_Snapshot_....txt.
       responses:
         "202":
           description: Success
@@ -2238,12 +2238,17 @@ components:
           required:
             - id
             - imported
+            - project_uses
           properties:
             id:
               type: integer
               format: int32
             imported:
               type: boolean
+            project_uses:
+              type: array
+              items:
+                type: string
     ImportStatus:
       type: object
       required:

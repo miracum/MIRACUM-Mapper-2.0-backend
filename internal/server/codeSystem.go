@@ -12,17 +12,21 @@ import (
 
 // GetAllCodeSystems implements api.StrictServerInterface.
 func (s *Server) GetAllCodeSystems(ctx context.Context, request api.GetAllCodeSystemsRequestObject) (api.GetAllCodeSystemsResponseObject, error) {
+	isAdmin := IsAdminFromContext(ctx)
+
 	var codeSystems []models.CodeSystem
 
 	if err := s.Database.GetAllCodeSystemsQuery(&codeSystems); err != nil {
 		return api.GetAllCodeSystems500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystems"}, nil
 	}
 
-	return api.GetAllCodeSystems200JSONResponse(*transform.GormCodeSystemsToApiGetCodeSystems(&codeSystems)), nil
+	return api.GetAllCodeSystems200JSONResponse(*transform.GormCodeSystemsToApiGetCodeSystems(&codeSystems, isAdmin)), nil
 }
 
 // GetCodeSystem implements api.StrictServerInterface.
 func (s *Server) GetCodeSystem(ctx context.Context, request api.GetCodeSystemRequestObject) (api.GetCodeSystemResponseObject, error) {
+	isAdmin := IsAdminFromContext(ctx)
+
 	codeSystemId := request.CodesystemId
 	var codeSystem models.CodeSystem
 
@@ -35,7 +39,7 @@ func (s *Server) GetCodeSystem(ctx context.Context, request api.GetCodeSystemReq
 		}
 	}
 
-	return api.GetCodeSystem200JSONResponse(*transform.GormCodeSystemToApiGetCodeSystem(&codeSystem)), nil
+	return api.GetCodeSystem200JSONResponse(*transform.GormCodeSystemToApiGetCodeSystem(&codeSystem, isAdmin)), nil
 
 }
 

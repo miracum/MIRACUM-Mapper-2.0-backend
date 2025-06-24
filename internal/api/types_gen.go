@@ -286,6 +286,7 @@ type CodeSystemRoleMigrationType string
 type CodeSystemVersion struct {
 	Id          int32              `json:"id"`
 	Imported    bool               `json:"imported"`
+	ProjectUses []string           `json:"project_uses"`
 	ReleaseDate openapi_types.Date `json:"release_date"`
 	VersionName string             `json:"version_name"`
 }
@@ -680,10 +681,10 @@ type ImportCodeSystemVersionLoincMultipartBody struct {
 
 // ImportCodeSystemVersionSnomedMultipartBody defines parameters for ImportCodeSystemVersionSnomed.
 type ImportCodeSystemVersionSnomedMultipartBody struct {
-	// Concept The .txt file with the concepts to import. Use the file sct2_Concept_Snapshot_....txt.
+	// Concept The .txt file with the concepts to import. Use the file Snapshot/Terminology/sct2_Concept_Snapshot_....txt.
 	Concept openapi_types.File `json:"concept"`
 
-	// Description The .txt file with the descriptions to import. Use the file sct2_Description_Snapshot_....txt.
+	// Description The .txt file with the descriptions to import. Use the file Snapshot/Terminology/sct2_Description_Snapshot_....txt.
 	Description openapi_types.File `json:"description"`
 }
 
