@@ -166,10 +166,22 @@ const (
 	GetAllConceptsParamsSortOrderDesc GetAllConceptsParamsSortOrder = "desc"
 )
 
+// Defines values for GetAllNewConceptsParamsSortBy.
+const (
+	GetAllNewConceptsParamsSortByCode    GetAllNewConceptsParamsSortBy = "code"
+	GetAllNewConceptsParamsSortByMeaning GetAllNewConceptsParamsSortBy = "meaning"
+)
+
+// Defines values for GetAllNewConceptsParamsSortOrder.
+const (
+	GetAllNewConceptsParamsSortOrderAsc  GetAllNewConceptsParamsSortOrder = "asc"
+	GetAllNewConceptsParamsSortOrderDesc GetAllNewConceptsParamsSortOrder = "desc"
+)
+
 // Defines values for GetAllConceptsByVersionParamsSortBy.
 const (
-	GetAllConceptsByVersionParamsSortByCode    GetAllConceptsByVersionParamsSortBy = "code"
-	GetAllConceptsByVersionParamsSortByMeaning GetAllConceptsByVersionParamsSortBy = "meaning"
+	Code    GetAllConceptsByVersionParamsSortBy = "code"
+	Meaning GetAllConceptsByVersionParamsSortBy = "meaning"
 )
 
 // Defines values for GetAllConceptsByVersionParamsSortOrder.
@@ -203,8 +215,8 @@ const (
 
 // Defines values for GetAllMappingsParamsSortOrder.
 const (
-	Asc  GetAllMappingsParamsSortOrder = "asc"
-	Desc GetAllMappingsParamsSortOrder = "desc"
+	GetAllMappingsParamsSortOrderAsc  GetAllMappingsParamsSortOrder = "asc"
+	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
 )
 
 // BaseCodeSystem defines model for BaseCodeSystem.
@@ -284,6 +296,16 @@ type CodeSystemRoleMigrationType string
 
 // CodeSystemVersion defines model for CodeSystemVersion.
 type CodeSystemVersion struct {
+	Id          int32              `json:"id"`
+	Imported    bool               `json:"imported"`
+	ProjectUses []string           `json:"project_uses"`
+	ReleaseDate openapi_types.Date `json:"release_date"`
+	VersionName string             `json:"version_name"`
+}
+
+// CodeSystemVersionWithConcepts defines model for CodeSystemVersionWithConcepts.
+type CodeSystemVersionWithConcepts struct {
+	Concepts    []Concept          `json:"concepts"`
 	Id          int32              `json:"id"`
 	Imported    bool               `json:"imported"`
 	ProjectUses []string           `json:"project_uses"`
@@ -630,6 +652,21 @@ type GetAllConceptsParamsSortBy string
 
 // GetAllConceptsParamsSortOrder defines parameters for GetAllConcepts.
 type GetAllConceptsParamsSortOrder string
+
+// GetAllNewConceptsParams defines parameters for GetAllNewConcepts.
+type GetAllNewConceptsParams struct {
+	// SortBy Field to sort sortBy
+	SortBy *GetAllNewConceptsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Order of sorting (asc or desc)
+	SortOrder *GetAllNewConceptsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+}
+
+// GetAllNewConceptsParamsSortBy defines parameters for GetAllNewConcepts.
+type GetAllNewConceptsParamsSortBy string
+
+// GetAllNewConceptsParamsSortOrder defines parameters for GetAllNewConcepts.
+type GetAllNewConceptsParamsSortOrder string
 
 // GetAllConceptsByVersionParams defines parameters for GetAllConceptsByVersion.
 type GetAllConceptsByVersionParams struct {

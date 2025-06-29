@@ -96,6 +96,35 @@ func (gq *GormQuery) GetAllConceptsByVersionQuery(concepts *[]models.Concept, co
 	return err
 }
 
+func (gq *GormQuery) GetAllConceptsNewByVersionQuery(codeSystemId int32, versionsSorted []models.CodeSystemVersion, sortBy string, sortOrder string) (*map[int32][]models.Concept, error) {
+	concepts := make(map[int32][]models.Concept)
+
+	err := gq.Database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&models.CodeSystem{}, codeSystemId).Error; err != nil {
+			switch {
+			case errors.Is(err, gorm.ErrRecordNotFound):
+				return database.NewDBError(database.NotFound, fmt.Sprintf("CodeSystem with ID %d couldn't be found.", codeSystemId))
+			default:
+				return err
+			}
+		}
+
+		for _, version := range versionsSorted {
+			var conceptsResult []models.Concept = []models.Concept{}
+			if err := tx.
+				Where("code_system_id = ?", codeSystemId).
+				Where("valid_from_version_id = ?", version.ID).
+				Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).
+				Find(&conceptsResult).Error; err != nil {
+				return err
+			}
+			concepts[version.ID] = conceptsResult
+		}
+		return nil
+	})
+	return &concepts, err
+}
+
 func UpdateConceptQuery(db *gorm.DB, concept *models.Concept) error {
 	// concept.DisplaySearchVector should not be updated
 	if err := db.Model(&models.Concept{}).Where("id = ?", concept.ID).Updates(map[string]interface{}{

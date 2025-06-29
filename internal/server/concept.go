@@ -8,6 +8,7 @@ import (
 	"miracummapper/internal/database"
 	"miracummapper/internal/database/models"
 	"miracummapper/internal/database/transform"
+	"sort"
 )
 
 var (
@@ -63,8 +64,8 @@ func (s *Server) GetAllConcepts(ctx context.Context, request api.GetAllConceptsR
 var (
 	// Define mappings from API parameters to database column names
 	conceptByVersionSortColumns = map[api.GetAllConceptsByVersionParamsSortBy]string{
-		api.GetAllConceptsByVersionParamsSortByCode:    "code",
-		api.GetAllConceptsByVersionParamsSortByMeaning: "display",
+		api.Code:    "code",
+		api.Meaning: "display",
 	}
 
 	// Define mappings from API parameters to sort orders
@@ -109,4 +110,93 @@ func (s *Server) GetAllConceptsByVersion(ctx context.Context, request api.GetAll
 	}
 
 	return api.GetAllConceptsByVersion200JSONResponse(apiConcepts), nil
+}
+
+var (
+	// Define mappings from API parameters to database column names
+	newConceptsSortColumns = map[api.GetAllNewConceptsParamsSortBy]string{
+		api.GetAllNewConceptsParamsSortByCode:    "code",
+		api.GetAllNewConceptsParamsSortByMeaning: "display",
+	}
+
+	// Define mappings from API parameters to sort orders
+	newConceptsSortOrders = map[api.GetAllNewConceptsParamsSortOrder]string{
+		api.GetAllNewConceptsParamsSortOrderAsc:  "ASC",
+		api.GetAllNewConceptsParamsSortOrderDesc: "DESC",
+	}
+)
+
+type VersionWithConcepts struct {
+	Version  models.CodeSystemVersion
+	Concepts map[string]models.Concept
+}
+
+type VersionsWithConcepts map[int32]VersionWithConcepts
+
+// GetAllNewConcepts implements api.StrictServerInterface.
+func (s *Server) GetAllNewConcepts(ctx context.Context, request api.GetAllNewConceptsRequestObject) (api.GetAllNewConceptsResponseObject, error) {
+	sortBy := newConceptsSortColumns[*request.Params.SortBy]
+	sortOrder := newConceptsSortOrders[*request.Params.SortOrder]
+
+	var codeSystemId int32 = request.CodesystemId
+
+	var codeSystem models.CodeSystem
+	if err := s.Database.GetCodeSystemQuery(&codeSystem, codeSystemId); err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllNewConcepts404JSONResponse(err.Error()), nil
+		default:
+			return api.GetAllNewConcepts500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the CodeSystem"}, nil
+		}
+	}
+
+	sort.Slice(codeSystem.CodeSystemVersions, func(i, j int) bool {
+		return codeSystem.CodeSystemVersions[i].ReleaseDate.Before(codeSystem.CodeSystemVersions[j].ReleaseDate)
+	})
+	orderedVersions := codeSystem.CodeSystemVersions
+
+	concepts, err := s.Database.GetAllConceptsNewByVersionQuery(codeSystemId, orderedVersions, sortBy, sortOrder)
+	if err != nil {
+		switch {
+		case errors.Is(err, database.ErrNotFound):
+			return api.GetAllNewConcepts404JSONResponse(err.Error()), nil
+		default:
+			return api.GetAllNewConcepts500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to get the Concepts"}, err
+		}
+	}
+
+	versions := make(map[int32]VersionWithConcepts)
+	for count, version := range orderedVersions {
+		versionWithConcepts := VersionWithConcepts{
+			Version:  version,
+			Concepts: make(map[string]models.Concept),
+		}
+		for _, concept := range (*concepts)[version.ID] {
+			isInOlderVersions := false
+			for _, olderVersion := range orderedVersions[:count] {
+				if _, exists := versions[olderVersion.ID].Concepts[concept.Code]; exists {
+					isInOlderVersions = true
+					break
+				}
+			}
+			if !isInOlderVersions {
+				versionWithConcepts.Concepts[concept.Code] = concept
+			}
+		}
+		versions[version.ID] = versionWithConcepts
+	}
+
+	apiVersionsWithConcepts := []api.CodeSystemVersionWithConcepts{}
+	for _, versionWithConcepts := range versions {
+		apiVersionWithConcepts := transform.GormVersionToApiVersionWithConcepts(&versionWithConcepts.Version)
+		if apiVersionWithConcepts == nil {
+			continue
+		}
+		for _, concept := range versionWithConcepts.Concepts {
+			apiVersionWithConcepts.Concepts = append(apiVersionWithConcepts.Concepts, *transform.GormConceptToApiConcept(&concept))
+		}
+		apiVersionsWithConcepts = append(apiVersionsWithConcepts, *apiVersionWithConcepts)
+	}
+
+	return api.GetAllNewConcepts200JSONResponse(apiVersionsWithConcepts), nil
 }

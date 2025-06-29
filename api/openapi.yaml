@@ -1659,6 +1659,45 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
+  /codesystems/{codesystem_id}/new-concepts:
+    get:
+      tags:
+        - concept
+      summary: Get all new concepts for a code system by ID
+      description: Get all new concepts for a code system by ID. The concepts are ordered by the version, they are first appering in. Sorting can be specified by query parameters.
+      operationId: getAllNewConcepts
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - name: sortBy
+          in: query
+          description: Field to sort sortBy
+          required: false
+          schema:
+            type: string
+            default: code
+            enum: [code, meaning]
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CodeSystemVersionWithConcepts"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
 components:
   parameters:
     project_id:
@@ -2249,6 +2288,17 @@ components:
               type: array
               items:
                 type: string
+    CodeSystemVersionWithConcepts:
+      allOf:
+        - $ref: "#/components/schemas/CodeSystemVersion"
+        - type: object
+          required:
+            - concepts
+          properties:
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/Concept"
     ImportStatus:
       type: object
       required:

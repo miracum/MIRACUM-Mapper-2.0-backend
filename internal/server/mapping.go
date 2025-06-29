@@ -24,8 +24,8 @@ var (
 
 	// Define mappings from API parameters to sort orders
 	mappingSortOrders = map[api.GetAllMappingsParamsSortOrder]string{
-		api.Asc:  "ASC",
-		api.Desc: "DESC",
+		api.GetAllMappingsParamsSortOrderAsc:  "ASC",
+		api.GetAllMappingsParamsSortOrderDesc: "DESC",
 	}
 )
 
