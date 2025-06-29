@@ -64,8 +64,8 @@ func (s *Server) GetAllConcepts(ctx context.Context, request api.GetAllConceptsR
 var (
 	// Define mappings from API parameters to database column names
 	conceptByVersionSortColumns = map[api.GetAllConceptsByVersionParamsSortBy]string{
-		api.Code:    "code",
-		api.Meaning: "display",
+		api.GetAllConceptsByVersionParamsSortByCode:    "code",
+		api.GetAllConceptsByVersionParamsSortByMeaning: "display",
 	}
 
 	// Define mappings from API parameters to sort orders
@@ -112,20 +112,6 @@ func (s *Server) GetAllConceptsByVersion(ctx context.Context, request api.GetAll
 	return api.GetAllConceptsByVersion200JSONResponse(apiConcepts), nil
 }
 
-var (
-	// Define mappings from API parameters to database column names
-	newConceptsSortColumns = map[api.GetAllNewConceptsParamsSortBy]string{
-		api.GetAllNewConceptsParamsSortByCode:    "code",
-		api.GetAllNewConceptsParamsSortByMeaning: "display",
-	}
-
-	// Define mappings from API parameters to sort orders
-	newConceptsSortOrders = map[api.GetAllNewConceptsParamsSortOrder]string{
-		api.GetAllNewConceptsParamsSortOrderAsc:  "ASC",
-		api.GetAllNewConceptsParamsSortOrderDesc: "DESC",
-	}
-)
-
 type VersionWithConcepts struct {
 	Version  models.CodeSystemVersion
 	Concepts map[string]models.Concept
@@ -135,9 +121,6 @@ type VersionsWithConcepts map[int32]VersionWithConcepts
 
 // GetAllNewConcepts implements api.StrictServerInterface.
 func (s *Server) GetAllNewConcepts(ctx context.Context, request api.GetAllNewConceptsRequestObject) (api.GetAllNewConceptsResponseObject, error) {
-	sortBy := newConceptsSortColumns[*request.Params.SortBy]
-	sortOrder := newConceptsSortOrders[*request.Params.SortOrder]
-
 	var codeSystemId int32 = request.CodesystemId
 
 	var codeSystem models.CodeSystem
@@ -155,7 +138,7 @@ func (s *Server) GetAllNewConcepts(ctx context.Context, request api.GetAllNewCon
 	})
 	orderedVersions := codeSystem.CodeSystemVersions
 
-	concepts, err := s.Database.GetAllConceptsNewByVersionQuery(codeSystemId, orderedVersions, sortBy, sortOrder)
+	concepts, err := s.Database.GetAllConceptsNewByVersionQuery(codeSystemId, orderedVersions)
 	if err != nil {
 		switch {
 		case errors.Is(err, database.ErrNotFound):

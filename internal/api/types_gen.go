@@ -166,22 +166,10 @@ const (
 	GetAllConceptsParamsSortOrderDesc GetAllConceptsParamsSortOrder = "desc"
 )
 
-// Defines values for GetAllNewConceptsParamsSortBy.
-const (
-	GetAllNewConceptsParamsSortByCode    GetAllNewConceptsParamsSortBy = "code"
-	GetAllNewConceptsParamsSortByMeaning GetAllNewConceptsParamsSortBy = "meaning"
-)
-
-// Defines values for GetAllNewConceptsParamsSortOrder.
-const (
-	GetAllNewConceptsParamsSortOrderAsc  GetAllNewConceptsParamsSortOrder = "asc"
-	GetAllNewConceptsParamsSortOrderDesc GetAllNewConceptsParamsSortOrder = "desc"
-)
-
 // Defines values for GetAllConceptsByVersionParamsSortBy.
 const (
-	Code    GetAllConceptsByVersionParamsSortBy = "code"
-	Meaning GetAllConceptsByVersionParamsSortBy = "meaning"
+	GetAllConceptsByVersionParamsSortByCode    GetAllConceptsByVersionParamsSortBy = "code"
+	GetAllConceptsByVersionParamsSortByMeaning GetAllConceptsByVersionParamsSortBy = "meaning"
 )
 
 // Defines values for GetAllConceptsByVersionParamsSortOrder.
@@ -215,8 +203,8 @@ const (
 
 // Defines values for GetAllMappingsParamsSortOrder.
 const (
-	GetAllMappingsParamsSortOrderAsc  GetAllMappingsParamsSortOrder = "asc"
-	GetAllMappingsParamsSortOrderDesc GetAllMappingsParamsSortOrder = "desc"
+	Asc  GetAllMappingsParamsSortOrder = "asc"
+	Desc GetAllMappingsParamsSortOrder = "desc"
 )
 
 // BaseCodeSystem defines model for BaseCodeSystem.
@@ -652,21 +640,6 @@ type GetAllConceptsParamsSortBy string
 
 // GetAllConceptsParamsSortOrder defines parameters for GetAllConcepts.
 type GetAllConceptsParamsSortOrder string
-
-// GetAllNewConceptsParams defines parameters for GetAllNewConcepts.
-type GetAllNewConceptsParams struct {
-	// SortBy Field to sort sortBy
-	SortBy *GetAllNewConceptsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
-
-	// SortOrder Order of sorting (asc or desc)
-	SortOrder *GetAllNewConceptsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
-}
-
-// GetAllNewConceptsParamsSortBy defines parameters for GetAllNewConcepts.
-type GetAllNewConceptsParamsSortBy string
-
-// GetAllNewConceptsParamsSortOrder defines parameters for GetAllNewConcepts.
-type GetAllNewConceptsParamsSortOrder string
 
 // GetAllConceptsByVersionParams defines parameters for GetAllConceptsByVersion.
 type GetAllConceptsByVersionParams struct {

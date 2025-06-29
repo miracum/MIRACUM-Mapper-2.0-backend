@@ -96,7 +96,7 @@ func (gq *GormQuery) GetAllConceptsByVersionQuery(concepts *[]models.Concept, co
 	return err
 }
 
-func (gq *GormQuery) GetAllConceptsNewByVersionQuery(codeSystemId int32, versionsSorted []models.CodeSystemVersion, sortBy string, sortOrder string) (*map[int32][]models.Concept, error) {
+func (gq *GormQuery) GetAllConceptsNewByVersionQuery(codeSystemId int32, versionsSorted []models.CodeSystemVersion) (*map[int32][]models.Concept, error) {
 	concepts := make(map[int32][]models.Concept)
 
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
@@ -114,7 +114,6 @@ func (gq *GormQuery) GetAllConceptsNewByVersionQuery(codeSystemId int32, version
 			if err := tx.
 				Where("code_system_id = ?", codeSystemId).
 				Where("valid_from_version_id = ?", version.ID).
-				Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).
 				Find(&conceptsResult).Error; err != nil {
 				return err
 			}

@@ -67,7 +67,7 @@ type Datastore interface {
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
 	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
-	GetAllConceptsNewByVersionQuery(codeSystemId int32, versionsSorted []models.CodeSystemVersion, sortBy string, sortOrder string) (*map[int32][]models.Concept, error)
+	GetAllConceptsNewByVersionQuery(codeSystemId int32, versionsSorted []models.CodeSystemVersion) (*map[int32][]models.Concept, error)
 	GetConceptQuery(concept *models.Concept, code string, codeSystemId int32, codeSystemVersionId int32) error
 	GetConceptByIdQuery(concept *models.Concept, conceptId int32) error
 

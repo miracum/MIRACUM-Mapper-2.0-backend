@@ -1668,15 +1668,6 @@ paths:
       operationId: getAllNewConcepts
       parameters:
         - $ref: "#/components/parameters/codesystem_id"
-        - name: sortBy
-          in: query
-          description: Field to sort sortBy
-          required: false
-          schema:
-            type: string
-            default: code
-            enum: [code, meaning]
-        - $ref: "#/components/parameters/sortOrder"
       responses:
         "200":
           description: Success
