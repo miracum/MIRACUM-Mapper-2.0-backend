@@ -130,7 +130,6 @@ func (gq *GormQuery) UpdateCodeSystemVersionQuery(codeSystemVersion *models.Code
 }
 
 func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error {
-	//return database.NewDBError(database.ClientError, "CodeSystemVersion cannot be deleted at the moment.")
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&models.CodeSystem{}, codeSystemId).Error; err != nil {
 			switch {
@@ -165,6 +164,19 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 				projectIds = append(projectIds, fmt.Sprintf("Id: %d", role.ProjectID))
 			}
 			return database.NewDBError(database.ClientError, fmt.Sprintf("CodeSystemVersion cannot be deleted if it is in use in these projects: %s", strings.Join(projectIds, ", ")))
+		}
+
+		if newerCodeSystemVersions, err := getNewerCodeSystemVersions(tx, codeSystemVersion.CodeSystemID, codeSystemVersion.ReleaseDate); err != nil {
+			return err
+		} else {
+			if len(newerCodeSystemVersions) > 0 {
+				for _, newerCodeSystemVersion := range newerCodeSystemVersions {
+					newerCodeSystemVersion.VersionID--
+					if err := tx.Save(&newerCodeSystemVersion).Error; err != nil {
+						return err
+					}
+				}
+			}
 		}
 
 		conceptsDelete := []models.Concept{}
@@ -261,6 +273,14 @@ func (gq *GormQuery) DeleteCodeSystemVersionQuery(codeSystemVersion *models.Code
 		return tx.Delete(&codeSystemVersion, codeSystemVersionId).Error
 	})
 	return err
+}
+
+func getNewerCodeSystemVersions(db *gorm.DB, codeSystemID int32, releaseDate time.Time) ([]models.CodeSystemVersion, error) {
+	var newerCodeSystemVersions []models.CodeSystemVersion
+	if err := db.Order("release_date ASC").Find(&newerCodeSystemVersions, "code_system_id = ? AND release_date > ?", codeSystemID, releaseDate).Error; err != nil {
+		return nil, err
+	}
+	return newerCodeSystemVersions, nil
 }
 
 // func (gq *GormQuery) CreateConceptsQuery(concepts *[]models.Concept) error {
