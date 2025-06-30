@@ -178,6 +178,9 @@ func (s *Server) GetAllNewConcepts(ctx context.Context, request api.GetAllNewCon
 		for _, concept := range versionWithConcepts.Concepts {
 			apiVersionWithConcepts.Concepts = append(apiVersionWithConcepts.Concepts, *transform.GormConceptToApiConcept(&concept))
 		}
+		sort.Slice(apiVersionWithConcepts.Concepts, func(i, j int) bool {
+			return apiVersionWithConcepts.Concepts[i].Code < apiVersionWithConcepts.Concepts[j].Code
+		})
 		apiVersionsWithConcepts = append(apiVersionsWithConcepts, *apiVersionWithConcepts)
 	}
 
