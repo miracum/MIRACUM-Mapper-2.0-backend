@@ -12,7 +12,77 @@ import (
 	"strings"
 )
 
-// This file contains functions for processing CSV files for importing generic, LOINC and SNOMED code systems.
+// This file contains functions for processing CSV / TSV files for importing generic, LOINC and SNOMED code systems.
+
+// General functions
+
+// Function to check the file type based on the extension and content type
+func checkFileType(file *multipart.FileHeader, expected string) error {
+	filename := file.Filename
+	fileExtension := filepath.Ext(filename)
+	if fileExtension == fmt.Sprintf(".%s", expected) {
+		return nil
+	}
+
+	mimeType := file.Header.Get("Content-Type")
+	expectedMimeType := ""
+	if expected == "csv" {
+		expectedMimeType = "text/csv"
+	} else if expected == "txt" {
+		expectedMimeType = "text/plain"
+	}
+	if mimeType == expectedMimeType {
+		return nil
+	}
+
+	if mimeType == "" && fileExtension == "" {
+		return fmt.Errorf("no content type or filename with extension provided")
+	} else if mimeType == "" {
+		return fmt.Errorf("unsupported file extension: %s", fileExtension)
+	} else if fileExtension == "" {
+		return fmt.Errorf("unsupported content type: %s", mimeType)
+	} else {
+		return fmt.Errorf("unsupported content type: %s and file extension: %s", mimeType, fileExtension)
+	}
+}
+
+// Function to validate the CSV header and return the index of required and optional columns
+func validateCSVHeader(reader *csv.Reader, requiredColumns []string, optionalColumns []string) (map[string]int, error) {
+	header, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("error reading the CSV header: %v", err)
+	}
+
+	columnsIndex := make(map[string]int)
+	for _, column := range requiredColumns {
+		columnsIndex[column] = -1
+	}
+	for _, column := range optionalColumns {
+		columnsIndex[column] = -1
+	}
+
+	for i, column := range header {
+		if j, exists := columnsIndex[column]; j == -1 && exists {
+			columnsIndex[column] = i
+		} else if j != -1 && exists {
+			return nil, fmt.Errorf("error: column found multiple times in csv file: %s", column)
+		}
+	}
+
+	for column, present := range columnsIndex {
+		if present == -1 {
+			for _, requiredColumn := range requiredColumns {
+				if column == requiredColumn {
+					return nil, fmt.Errorf("missing required column: %s", column)
+				}
+			}
+		}
+	}
+
+	return columnsIndex, nil
+}
+
+// LOINC and Generic
 
 // Structs for processing CSV files
 
@@ -28,18 +98,6 @@ type csvIndexReplaceBy struct {
 	mapTo       int
 	equivalence int
 	comment     int
-}
-
-type csvIndexSnomedConcepts struct {
-	code   int
-	active int
-}
-
-type csvIndexSnomedDescriptions struct {
-	conceptId int
-	active    int
-	typeId    int
-	term      int
 }
 
 // Helper functions for conversion
@@ -71,36 +129,6 @@ func getDisplayName(displayIndex []int, record []string) string {
 		}
 	}
 	return displayName
-}
-
-// Function to check the file type based on the extension and content type
-func checkFileType(file *multipart.FileHeader, expected string) error {
-	filename := file.Filename
-	fileExtension := filepath.Ext(filename)
-	if fileExtension == fmt.Sprintf(".%s", expected) {
-		return nil
-	}
-
-	mimeType := file.Header.Get("Content-Type")
-	expectedMimeType := ""
-	if expected == "csv" {
-		expectedMimeType = "text/csv"
-	} else if expected == "txt" {
-		expectedMimeType = "text/plain"
-	}
-	if mimeType == expectedMimeType {
-		return nil
-	}
-
-	if mimeType == "" && fileExtension == "" {
-		return fmt.Errorf("no content type or filename with extension provided")
-	} else if mimeType == "" {
-		return fmt.Errorf("unsupported file extension: %s", fileExtension)
-	} else if fileExtension == "" {
-		return fmt.Errorf("unsupported content type: %s", mimeType)
-	} else {
-		return fmt.Errorf("unsupported content type: %s and file extension: %s", mimeType, fileExtension)
-	}
 }
 
 // Functions for CSV header validation and column retrieval
@@ -167,65 +195,6 @@ func getCSVIndexReplaceBy(codeSystemType models.CodeSystemType, columnsIndex map
 	default:
 		return csvIndexReplaceBy{}
 	}
-}
-
-func getCSVColumnsSnomedConcepts() ([]string, []string) {
-	return []string{"id", "active"}, []string{}
-}
-
-func getCSVColumnsSnomedDescriptions() ([]string, []string) {
-	return []string{"conceptId", "active", "typeId", "term"}, []string{}
-}
-
-func getCSVIndexSnomedConcepts(columnsIndex map[string]int) csvIndexSnomedConcepts {
-	return csvIndexSnomedConcepts{
-		code:   columnsIndex["id"],
-		active: columnsIndex["active"],
-	}
-}
-
-func getCSVIndexSnomedDescriptions(columnsIndex map[string]int) csvIndexSnomedDescriptions {
-	return csvIndexSnomedDescriptions{
-		conceptId: columnsIndex["conceptId"],
-		active:    columnsIndex["active"],
-		typeId:    columnsIndex["typeId"],
-		term:      columnsIndex["term"],
-	}
-}
-
-func validateCSVHeader(reader *csv.Reader, requiredColumns []string, optionalColumns []string) (map[string]int, error) {
-	header, err := reader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("error reading the CSV header: %v", err)
-	}
-
-	columnsIndex := make(map[string]int)
-	for _, column := range requiredColumns {
-		columnsIndex[column] = -1
-	}
-	for _, column := range optionalColumns {
-		columnsIndex[column] = -1
-	}
-
-	for i, column := range header {
-		if j, exists := columnsIndex[column]; j == -1 && exists {
-			columnsIndex[column] = i
-		} else if j != -1 && exists {
-			return nil, fmt.Errorf("error: column found multiple times in csv file: %s", column)
-		}
-	}
-
-	for column, present := range columnsIndex {
-		if present == -1 {
-			for _, requiredColumn := range requiredColumns {
-				if column == requiredColumn {
-					return nil, fmt.Errorf("missing required column: %s", column)
-				}
-			}
-		}
-	}
-
-	return columnsIndex, nil
 }
 
 // Function to process CSV rows of the files
@@ -307,6 +276,64 @@ func processCSVRowsReplaceBy(reader *csv.Reader, csvIndex csvIndexReplaceBy, cod
 
 	return &replaceByConcepts, 200, nil
 }
+
+// SNOMED CT
+
+// Structs for processing CSV files
+
+type csvIndexSnomedConcepts struct {
+	code     int
+	active   int
+	moduleId int
+}
+
+type csvIndexSnomedDescriptions struct {
+	conceptId int
+	active    int
+	typeId    int
+	term      int
+}
+
+// Helper functions for conversion
+
+func convertConceptStatusSnomed(active int) models.ConceptStatus {
+	if active == 1 {
+		return models.ActiveConcept
+	} else if active == 0 {
+		return models.Deprecated
+	}
+	return models.ActiveConcept // Default to Active if not specified
+}
+
+// Functions for CSV header validation and column retrieval
+
+func getCSVColumnsSnomedConcepts() ([]string, []string) {
+	return []string{"id", "active", "moduleId"}, []string{}
+}
+
+func getCSVColumnsSnomedDescriptions() ([]string, []string) {
+	return []string{"conceptId", "active", "typeId", "term"}, []string{}
+}
+
+func getCSVIndexSnomedConcepts(columnsIndex map[string]int) csvIndexSnomedConcepts {
+	return csvIndexSnomedConcepts{
+		code:     columnsIndex["id"],
+		active:   columnsIndex["active"],
+		moduleId: columnsIndex["moduleId"],
+	}
+}
+
+func getCSVIndexSnomedDescriptions(columnsIndex map[string]int) csvIndexSnomedDescriptions {
+	return csvIndexSnomedDescriptions{
+		conceptId: columnsIndex["conceptId"],
+		active:    columnsIndex["active"],
+		typeId:    columnsIndex["typeId"],
+		term:      columnsIndex["term"],
+	}
+}
+
+// Constants for SNOMED CT
+const SNOMED_CT_CORE_ID = 900000000000207008
 
 func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Scanner, csvIndexConcepts csvIndexSnomedConcepts, csvIndexDescriptions csvIndexSnomedDescriptions) (*[]database.ConceptImport, int32, error) {
 	var concepts map[string]database.ConceptImport = make(map[string]database.ConceptImport)
