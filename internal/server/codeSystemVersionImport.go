@@ -296,10 +296,10 @@ type csvIndexSnomedDescriptions struct {
 
 // Helper functions for conversion
 
-func convertConceptStatusSnomed(active int) models.ConceptStatus {
-	if active == 1 {
+func convertConceptStatusSnomed(active string) models.ConceptStatus {
+	if active == "1" {
 		return models.ActiveConcept
-	} else if active == 0 {
+	} else if active == "0" {
 		return models.Deprecated
 	}
 	return models.ActiveConcept // Default to Active if not specified
@@ -333,7 +333,8 @@ func getCSVIndexSnomedDescriptions(columnsIndex map[string]int) csvIndexSnomedDe
 }
 
 // Constants for SNOMED CT
-const SNOMED_CT_CORE_ID = 900000000000207008
+const SNOMED_CT_CORE_ID = "900000000000207008" // SNOMED CT Core module ID
+const SNOMED_CT_FSN_ID = "900000000000013009"  // Fully Specified Name type ID
 
 func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Scanner, csvIndexConcepts csvIndexSnomedConcepts, csvIndexDescriptions csvIndexSnomedDescriptions) (*[]database.ConceptImport, int32, error) {
 	var concepts map[string]database.ConceptImport = make(map[string]database.ConceptImport)
@@ -350,15 +351,17 @@ func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Sc
 			return nil, 500, fmt.Errorf("An Error occurred while reading the Concepts file: %v", err)
 		}
 
-		active := record[csvIndexConcepts.active] == "1"
+		moduleId := record[csvIndexConcepts.moduleId]
+		if moduleId != SNOMED_CT_CORE_ID {
+			continue // Skip concepts not in the SNOMED CT core module
+		}
+
+		active := record[csvIndexConcepts.active]
+		status := convertConceptStatusSnomed(active)
 
 		conceptImport := database.ConceptImport{
 			Code:   record[csvIndexConcepts.code],
-			Status: models.ActiveConcept,
-		}
-
-		if !active {
-			conceptImport.Status = models.Deprecated
+			Status: status,
 		}
 
 		concepts[conceptImport.Code] = conceptImport
@@ -381,7 +384,7 @@ func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Sc
 		}
 
 		typeId := record[csvIndexDescriptions.typeId]
-		if typeId != "900000000000013009" { // Only process "Fully Specified Name" type
+		if typeId != SNOMED_CT_FSN_ID { // Only process "Fully Specified Name" type
 			continue
 		}
 
