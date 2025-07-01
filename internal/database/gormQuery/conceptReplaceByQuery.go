@@ -39,7 +39,7 @@ func (gq *GormQuery) GetConceptReplaceBies(code string, codeSystemId int32, code
 			var concept = models.Concept{}
 			if err := gq.GetConceptQuery(&concept, conceptReplaceBy.MapTo, conceptReplaceBy.CodeSystemID, codeSystemVersionId); err != nil {
 				switch {
-				case errors.Is(err, gorm.ErrRecordNotFound):
+				case errors.Is(err, database.ErrNotFound):
 					continue
 				default:
 					return err
