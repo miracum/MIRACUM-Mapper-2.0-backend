@@ -63,16 +63,25 @@ func (s *Server) ImportCodeSystemVersionSnomed(ctx context.Context, request api.
 	}
 	descriptionFile := form.File["description"][0]
 
-	return processFilesSnomed(conceptFile, descriptionFile, codeSystemId, codeSystemVersionId, s.Database)
+	if len(form.File["association"]) == 0 {
+		return api.ImportCodeSystemVersionSnomed400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("No association file provided")}, nil
+	}
+	associationFile := form.File["association"][0]
+
+	return processFilesSnomed(conceptFile, descriptionFile, associationFile, codeSystemId, codeSystemVersionId, s.Database)
 }
 
-func processFilesSnomed(concept *multipart.FileHeader, description *multipart.FileHeader, codeSystemId int32, codeSystemVersionId int32, db database.Datastore) (api.ImportCodeSystemVersionSnomedResponseObject, error) {
+func processFilesSnomed(concept *multipart.FileHeader, description *multipart.FileHeader, association *multipart.FileHeader, codeSystemId int32, codeSystemVersionId int32, db database.Datastore) (api.ImportCodeSystemVersionSnomedResponseObject, error) {
 	// Check file types
 	err := checkFileType(concept, "txt")
 	if err != nil {
 		return api.ImportCodeSystemVersionSnomed400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 	}
 	err = checkFileType(description, "txt")
+	if err != nil {
+		return api.ImportCodeSystemVersionSnomed400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+	}
+	err = checkFileType(association, "txt")
 	if err != nil {
 		return api.ImportCodeSystemVersionSnomed400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
 	}
@@ -109,6 +118,22 @@ func processFilesSnomed(concept *multipart.FileHeader, description *multipart.Fi
 	}
 	csvIndexDescriptions := getCSVIndexSnomedDescriptions(columnsIndexDescription)
 
+	// Validate association file header
+	associationFile, err := association.Open()
+	if err != nil {
+		return api.ImportCodeSystemVersionSnomed500JSONResponse{InternalServerErrorJSONResponse: "An Error occurred while trying to open the association file"}, nil
+	}
+	defer associationFile.Close()
+
+	associationFileReader := csv.NewReader(associationFile)
+	associationFileReader.Comma = '\t' // SNOMED files are tab-separated
+	requiredColumnsAssociation, optionalColumnsAssociation := getCSVColumnsSnomedAssociations()
+	columnsIndexAssociation, err := validateCSVHeader(associationFileReader, requiredColumnsAssociation, optionalColumnsAssociation)
+	if err != nil {
+		return api.ImportCodeSystemVersionSnomed400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse(err.Error())}, nil
+	}
+	csvIndexAssociations := getCSVIndexSnomedAssociations(columnsIndexAssociation)
+
 	// Read files
 	descriptionFile2, err := description.Open()
 	if err != nil {
@@ -117,7 +142,7 @@ func processFilesSnomed(concept *multipart.FileHeader, description *multipart.Fi
 	defer descriptionFile2.Close()
 	descriptionFileReader2 := bufio.NewScanner(descriptionFile2)
 
-	concepts, status, err := processCSVRowsSnomed(conceptFileReader, descriptionFileReader2, csvIndexConcepts, csvIndexDescriptions)
+	concepts, replaceBies, status, err := processCSVRowsSnomed(conceptFileReader, descriptionFileReader2, associationFileReader, csvIndexConcepts, csvIndexDescriptions, csvIndexAssociations, codeSystemId)
 	if err != nil {
 		switch status {
 		case 400:
@@ -131,6 +156,6 @@ func processFilesSnomed(concept *multipart.FileHeader, description *multipart.Fi
 	if !utilities.TryImporting() {
 		return api.ImportCodeSystemVersionSnomed400JSONResponse{BadRequestErrorJSONResponse: api.BadRequestErrorJSONResponse("An import is already in progress. Please wait until it is finished.")}, nil
 	}
-	go db.ImportConcepts(codeSystemId, codeSystemVersionId, concepts, nil)
+	go db.ImportConcepts(codeSystemId, codeSystemVersionId, concepts, replaceBies)
 	return api.ImportCodeSystemVersionSnomed202JSONResponse("Files processed successfully. Starting to create and update concepts in the background."), nil
 }

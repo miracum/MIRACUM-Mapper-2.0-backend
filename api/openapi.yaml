@@ -1508,6 +1508,10 @@ paths:
                   type: string
                   format: binary
                   description: The .txt file with the descriptions to import. Use the file Snapshot/Terminology/sct2_Description_Snapshot_....txt.
+                association:
+                  type: string
+                  format: binary
+                  description: The .txt file with the replace by hints for deprecated / deleted concepts. Use the file Snapshot/Refset/Content/der2_cRefset_AssociationSnapshot_....txt.
       responses:
         "202":
           description: Success

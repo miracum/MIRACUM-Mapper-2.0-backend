@@ -691,6 +691,9 @@ type ImportCodeSystemVersionLoincMultipartBody struct {
 
 // ImportCodeSystemVersionSnomedMultipartBody defines parameters for ImportCodeSystemVersionSnomed.
 type ImportCodeSystemVersionSnomedMultipartBody struct {
+	// Association The .txt file with the replace by hints for deprecated / deleted concepts. Use the file Snapshot/Refset/Content/der2_cRefset_AssociationSnapshot_....txt.
+	Association openapi_types.File `json:"association"`
+
 	// Concept The .txt file with the concepts to import. Use the file Snapshot/Terminology/sct2_Concept_Snapshot_....txt.
 	Concept openapi_types.File `json:"concept"`
 

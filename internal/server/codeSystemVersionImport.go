@@ -294,6 +294,14 @@ type csvIndexSnomedDescriptions struct {
 	term      int
 }
 
+type csvIndexSnomedAssociations struct {
+	active                int
+	moduleId              int
+	refsetId              int
+	referencedComponentId int
+	targetComponentId     int
+}
+
 // Helper functions for conversion
 
 func convertConceptStatusSnomed(active string) models.ConceptStatus {
@@ -315,6 +323,10 @@ func getCSVColumnsSnomedDescriptions() ([]string, []string) {
 	return []string{"conceptId", "active", "typeId", "term"}, []string{}
 }
 
+func getCSVColumnsSnomedAssociations() ([]string, []string) {
+	return []string{"active", "moduleId", "refsetId", "referencedComponentId", "targetComponentId"}, []string{}
+}
+
 func getCSVIndexSnomedConcepts(columnsIndex map[string]int) csvIndexSnomedConcepts {
 	return csvIndexSnomedConcepts{
 		code:     columnsIndex["id"],
@@ -332,23 +344,48 @@ func getCSVIndexSnomedDescriptions(columnsIndex map[string]int) csvIndexSnomedDe
 	}
 }
 
+func getCSVIndexSnomedAssociations(columnsIndex map[string]int) csvIndexSnomedAssociations {
+	return csvIndexSnomedAssociations{
+		active:                columnsIndex["active"],
+		moduleId:              columnsIndex["moduleId"],
+		refsetId:              columnsIndex["refsetId"],
+		referencedComponentId: columnsIndex["referencedComponentId"],
+		targetComponentId:     columnsIndex["targetComponentId"],
+	}
+}
+
 // Constants for SNOMED CT
 const SNOMED_CT_CORE_ID = "900000000000207008" // SNOMED CT Core module ID
 const SNOMED_CT_FSN_ID = "900000000000013009"  // Fully Specified Name type ID
 
-func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Scanner, csvIndexConcepts csvIndexSnomedConcepts, csvIndexDescriptions csvIndexSnomedDescriptions) (*[]database.ConceptImport, int32, error) {
+var SMOMED_CT_MAP_EQUIVALENCE = map[string]models.ConceptReplaceByEquivalence{
+	"900000000000523009": models.ReplaceByRelatedTo, // POSSIBLY EQUIVALENT TO
+	"900000000000526001": models.ReplaceByEqual,     // REPLACED BY
+	"900000000000527005": models.ReplaceByEqual,     // SAME AS
+	"900000000000528000": models.ReplaceByWider,     // WAS A
+	"900000000000530003": models.ReplaceByRelatedTo, // ALTERNATIVE
+	// Skipped values:
+	// "900000000000524003" // MOVED TO - does not refer to a concept but namespaces
+	// "900000000000525002" // MOVED FROM - does not refer to a concept but namespaces
+	// "900000000000529008" // SIMILAR TO - currently not used in SNOMED CT
+	// "900000000000531004" // REFERS TO - does not refer to a concept but descriptions
+}
+
+func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Scanner, associationReader *csv.Reader, csvIndexConcepts csvIndexSnomedConcepts, csvIndexDescriptions csvIndexSnomedDescriptions, csvIndexAssociations csvIndexSnomedAssociations, codeSystemId int32) (*[]database.ConceptImport, *[]models.ConceptReplaceBy, int32, error) {
 	var concepts map[string]database.ConceptImport = make(map[string]database.ConceptImport)
+
+	var replaceByConcepts []models.ConceptReplaceBy
 
 	for {
 		record, err := conceptReader.Read()
 		if err != nil {
 			if err == csv.ErrFieldCount {
-				return nil, 400, fmt.Errorf("Concepts file has inconsistent number of fields")
+				return nil, nil, 400, fmt.Errorf("Concepts file has inconsistent number of fields")
 			}
 			if err == io.EOF {
 				break
 			}
-			return nil, 500, fmt.Errorf("An Error occurred while reading the Concepts file: %v", err)
+			return nil, nil, 500, fmt.Errorf("An Error occurred while reading the Concepts file: %v", err)
 		}
 
 		moduleId := record[csvIndexConcepts.moduleId]
@@ -370,12 +407,12 @@ func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Sc
 	for descriptionReader.Scan() {
 		line := descriptionReader.Text()
 		if err := descriptionReader.Err(); err != nil {
-			return nil, 500, fmt.Errorf("An Error occurred while reading the Descriptions file: %v", err)
+			return nil, nil, 500, fmt.Errorf("An Error occurred while reading the Descriptions file: %v", err)
 		}
 
 		record := strings.Split(line, "\t")
 		if len(record) != 9 {
-			return nil, 400, fmt.Errorf("Descriptions file has inconsistent number of fields")
+			return nil, nil, 400, fmt.Errorf("Descriptions file has inconsistent number of fields")
 		}
 
 		active := record[csvIndexDescriptions.active] == "1"
@@ -396,12 +433,61 @@ func processCSVRowsSnomed(conceptReader *csv.Reader, descriptionReader *bufio.Sc
 		}
 	}
 
+	for {
+		record, err := associationReader.Read()
+		if err != nil {
+			if err == csv.ErrFieldCount {
+				return nil, nil, 400, fmt.Errorf("Associations file has inconsistent number of fields")
+			}
+			if err == io.EOF {
+				break
+			}
+			return nil, nil, 500, fmt.Errorf("An Error occurred while reading the Associations file: %v", err)
+		}
+
+		moduleId := record[csvIndexAssociations.moduleId]
+		if moduleId != SNOMED_CT_CORE_ID {
+			continue // Skip associations not in the SNOMED CT core module
+		}
+
+		active := record[csvIndexAssociations.active] == "1"
+		if !active {
+			continue // Skip inactive associations
+		}
+
+		refsetId := record[csvIndexAssociations.refsetId]
+		equivalence, exists := SMOMED_CT_MAP_EQUIVALENCE[refsetId]
+		if !exists {
+			continue // Skip associations not in the SNOMED CT replace by map
+		}
+
+		source := record[csvIndexAssociations.referencedComponentId]
+		target := record[csvIndexAssociations.targetComponentId]
+
+		_, sourceExists := concepts[source]
+		_, targetExists := concepts[target]
+		if !sourceExists || !targetExists {
+			continue // Skip associations where source or target concept does not exist
+		}
+
+		replaceByConcept := models.ConceptReplaceBy{
+			Code:         source,
+			MapTo:        target,
+			CodeSystemID: codeSystemId,
+			Equivalence:  &equivalence,
+			Comment:      nil, // No comment in SNOMED associations
+		}
+
+		replaceByConcepts = append(replaceByConcepts, replaceByConcept)
+
+	}
+
 	var conceptImports []database.ConceptImport
 	for _, concept := range concepts {
 		if concept.Display == "" {
-			return nil, 400, fmt.Errorf("Concept with code %s has no display name", concept.Code)
+			return nil, nil, 400, fmt.Errorf("Concept with code %s has no display name", concept.Code)
 		}
 		conceptImports = append(conceptImports, concept)
 	}
-	return &conceptImports, 200, nil
+	return &conceptImports, &replaceByConcepts, 200, nil
 }
