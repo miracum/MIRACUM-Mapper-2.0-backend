@@ -359,7 +359,7 @@ const SNOMED_CT_CORE_ID = "900000000000207008" // SNOMED CT Core module ID
 const SNOMED_CT_FSN_ID = "900000000000013009"  // Fully Specified Name type ID
 
 var SMOMED_CT_MAP_EQUIVALENCE = map[string]models.ConceptReplaceByEquivalence{
-	"900000000000523009": models.ReplaceByRelatedTo, // POSSIBLY EQUIVALENT TO
+	"900000000000523009": models.ReplaceByNarrower,  // POSSIBLY EQUIVALENT TO
 	"900000000000526001": models.ReplaceByEqual,     // REPLACED BY
 	"900000000000527005": models.ReplaceByEqual,     // SAME AS
 	"900000000000528000": models.ReplaceByWider,     // WAS A

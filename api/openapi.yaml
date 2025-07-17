@@ -1485,7 +1485,7 @@ paths:
       tags:
         - code-system-version
       summary: Import concepts for a SNOMED CT code system version by ID
-      description: Import concepts for a SNOMED code system version by ID. The concepts are imported from the files sct2_Concept_Snapshot_<version>.txt and sct2_Description_Snapshot_....txt. The files can be uploaded directly without a conersion. For other code system types use the other endpoints.
+      description: Import concepts for a SNOMED code system version by ID. The concepts are imported from the files sct2_Concept_Snapshot_<version>.txt and sct2_Description_Snapshot_....txt. The replace by hints are imported from the file der2_cRefset_AssociationSnapshot_....txt. The files can be uploaded directly without a conversion. For other code system types use the other endpoints.
       parameters:
         - $ref: "#/components/parameters/codesystem_id"
         - $ref: "#/components/parameters/codesystem-version_id"
@@ -1499,6 +1499,7 @@ paths:
               required:
                 - concept
                 - description
+                - association
               properties:
                 concept:
                   type: string
