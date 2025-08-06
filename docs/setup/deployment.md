@@ -13,7 +13,7 @@ To get an overview of how the services work together, see the following graphic:
 
 ## Prerequisites
 
-All services are containerized and can be deployed using Docker. A `Dockerfile` for the Backend and Frontend are provided to build the containers and `docker-compose.yaml` files are provided to run these containers with additional services like a PostgreSQL database, Keycloak and Nginx. The Frontend and Backend itself can be configured to work with these external services. To use the containers, Docker has to be installed on the machine.
+All services are containerized and can be deployed using Docker. A `Dockerfile` for the Backend and Frontend is provided to build the containers and `docker-compose.yaml` files are provided to run these containers with additional services like a PostgreSQL database, Keycloak and Nginx. The Frontend and Backend itself can be configured to work with these external services. To use the containers, Docker has to be installed on the machine.
 
 
 ## Running the application
