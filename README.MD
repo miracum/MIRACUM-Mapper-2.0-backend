@@ -20,13 +20,28 @@ The backend is a RESTful API that provides endpoints for the frontend to interac
 
 ## Quick Start
 
-The application can be build and run using Docker. A `Dockerfile` and `docker-compose.yaml` files are provided for this purpose. The backend can be run either in the docker container or in a Dev-Container which is also provided for development. The backend uses a postgres database service that stores its data in a volume. For authentication during development and testing, a Keycloak service is provided that also uses a postgres database service and a volume.
+The application can be build and run using Docker. A `Dockerfile` and `docker-compose.yaml` files are provided for this purpose. The backend service can be run either in the docker container or in a Dev-Container which is also provided for development. The backend uses a postgres database service that stores its data in a volume. For authentication during development and testing, a Keycloak service is provided that also uses a postgres database service and a volume.
 
 There are different guides depending on how the application should be set up and run:
 
 - If you want to contribute to the project and actively develop something, see the [Development Guide](/docs/setup/development.md)
 - If you want to test the application (e. g. import codesystems, create projects and mappings) without changing the code, see the [Test Guide](/docs/setup/testing.md)
 - If you want to deploy the application for production or on a test system, see the [Deployment Guide](/docs/setup/deployment.md)
+
+If you had an old version of the application running on your system, it might be necessary to delete or rebuild the docker image and delete the old database.
+
+To rebuild the image, add the flag `--build` at the end of the `docker compose` commands.
+
+To delete the backend image, use the following command:
+```bash
+docker image remove miracum-mapper-20-backend-miracum-mapper
+```
+
+To delete the backend database volume, use the following command:
+```bash
+docker volume remove miracum_postgres_data
+```
+
 
 ## Configuration
 

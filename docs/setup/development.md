@@ -78,10 +78,3 @@ The project uses GitHub Actions as a CI/CD pipeline. The workflow is defined in 
 - TODO: `integration-test` will be added to test the application as a whole.
 
 - In the `build` job the docker image is build, scanned and pushed to the GitHub Container Registry.
-
-
-
-
-The application can also be run locally. Docker should be used anyway for 
-
-`Go 1.22` is used to develop the project so it has to be installed. `Make` has to be available to use the Makefiles for building the Application. Docker is necessary to run the application in an containerized environment and start the postgres database. In order to make the development process easiert in the future, a Dev Container will be provided which contains all necessary tools and dependencies so the project can be developed in a consistent environment.
