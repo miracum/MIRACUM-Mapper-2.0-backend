@@ -7,26 +7,47 @@ import (
 
 func GormCodeSystemToApiCodeSystem(codeSystem *models.CodeSystem) *api.CodeSystem {
 	return &api.CodeSystem{
-		Id:          int32(codeSystem.ID),
+		Id:          codeSystem.ID,
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Name:        codeSystem.Name,
+		Type:        api.CodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 		Uri:         codeSystem.Uri,
-		Version:     codeSystem.Version,
 	}
+}
+
+func GormCodeSystemToApiGetCodeSystem(codeSystem *models.CodeSystem, isAdmin bool) *api.GetCodeSystem {
+	return &api.GetCodeSystem{
+		Id:          codeSystem.ID,
+		Author:      codeSystem.Author,
+		Description: codeSystem.Description,
+		Uri:         codeSystem.Uri,
+		Name:        codeSystem.Name,
+		Type:        api.GetCodeSystemType(codeSystem.Type),
+		Title:       codeSystem.Title,
+		Versions:    *GormCodeSystemVersionsToApiCodeSystemVersions(&codeSystem.CodeSystemVersions, isAdmin),
+	}
+}
+
+func GormCodeSystemsToApiGetCodeSystems(codeSystems *[]models.CodeSystem, isAdmin bool) *[]api.GetCodeSystem {
+	apiCodeSystems := []api.GetCodeSystem{}
+	for _, codeSystem := range *codeSystems {
+		apiCodeSystems = append(apiCodeSystems, *GormCodeSystemToApiGetCodeSystem(&codeSystem, isAdmin))
+	}
+	return &apiCodeSystems
 }
 
 func ApiCodeSystemToGormCodeSystem(codeSystem *api.CodeSystem) *models.CodeSystem {
 	return &models.CodeSystem{
 		Model: models.Model{
-			ID: uint32(codeSystem.Id),
+			ID: codeSystem.Id,
 		},
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
-		Version:     codeSystem.Version,
 		Name:        codeSystem.Name,
+		Type:        models.CodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 	}
 }
@@ -36,8 +57,8 @@ func ApiCreateCodeSystemToGormCodeSystem(codeSystem *api.CreateCodeSystem) *mode
 		Author:      codeSystem.Author,
 		Description: codeSystem.Description,
 		Uri:         codeSystem.Uri,
-		Version:     codeSystem.Version,
 		Name:        codeSystem.Name,
+		Type:        models.CodeSystemType(codeSystem.Type),
 		Title:       codeSystem.Title,
 	}
 }

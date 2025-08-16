@@ -30,6 +30,8 @@ tags:
     #   url: http://swagger.io
   - name: project
     description: Operations about projects
+  - name: migration
+    description: Operations about project migration
   - name: project-permission
     description: Operations about project permissions
   - name: project-codesystem-roles
@@ -40,6 +42,8 @@ tags:
     description: Operations about users
   - name: code-system
     description: Operations about code systems
+  - name: code-system-version
+    description: Operations about code system versions
   - name: concept
     description: Operations about concepts
 paths:
@@ -236,6 +240,240 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
+  /projects/{project_id}/migration/options:
+    get:
+      tags:
+        - migration
+      summary: Get migration options for a project
+      description: Get migration options for a project
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getMigrationOptions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MigrationOptions"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/status:
+    get:
+      tags:
+        - migration
+      summary: Get migration status for a project
+      description: Get migration status for a project
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getMigrationStatus
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MigrationStatus"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/start:
+    post:
+      tags:
+        - migration
+      summary: Start migration to a newer version of a code system role
+      description: Start migration to a newer version of a code system role. Editing mappings is not possible during the migration.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: startMigration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/StartMigration"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Migration started"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project or codesystem-role not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/cancel:
+    post:
+      tags:
+        - migration
+      summary: Cancel migration to a newer version of a code system role
+      description: Cancel migration to a newer version of a code system role. Editing mappings is possible again after the cancellation.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: cancelMigration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Migration cancelled"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/changes:
+    get:
+      tags:
+        - migration
+      summary: Get all changes that need to be reviewed 
+      description: Get all changes between the old and new version of a code system role, that are not yet reviewed.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: getMigrationChanges
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MigrationChanges"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/finish:
+    post:
+      tags:
+        - migration
+      summary: Finish migration to a newer version of a code system role
+      description: Finish migration to a newer version of a code system role.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: finishMigration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Migration finished"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /projects/{project_id}/migration/migrate:
+    post:
+      tags:
+        - migration
+      summary: Migrate mappings to the newer version of a code system role
+      description: Migrate mappings to the newer version of a code system role.
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+      operationId: migrateMapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                "$ref": "#/components/schemas/MigrateMapping"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - errors
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MigrateMappingError"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "403":
+          "$ref": "#/components/responses/ForbiddenError"
+        "404":
+          description: Project or Mapping not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
   /projects/{project_id}/permissions:
     get:
       tags:
@@ -831,7 +1069,7 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/components/schemas/CodeSystem"
+                  "$ref": "#/components/schemas/GetCodeSystem"
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -933,7 +1171,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/CodeSystem" # id required
+                "$ref": "#/components/schemas/GetCodeSystem" # id required
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -976,34 +1214,28 @@ paths:
       security:
         - OAuth2: [admin]
         - BearerAuth: [admin]
-  /codesystems/{codesystem_id}/import:
+  /codesystems/{codesystem_id}/versions:
     post:
       tags:
-        - code-system
-      summary: Import concepts for a code system by ID
-      description: Import concepts for a code system by ID. The concepts are imported from a CSV file. The format of the CSV must be "code,meaning"
+        - code-system-version
+      summary: Create a new version for a code system by ID
+      description: Create a new version for a code system by ID. Only admins can create code system versions.
       parameters:
         - $ref: "#/components/parameters/codesystem_id"
-      operationId: importCodeSystem
+      operationId: createCodeSystemVersion
       requestBody:
         required: true
         content:
-          text/csv:
+          application/json:
             schema:
-              type: string
-              example: |
-                code,meaning
-                123,test meaning 1
-                456,another meaning
-                789,third meaning
+              "$ref": "#/components/schemas/BaseCodeSystemVersion"
       responses:
-        "202":
+        "200":
           description: Success
           content:
             application/json:
               schema:
-                type: string
-                example: "CSV is in the correct format. Start importing concepts now"
+                "$ref": "#/components/schemas/CodeSystemVersion"
         "400":
           "$ref": "#/components/responses/BadRequestError"
         "401":
@@ -1014,6 +1246,312 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Exception
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+    put:
+      tags:
+        - code-system-version
+      summary: Update a code system version by ID
+      description: Update a code system version by ID. Only admins can update code system versions.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+      operationId: updateCodeSystemVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateCodeSystemVersion"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemVersion"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}:
+    delete:
+      tags:
+        - code-system-version
+      summary: Delete a code system version by ID
+      description: Delete a code system version by ID. Only admins can delete code system versions.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: deleteCodeSystemVersion
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodeSystemVersion"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem or CodeSystemVersion not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/generic:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a generic code system version by ID
+      description: Import concepts for a generic code system version by ID. The concepts and optional replace by hints are imported from CSV files. For other code system types use the other endpoints.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersionGeneric
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - main
+              properties:
+                main:
+                  type: string
+                  format: binary
+                  description: The main CSV file with the concepts to import. Required columns are "code", "display" and "status". The column "description" is optional. "status" has to be one of ["active" | "trial" | "deprecated" | "discouraged"]. If the code system does not support a status, use "active" for all concepts.
+                replace_by:
+                  type: string
+                  format: binary
+                  description: An optional CSV file with replace by / map to hints for deprecated / deleted concepts. Required columns are "code" and "map_to". The columns "equivalence" and "comment" are optional. "map_to" is the code of the concept that should replace the deprecated / deleted concept "code". "equivalence" has to be one of ["relatedto" | "equivalent" | "equal" | "wider" | "subsumes" | "narrower" | "specializes" | "inexact" | "unmatched" | "disjoint"] or empty.
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Files processed successfully. Starting to create and update concepts in the background."
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/loinc:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a Loinc code system version by ID
+      description: Import concepts for a Loinc code system version by ID. The CSV files can be uploaded directly without a conersion. For other code system types use the other endpoints.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersionLoinc
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - loinc
+                - map_to
+              properties:
+                loinc:
+                  type: string
+                  format: binary
+                  description: The main CSV file with the concepts to import. Use the file LoincTable/Loinc.csv.
+                map_to:
+                  type: string
+                  format: binary
+                  description: The CSV file with replace by / map to hints for deprecated / deleted concepts. Use the file LoincTable/MapTo.csv.
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Files processed successfully. Starting to create and update concepts in the background."
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/icd10gm:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a ICD-10-GM code system version by ID
+      description: Import concepts for a ICD-10-GM code system version by ID. The concepts are imported from FHIR/JSON files CodeSystem-icd10gm-....json and ConceptMap-icd10gm-....json. The files must be according to the FHIR R4 standard. The JSON-Objects must be copied into the request body (see example). For other code system types use the other endpoints.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersionIcd
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                codeSystem: {
+                  "resourceType": "CodeSystem",
+                  "other fields": " ... "
+                }
+                conceptMap: {
+                  "resourceType": "ConceptMap",
+                  "other fields": " ... "
+                }
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Files processed successfully. Starting to create and update concepts in the background."
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/import/snomedct:
+    post:
+      tags:
+        - code-system-version
+      summary: Import concepts for a SNOMED CT code system version by ID
+      description: Import concepts for a SNOMED code system version by ID. The concepts are imported from the files sct2_Concept_Snapshot_<version>.txt and sct2_Description_Snapshot_....txt. The replace by hints are imported from the file der2_cRefset_AssociationSnapshot_....txt. The files can be uploaded directly without a conversion. For other code system types use the other endpoints.
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+      operationId: importCodeSystemVersionSnomed
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - concept
+                - description
+                - association
+              properties:
+                concept:
+                  type: string
+                  format: binary
+                  description: The .txt file with the concepts to import. Use the file Snapshot/Terminology/sct2_Concept_Snapshot_....txt.
+                description:
+                  type: string
+                  format: binary
+                  description: The .txt file with the descriptions to import. Use the file Snapshot/Terminology/sct2_Description_Snapshot_....txt.
+                association:
+                  type: string
+                  format: binary
+                  description: The .txt file with the replace by hints for deprecated / deleted concepts. Use the file Snapshot/Refset/Content/der2_cRefset_AssociationSnapshot_....txt.
+      responses:
+        "202":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Files processed successfully. Starting to create and update concepts in the background."
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+      security:
+        - OAuth2: [admin]
+        - BearerAuth: [admin]
+  /import-status:
+    get:
+      tags:
+        - code-system-version
+      summary: Get the status of the running or last import
+      description: Get the status of the currently running or the last import.
+      operationId: getImportStatus
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImportStatus"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
         "500":
           "$ref": "#/components/responses/InternalServerError"
       security:
@@ -1072,6 +1610,90 @@ paths:
                 "$ref": "#/components/schemas/ErrorResponse"
         "500":
           "$ref": "#/components/responses/InternalServerError"
+  /codesystems/{codesystem_id}/versions/{codesystem-version_id}/concepts:
+    get:
+      tags:
+        - concept
+      summary: Get all concepts for a code system version by ID
+      description: Get all concepts for a code system version by ID. Paging and sorting can be specified by query parameters.
+      operationId: getAllConceptsByVersion
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+        - $ref: "#/components/parameters/codesystem-version_id"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - name: sortBy
+          in: query
+          description: Field to sort sortBy
+          required: false
+          schema:
+            type: string
+            default: code
+            enum: [code, meaning]
+        - $ref: "#/components/parameters/sortOrder"
+        - name: codeSearch
+          in: query
+          description: search for the code
+          required: false
+          schema:
+            type: string
+        - name: meaningSearch
+          in: query
+          description: search for meaning
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Concept" # id optional
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
+  /codesystems/{codesystem_id}/new-concepts:
+    get:
+      tags:
+        - concept
+      summary: Get all new concepts for a code system by ID
+      description: Get all new concepts for a code system by ID. The concepts are ordered by the version, they are first appering in. Sorting can be specified by query parameters.
+      operationId: getAllNewConcepts
+      parameters:
+        - $ref: "#/components/parameters/codesystem_id"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CodeSystemVersionWithConcepts"
+        "400":
+          "$ref": "#/components/responses/BadRequestError"
+        "401":
+          "$ref": "#/components/responses/UnauthorizedError"
+        "404":
+          description: CodeSystem not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        "500":
+          "$ref": "#/components/responses/InternalServerError"
 components:
   parameters:
     project_id:
@@ -1082,7 +1704,6 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
     user_id:
       name: user_id
       in: path
@@ -1098,7 +1719,6 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
     mapping_id:
       name: mapping_id
       in: path
@@ -1106,8 +1726,7 @@ components:
       description: The ID of the mapping
       schema:
         type: integer
-        format: int64
-        minimum: 1
+        format: int32
     codesystem_id:
       name: codesystem_id
       in: path
@@ -1116,7 +1735,14 @@ components:
       schema:
         type: integer
         format: int32
-        minimum: 1
+    codesystem-version_id:
+      name: codesystem-version_id
+      in: path
+      required: true
+      description: The ID of the Codesystem Version
+      schema:
+        type: integer
+        format: int32
     page:
       name: page
       in: query
@@ -1129,7 +1755,7 @@ components:
     pageSize:
       name: pageSize
       in: query
-      description: Number of items per page (minimum 1, maximum 100)
+      description: Number of items per page (must be a positive integer)
       required: false
       schema:
         type: integer
@@ -1245,11 +1871,15 @@ components:
       required:
         - name
         - system
+        - version
         - type
       properties:
         name:
           type: string
         system:
+          type: integer
+          format: int32
+        version:
           type: integer
           format: int32
         type:
@@ -1290,7 +1920,164 @@ components:
                 name:
                   type: string
                 version:
+                  $ref: "#/components/schemas/CodeSystemVersion"
+                next_version:
+                  $ref: "#/components/schemas/CodeSystemVersion"
+    CodeSystemRoleMigration:
+      allOf:
+        - $ref: "#/components/schemas/UpdateCodeSystemRole"
+        - type: object
+          required:
+            - system
+          properties:
+            system:
+              type: object
+              required:
+                - id
+                - name
+                - version
+              properties:
+                id:
+                  type: integer
+                  format: int32
+                name:
                   type: string
+                version:
+                  $ref: "#/components/schemas/CodeSystemVersion"
+                next_version:
+                  $ref: "#/components/schemas/CodeSystemVersion"
+                newer_versions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CodeSystemVersion"
+    MigrationOptions:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          required:
+            - code_system_roles
+          properties:
+            code_system_roles:
+              type: array
+              items:
+                $ref: "#/components/schemas/CodeSystemRoleMigration"
+    MigrationStatus:
+      type: object
+      required:
+        - running
+      properties:
+        running:
+          type: boolean
+        code_system_role:
+          $ref: "#/components/schemas/CodeSystemRole"
+    StartMigration:
+      type: object
+      required:
+        - code_system_role_id
+        - version_id
+      properties:
+        code_system_role_id:
+          type: integer
+          format: int32
+        version_id:
+          type: integer
+          format: int32
+    MigrationChanges:
+      type: object
+      required:
+        - deleted
+        - deprecated
+        - discouraged
+        - change_display
+        - change_description
+      properties:
+        deleted:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldConcept"
+        deprecated:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
+        discouraged:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
+        change_display:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
+        change_description:
+          type: array
+          items:
+            $ref: "#/components/schemas/MigrationChangeOldAndNewConcept"
+    MigrationChangeOldConcept:
+      type: object
+      required:
+        - old_concept
+        - mappings
+        - replace_by
+      properties:
+        old_concept:
+          $ref: "#/components/schemas/Concept"
+        mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mapping"
+        replace_by:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConceptReplaceBy"
+    MigrationChangeOldAndNewConcept:
+      type: object
+      required:
+        - old_concept
+        - new_concept
+        - mappings
+        - replace_by
+      properties:
+        old_concept:
+          $ref: "#/components/schemas/Concept"
+        new_concept:
+          $ref: "#/components/schemas/Concept"
+        mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Mapping"
+        replace_by:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConceptReplaceBy"
+    MigrateMapping:
+      type: object
+      required:
+        - migration_type
+        - mapping_id
+      properties:
+        migration_type:
+          type: string
+          enum: [none, delete, keep, new]
+        mapping_id:
+          type: integer
+          format: int32
+        new_concept_id:
+          type: integer
+          format: int32
+    MigrateMappingError:
+      type: object
+      required:
+        - mapping_id
+        - code
+        - error
+      properties:
+        migration:
+          $ref: "#/components/schemas/MigrateMapping"
+        code:
+          type: string
+          example: "404"
+        error:
+          type: string
+          example: "Mapping not found"
     CreateMapping:
       type: object
       # required:
@@ -1308,7 +2095,7 @@ components:
             ]
         status:
           type: string
-          enum: [active, inactive, pending]
+          enum: [active, inactive, pending, migrated]
         comment:
           type: string
         elements:
@@ -1324,7 +2111,7 @@ components:
           properties:
             id:
               type: integer
-              format: int64
+              format: int32
     Mapping:
       allOf:
         - $ref: "#/components/schemas/UpdateMapping"
@@ -1349,13 +2136,15 @@ components:
           format: int32
         concept:
           type: integer
-          format: int64
+          format: int32
     FullElement:
       allOf:
         - $ref: "#/components/schemas/Element"
         - type: object
           properties:
             concept:
+              $ref: "#/components/schemas/Concept"
+            nextConcept:
               $ref: "#/components/schemas/Concept"
     User:
       type: object
@@ -1377,33 +2166,63 @@ components:
         - id
         - code
         - meaning
+        - status
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
         code:
           type: string
         meaning:
           type: string
-    CreateCodeSystem:
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, trial, deprecated, discouraged]
+    ConceptReplaceBy:
+      type: object
+      required:
+        - code
+        - map_to
+        - code_system_id
+      properties:
+        code:
+          type: string
+        map_to:
+          type: object
+          $ref: "#/components/schemas/Concept"
+        code_system_id:
+          type: integer
+          format: int32
+        equivalence:
+          type: string
+          enum: [relatedto, equivalent, equal, wider, subsumes, narrower, specializes, inexact, unmatched, disjoint]
+        comment:
+          type: string
+    BaseCodeSystem:
       type: object
       required:
         - uri
-        - version
         - name
+        - type
       properties:
         uri:
           type: string
-        version:
-          type: string
         name:
           type: string
+        type:
+          type: string
+          enum: [GENERIC, LOINC, ICD_10_GM, SNOMED_CT]
         title:
           type: string
         description:
           type: string
         author:
           type: string
+    CreateCodeSystem:
+      allOf:
+        - $ref: "#/components/schemas/BaseCodeSystem"
     CodeSystem:
       allOf:
         - $ref: "#/components/schemas/CreateCodeSystem"
@@ -1414,6 +2233,84 @@ components:
             id:
               type: integer
               format: int32
+    GetCodeSystem:
+      allOf:
+        - $ref: "#/components/schemas/CodeSystem"
+        - type: object
+          required:
+            - versions
+          properties:
+            versions:
+              type: array
+              items:
+                $ref: "#/components/schemas/CodeSystemVersion"
+    BaseCodeSystemVersion:
+      type: object
+      required:
+        - version_name
+        - release_date
+      properties:
+        version_name:
+          type: string
+        release_date:
+          type: string
+          format: date
+    UpdateCodeSystemVersion:
+      type: object
+      required:
+        - version_name
+        - id
+      properties:
+        version_name:
+          type: string
+        id:
+          type: integer
+          format: int32
+    CodeSystemVersion:
+      allOf:
+        - $ref: "#/components/schemas/BaseCodeSystemVersion"
+        - type: object
+          required:
+            - id
+            - imported
+            - project_uses
+          properties:
+            id:
+              type: integer
+              format: int32
+            imported:
+              type: boolean
+            project_uses:
+              type: array
+              items:
+                type: string
+    CodeSystemVersionWithConcepts:
+      allOf:
+        - $ref: "#/components/schemas/CodeSystemVersion"
+        - type: object
+          required:
+            - concepts
+          properties:
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/Concept"
+    ImportStatus:
+      type: object
+      required:
+        - progress
+        - running
+        - error
+      properties:
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        running:
+          type: boolean
+        error:
+          type: string
+          nullable: true
     ErrorResponse:
       type: string
   responses:

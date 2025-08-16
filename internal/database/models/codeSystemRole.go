@@ -29,12 +29,17 @@ func (e CodeSystemRoleType) Value() (driver.Value, error) {
 }
 
 type CodeSystemRole struct {
-	ID           uint32             `gorm:"primarykey"`
-	Type         CodeSystemRoleType `gorm:"type:CodeSystemRoleType"`
-	Name         string
-	Position     uint32
-	ProjectID    uint32 `gorm:"index"`
-	CodeSystemID uint32
-	Elements     []Element `gorm:"constraint:OnDelete:CASCADE"`
-	CodeSystem   CodeSystem
+	ID                      int32              `gorm:"primarykey;type:integer"`
+	Type                    CodeSystemRoleType `gorm:"type:CodeSystemRoleType"`
+	Name                    string
+	Position                int32     `gorm:"type:integer"`
+	ProjectID               int32     `gorm:"index;type:integer"`
+	Project                 Project   // preloaded on get codeSystem
+	CodeSystemID            int32     `gorm:"type:integer"`
+	Elements                []Element `gorm:"constraint:OnDelete:CASCADE"`
+	CodeSystem              CodeSystem
+	CodeSystemVersionID     int32 `gorm:"type:integer"`
+	CodeSystemVersion       CodeSystemVersion
+	NextCodeSystemVersionID *int32 `gorm:"type:integer"`
+	NextCodeSystemVersion   CodeSystemVersion
 }

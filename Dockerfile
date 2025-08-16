@@ -1,7 +1,7 @@
 #########################################################
 # Build Executable binary
 #########################################################
-FROM golang:1.22.2-alpine AS builder
+FROM golang:1.24.2-alpine AS builder
 
 # Install dependencies ('make')
 RUN apk update && apk add --no-cache make

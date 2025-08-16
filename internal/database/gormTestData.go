@@ -30,8 +30,8 @@ func createTestData(gormDB *gorm.DB) {
 
 	description := "Example Code System 1"
 	codeSystem := models.CodeSystem{
-		Uri:             "http://example.com/codesystem",
-		Version:         "1.0",
+		Uri: "http://example.com/codesystem",
+		//Version:         "1.0",
 		Name:            "Example Code System",
 		Description:     &description,
 		Author:          nil,
@@ -109,7 +109,7 @@ func createTestData(gormDB *gorm.DB) {
 
 	for i, sampleLoincCode := range pseudoLoincCodes {
 		concept := models.Concept{
-			ID:           uint64(i + 3),
+			ID:           int32(i + 3),
 			CodeSystemID: 2,
 			Code:         sampleLoincCode.Code,
 			Display:      sampleLoincCode.Meaning,
@@ -132,7 +132,7 @@ func createTestData(gormDB *gorm.DB) {
 
 			count = count + rand.Intn(10) + 1
 			concepts[i] = models.Concept{
-				ID:           uint64(count),
+				ID:           int32(count),
 				CodeSystemID: 2,
 				Code:         fmt.Sprint(count),
 				Display:      meaning,
@@ -155,7 +155,7 @@ func createTestData(gormDB *gorm.DB) {
 
 			count = count + rand.Intn(10) + 1
 			concepts[i] = models.Concept{
-				ID:           uint64(count),
+				ID:           int32(count),
 				CodeSystemID: 1,
 				Code:         fmt.Sprint(count),
 				Display:      meaning,

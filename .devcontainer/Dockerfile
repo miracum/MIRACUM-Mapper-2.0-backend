@@ -1,5 +1,5 @@
 # Use the official Golang image as a base
-FROM golang:1.22.2-alpine
+FROM golang:1.24.2-alpine
 
 # Install dependencies
 RUN apk update && apk add --no-cache make git docker-compose zsh shadow

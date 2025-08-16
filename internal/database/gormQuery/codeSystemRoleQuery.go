@@ -10,7 +10,7 @@ import (
 )
 
 func (gq *GormQuery) GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSystemRole, projectId int32) error {
-	db := gq.Database.Preload("CodeSystem").Where("project_id = ?", projectId).Find(&codeSystemRoles)
+	db := gq.Database.Preload("CodeSystem").Preload("CodeSystemVersion").Preload("NextCodeSystemVersion").Where("project_id = ?", projectId).Find(&codeSystemRoles)
 	if db.Error != nil {
 		pgErr, ok := handlePgError(db.Error)
 		if !ok {
@@ -32,7 +32,7 @@ func (gq *GormQuery) GetAllCodeSystemRolesQuery(codeSystemRoles *[]models.CodeSy
 }
 
 func (gq *GormQuery) GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error {
-	db := gq.Database.Preload("CodeSystem").
+	db := gq.Database.Preload("CodeSystem").Preload("CodeSystemVersion").Preload("NextCodeSystemVersion").
 		Where("project_id = ?", projectId).
 		First(&codeSystemRole, codeSystemRoleId)
 	if db.Error != nil {
@@ -57,7 +57,7 @@ func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystem
 	err := gq.Database.Transaction(func(tx *gorm.DB) error {
 		oldCodeSystemRole := models.CodeSystemRole{}
 
-		if err := tx.Preload("CodeSystem").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRole.ID).Error; err != nil {
+		if err := tx.Preload("CodeSystem").Preload("CodeSystemVersion").Preload("NextCodeSystemVersion").Where("project_id = ?", projectId).First(&oldCodeSystemRole, codeSystemRole.ID).Error; err != nil {
 			switch {
 			case errors.Is(err, gorm.ErrRecordNotFound):
 				var project models.Project
@@ -76,13 +76,19 @@ func (gq *GormQuery) UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystem
 			}
 		}
 
-		codeSystemRole.CodeSystemID = oldCodeSystemRole.CodeSystemID
 		codeSystemRole.Position = oldCodeSystemRole.Position
+		codeSystemRole.CodeSystemID = oldCodeSystemRole.CodeSystemID
+		codeSystemRole.Elements = oldCodeSystemRole.Elements
+		codeSystemRole.CodeSystem = oldCodeSystemRole.CodeSystem
+		codeSystemRole.CodeSystemVersionID = oldCodeSystemRole.CodeSystemVersionID
+		codeSystemRole.CodeSystemVersion = oldCodeSystemRole.CodeSystemVersion
+		codeSystemRole.NextCodeSystemVersionID = oldCodeSystemRole.NextCodeSystemVersionID
+		codeSystemRole.NextCodeSystemVersion = oldCodeSystemRole.NextCodeSystemVersion
 
 		if err := tx.Save(codeSystemRole).Error; err != nil {
 			return err
 		}
-		codeSystemRole.CodeSystem = oldCodeSystemRole.CodeSystem
+
 		return nil
 	})
 	return err

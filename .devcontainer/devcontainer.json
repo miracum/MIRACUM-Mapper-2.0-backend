@@ -16,7 +16,8 @@
                 "shardulm94.trailing-spaces",
                 "ms-azuretools.vscode-docker",
                 "42Crunch.vscode-openapi",
-                "Arjun.swagger-viewer"
+                "Arjun.swagger-viewer",
+                "cweijan.vscode-postgresql-client2"
             ]
         }
     },

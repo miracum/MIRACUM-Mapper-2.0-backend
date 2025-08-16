@@ -31,7 +31,7 @@ func getGormConnection(config *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if err := db.AutoMigrate(&models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{}); err != nil {
+	if err := db.AutoMigrate(&models.ConceptReplaceBy{}, &models.CodeSystem{}, &models.Concept{}, &models.User{}, &models.Project{}, &models.Mapping{}, &models.Element{}, &models.CodeSystemRole{}, &models.ProjectPermission{}, &models.CodeSystemVersion{}); err != nil {
 		return nil, fmt.Errorf("failed to auto migrate models: %v", err)
 	}
 
@@ -74,9 +74,12 @@ func executeSQL(db *gorm.DB, sqlStatements []string) error {
 func initEnums(db *gorm.DB) error {
 	enumStatements := []string{
 		"CREATE TYPE Equivalence AS ENUM ('related-to', 'equivalent', 'source-is-narrower-than-target', 'source-is-broader-than-target', 'not-related');",
-		"CREATE TYPE Status AS ENUM ('active', 'inactive', 'pending');",
+		"CREATE TYPE MappingStatus AS ENUM ('active', 'inactive', 'pending', 'migrated');",
 		"CREATE TYPE CodeSystemRoleType AS ENUM ('source', 'target');",
 		"CREATE TYPE ProjectPermissionRole AS ENUM ('reviewer', 'project_owner', 'editor');",
+		"CREATE TYPE ConceptStatus AS ENUM ('active', 'trial', 'deprecated', 'discouraged');",
+		"CREATE TYPE CodeSystemType AS ENUM ('GENERIC', 'LOINC', 'ICD_10_GM', 'SNOMED_CT');",
+		"CREATE TYPE ConceptReplaceByEquivalence AS ENUM ('relatedto', 'equivalent', 'equal', 'wider', 'subsumes', 'narrower', 'specializes', 'inexact', 'unmatched', 'disjoint');",
 	}
 
 	if err := executeSQLWithExceptionHandling(db, enumStatements); err != nil {

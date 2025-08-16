@@ -1,6 +1,7 @@
 package database
 
 import (
+	"miracummapper/internal/api"
 	"miracummapper/internal/database/models"
 
 	"github.com/google/uuid"
@@ -26,11 +27,20 @@ type Datastore interface {
 	GetCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32, codeSystemRoleId int32) error
 	UpdateCodeSystemRoleQuery(codeSystemRole *models.CodeSystemRole, projectId int32) error
 
+	// CodeSystemRoleMigration
+	StartMigrationQuery(projectId int32, codeSystemRoleId int32, versionId int32) error
+	CancelMigrationQuery(projectId int32) error
+	GetMigrationCodeSystemRoleQuery(projectId int32) (*models.CodeSystemRole, error)
+	GetMigrationValidToVersionIdsQuery(codeSystemId int32, nextCodeSystemVersionId int32) ([]int32, error)
+	GetMigrationValidFromVersionIdsQuery(codeSystemId int32, codeSystemVersionId int32) ([]int32, error)
+	FinishMigrationQuery(codeSystemRole *models.CodeSystemRole, mappings *[]models.Mapping, statusRequired bool) error
+	MigrationElementSetNextConceptQuery(mappingId int32, codeSystemRoleId int32, nextConceptId *int32) error
+
 	// Mapping
-	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int, pageSize int, offset int, sortBy string, sortOrder string) error
-	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error)) error
-	GetMappingQuery(mapping *models.Mapping, projectId int, mappingId int64) error
-	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]uint32, error), deleteMissingElements bool) error
+	GetAllMappingsQuery(mappings *[]models.Mapping, projectId int32, pageSize int, offset int, sortBy string, sortOrder string) error
+	CreateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]int32, error)) error
+	GetMappingQuery(mapping *models.Mapping, projectId int32, mappingId int32) error
+	UpdateMappingQuery(mapping *models.Mapping, checkFunc func(mapping *models.Mapping, project *models.Project) ([]int32, error), deleteMissingElements bool) error
 	DeleteMappingQuery(mapping *models.Mapping) error
 
 	// User
@@ -44,11 +54,32 @@ type Datastore interface {
 	GetCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	DeleteCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32) error
 	UpdateCodeSystemQuery(codeSystem *models.CodeSystem) error
-	GetFirstElementCodeSystemQuery(codeSystem *models.CodeSystem, codeSystemId int32, concept *models.Concept) error
+
+	// CodeSystemVersion
+	CreateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
+	GetCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
+	UpdateCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion) error
+	DeleteCodeSystemVersionQuery(codeSystemVersion *models.CodeSystemVersion, codeSystemId int32, codeSystemVersionId int32) error
+
+	// CodeSystemVersionImport
+	ImportConcepts(codeSystemId int32, codeSystemVersionId int32, concepts *[]ConceptImport, replaceBies *[]models.ConceptReplaceBy)
 
 	// Concept
 	GetAllConceptsQuery(concepts *[]models.Concept, codeSystemId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
-	CreateConceptsQuery(concepts *[]models.Concept) error
+	GetAllConceptsByVersionQuery(concepts *[]models.Concept, codeSystemId int32, codeSystemVersionId int32, pageSize int, offset int, sortBy string, sortOrder string, meaning string, code string) error
+	GetAllConceptsNewByVersionQuery(codeSystemId int32, versionsSorted []models.CodeSystemVersion) (*map[int32][]models.Concept, error)
+	GetConceptQuery(concept *models.Concept, code string, codeSystemId int32, codeSystemVersionId int32) error
+	GetConceptByIdQuery(concept *models.Concept, conceptId int32) error
+
+	// ConceptReplaceBy
+	GetConceptReplaceBies(code string, codeSystemId int32, codeSystemVersionId int32) (*[]api.ConceptReplaceBy, error)
+}
+
+type ConceptImport struct {
+	Code        string
+	Display     string
+	Description *string
+	Status      models.ConceptStatus
 }
 
 type ErrorType int

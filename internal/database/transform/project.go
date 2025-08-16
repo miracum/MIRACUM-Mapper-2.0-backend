@@ -25,7 +25,7 @@ func GormProjectToApiProjectDetails(project *models.Project) api.ProjectDetails 
 	var projectDetails api.ProjectDetails = api.ProjectDetails{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  int32(project.ID),
+		Id:                  project.ID,
 		Modified:            modified,
 		Created:             created,
 		Name:                project.Name,
@@ -92,7 +92,7 @@ func GormProjectToApiProject(project *models.Project) *api.Project {
 	return &api.Project{
 		Description:         project.Description,
 		EquivalenceRequired: project.EquivalenceRequired,
-		Id:                  int32(project.ID),
+		Id:                  project.ID,
 		Modified:            modified,
 		Name:                project.Name,
 		StatusRequired:      project.StatusRequired,
@@ -104,7 +104,7 @@ func GormProjectToApiProject(project *models.Project) *api.Project {
 func ApiUpdateProjectToGormProject(project *api.UpdateProject) *models.Project {
 	return &models.Project{
 		Model: models.Model{
-			ID: uint32(project.Id),
+			ID: project.Id,
 		},
 		Name:                project.Name,
 		Description:         project.Description,
@@ -112,4 +112,62 @@ func ApiUpdateProjectToGormProject(project *api.UpdateProject) *models.Project {
 		EquivalenceRequired: project.EquivalenceRequired,
 		StatusRequired:      project.StatusRequired,
 	}
+}
+
+func GormMigrationOptionsToApiMigrationOptions(project *models.Project, newerCodeSystemVersions *map[int32][]models.CodeSystemVersion) *api.MigrationOptions {
+	var modified string
+	if !project.UpdatedAt.IsZero() {
+		modified = project.UpdatedAt.String()
+	} else {
+		modified = ""
+	}
+
+	var created string
+	if !project.CreatedAt.IsZero() {
+		created = project.CreatedAt.String()
+	} else {
+		created = ""
+	}
+
+	var migrationOptions api.MigrationOptions = api.MigrationOptions{
+		Description:         project.Description,
+		EquivalenceRequired: project.EquivalenceRequired,
+		Id:                  project.ID,
+		Modified:            modified,
+		Created:             created,
+		Name:                project.Name,
+		StatusRequired:      project.StatusRequired,
+		Version:             project.Version,
+	}
+
+	migrationOptions.CodeSystemRoles = *GormCodeSystemRolesMigrationToApiCodeSystemRolesMigration(&project.CodeSystemRoles, newerCodeSystemVersions)
+
+	return &migrationOptions
+}
+
+func GormCodeSystemRolesMigrationToApiCodeSystemRolesMigration(codeSystemRoles *[]models.CodeSystemRole, newerCodeSystemVersions *map[int32][]models.CodeSystemVersion) *[]api.CodeSystemRoleMigration {
+	apiCodeSystemRoles := []api.CodeSystemRoleMigration{}
+	for _, role := range *codeSystemRoles {
+		var newerVersions = (*newerCodeSystemVersions)[role.ID]
+		apiCodeSystemRole := api.CodeSystemRoleMigration{
+			Id:   role.ID,
+			Name: role.Name,
+			System: struct {
+				Id            int32                    `json:"id"`
+				Name          string                   `json:"name"`
+				NewerVersions *[]api.CodeSystemVersion `json:"newer_versions,omitempty"`
+				NextVersion   *api.CodeSystemVersion   `json:"next_version,omitempty"`
+				Version       api.CodeSystemVersion    `json:"version"`
+			}{
+				Id:            role.CodeSystemID,
+				Name:          role.CodeSystem.Name,
+				NewerVersions: GormCodeSystemVersionsToApiCodeSystemVersions(&newerVersions, false),
+				NextVersion:   GormCodeSystemVersionToApiCodeSystemVersion(&role.NextCodeSystemVersion, false),
+				Version:       *GormCodeSystemVersionToApiCodeSystemVersion(&role.CodeSystemVersion, false),
+			},
+			Type: api.CodeSystemRoleMigrationType(role.Type),
+		}
+		apiCodeSystemRoles = append(apiCodeSystemRoles, apiCodeSystemRole)
+	}
+	return &apiCodeSystemRoles
 }

@@ -79,7 +79,12 @@ func (s *Server) CreateProject(ctx context.Context, request api.CreateProjectReq
 		}
 	}
 
-	return api.CreateProject200JSONResponse(transform.GormProjectToApiProjectDetails(project)), nil
+	var newProject models.Project
+	if err := s.Database.GetProjectQuery(&newProject, project.ID); err != nil {
+		return api.CreateProject200JSONResponse(transform.GormProjectToApiProjectDetails(project)), nil
+	}
+
+	return api.CreateProject200JSONResponse(transform.GormProjectToApiProjectDetails(&newProject)), nil
 }
 
 func (s *Server) GetProject(ctx context.Context, request api.GetProjectRequestObject) (api.GetProjectResponseObject, error) {
