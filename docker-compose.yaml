@@ -4,7 +4,7 @@ services:
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    image: ghcr.io/miracum/miracum-mapper-2.0-backend:1.1.0
+    image: ghcr.io/miracum/miracum-mapper-2.0-backend:2.0.0
     container_name: miracum-mapper
     environment:
       KEYCLOAK_URL: http://keycloak:8080
